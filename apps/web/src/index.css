@@ -1,0 +1,84 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Wireframe palette — warm neutrals + sage accent */
+  --color-bg: #fafaf9;
+  --color-bg-alt: #f4f4f2;
+  --color-canvas: #f0eee9;
+  --color-surface: #ffffff;
+  --color-line: #e6e5e1;
+  --color-line-soft: #eeede9;
+  --color-ink: #1f1e1c;
+  --color-ink-mid: #6b6a66;
+  --color-ink-soft: #a3a29d;
+  --color-ink-ghost: #c9c8c3;
+
+  --color-accent: #7a8a6e;
+  --color-accent-bg: #eef1ea;
+
+  --color-warn: #b8895c;
+  --color-warn-bg: #f6ede3;
+  --color-danger: #a86a6a;
+  --color-danger-bg: #f3e6e6;
+  --color-good: #6a8a78;
+  --color-good-bg: #e8efea;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--color-canvas);
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font-family: inherit;
+}
+
+.wf-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: 'tnum' 1;
+}
+
+.wf-tap {
+  transition: background 120ms ease, transform 80ms ease;
+  cursor: pointer;
+}
+.wf-tap:active {
+  transform: scale(0.985);
+}
+
+@keyframes blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}

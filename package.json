@@ -1,0 +1,30 @@
+{
+  "name": "finance-tdah",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Finance tracker for ADHD minds — monorepo (web + api + shared)",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter=./apps/* dev",
+    "dev:web": "pnpm --filter @finance-tdah/web dev",
+    "dev:api": "pnpm --filter @finance-tdah/api dev",
+    "build": "pnpm -r --filter=./apps/* build",
+    "build:web": "pnpm --filter @finance-tdah/web build",
+    "build:api": "pnpm --filter @finance-tdah/api build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @finance-tdah/api db:generate",
+    "db:migrate": "pnpm --filter @finance-tdah/api db:migrate",
+    "db:seed": "pnpm --filter @finance-tdah/api db:seed",
+    "db:studio": "pnpm --filter @finance-tdah/api db:studio",
+    "auth:schema": "pnpm --filter @finance-tdah/api auth:schema",
+    "docker:up": "docker compose --env-file .env up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "docker:build": "docker compose build"
+  },
+  "packageManager": "pnpm@11.1.1",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=11"
+  }
+}

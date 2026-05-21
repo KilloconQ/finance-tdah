@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1779710400000,
+      "tag": "0000_rename_enums_to_english",
+      "breakpoints": true
+    }
+  ]
+}
