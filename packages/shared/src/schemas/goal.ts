@@ -17,7 +17,7 @@ export const goalSchema = z.object({
 export const createGoalSchema = z.object({
   name: z.string().min(1).max(80),
   emoji: z.string().min(1).max(8).default('🌿'),
-  targetCents: cents,
+  targetCents: cents.min(1, { error: 'La meta debe ser mayor a $0' }),
   deadline: isoDate.optional(),
 })
 

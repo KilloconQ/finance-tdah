@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import { netWorth } from '@finance-tdah/shared/domain'
 import { AppBar, BigNumber, PhoneShell, SectionHeader, TabBar } from '@/components'
-import { useAppStore } from '@/store/appStore'
+import { goalsQueryOptions } from '@/features/goals'
 import { formatMoney } from '@/lib/format'
-import { accountsQuery, goalsQuery } from '@/lib/queries'
+import { accountsQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
+import { useTweaks } from '@/lib/use-tweaks'
 
 const ACCOUNT_EMOJI: Record<string, string> = {
   debito: '🏦',
@@ -17,31 +19,33 @@ const ACCOUNT_EMOJI: Record<string, string> = {
 export const Route = createFileRoute('/_app/accounts')({
   loader: () => {
     void queryClient.prefetchQuery(accountsQuery())
-    void queryClient.prefetchQuery(goalsQuery())
+    void queryClient.prefetchQuery(goalsQueryOptions())
   },
   component: Accounts,
 })
 
 function Accounts() {
   const navigate = useNavigate()
-  const showBalances = useAppStore((s) => s.tweaks.showBalances)
-  const detailed = useAppStore((s) => s.tweaks.density === 'detailed')
+  const { showBalances, density } = useTweaks()
+  const detailed = density === 'detailed'
 
   const { data: accounts = [] } = useQuery(accountsQuery())
-  const { data: goals = [] } = useQuery(goalsQuery())
+  const { data: goals = [] } = useQuery(goalsQueryOptions())
 
   const positive = accounts.filter((a) => a.balanceCents >= 0)
   const debt = accounts.filter((a) => a.balanceCents < 0)
   const goalsTotal = goals.reduce((sum, g) => sum + g.currentCents, 0)
 
-  const grossLiquid = positive.reduce((sum, a) => sum + a.balanceCents, 0)
-  const debtTotal = Math.abs(debt.reduce((sum, a) => sum + a.balanceCents, 0))
-  const real = grossLiquid + goalsTotal - debtTotal
+  // Single source of truth: jars live inside accounts, so they are never added
+  // to liquid. See packages/shared/src/domain/net-worth.ts.
+  const { liquidCents: grossLiquid, debtCents: debtTotal, netWorthCents: real } = netWorth(accounts)
 
-  const liquidWeight = grossLiquid
+  // The bar splits total assets into the free slice and the jar-earmarked slice
+  // (both already part of liquid), then debt — so nothing is counted twice.
+  const freeWeight = Math.max(0, grossLiquid - goalsTotal)
   const jarsWeight = goalsTotal
   const debtWeight = debtTotal
-  const totalWeight = Math.max(1, liquidWeight + jarsWeight + debtWeight)
+  const totalWeight = Math.max(1, freeWeight + jarsWeight + debtWeight)
 
   return (
     <PhoneShell>
@@ -69,10 +73,8 @@ function Accounts() {
             {showBalances ? (
               <>
                 tienes{' '}
-                <span className="wf-mono text-ink">
-                  {formatMoney((grossLiquid + goalsTotal) / 100)}
-                </span>{' '}
-                · debes <span className="wf-mono text-danger">{formatMoney(debtTotal / 100)}</span>
+                <span className="wf-mono text-ink">{formatMoney(grossLiquid / 100)}</span> · debes{' '}
+                <span className="wf-mono text-danger">{formatMoney(debtTotal / 100)}</span>
               </>
             ) : (
               '•••• · ••••'
@@ -82,7 +84,7 @@ function Accounts() {
 
         <div className="mt-1 rounded-xl border border-line bg-surface p-3.5">
           <div className="flex h-3.5 overflow-hidden rounded-md bg-line-soft">
-            <div className="bg-ink" style={{ flex: liquidWeight / totalWeight }} />
+            <div className="bg-ink" style={{ flex: freeWeight / totalWeight }} />
             <div className="bg-accent" style={{ flex: jarsWeight / totalWeight }} />
             <div
               className="bg-danger"
@@ -90,7 +92,7 @@ function Accounts() {
             />
           </div>
           <div className="mt-2.5 flex flex-wrap gap-3 text-[11px] text-ink-mid">
-            <LegendDot color="ink" label="líquido" />
+            <LegendDot color="ink" label="libre" />
             <LegendDot color="accent" label="frascos" />
             <LegendDot color="danger" label="deuda" />
           </div>

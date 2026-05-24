@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { and, eq, gte, sum } from 'drizzle-orm'
+import { netWorth } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 
@@ -26,16 +27,10 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
       .from(schema.expense)
       .where(and(eq(schema.expense.userId, user.id), gte(schema.expense.occurredAt, startOfWeek)))
 
-    const liquidCents = accounts
-      .filter((a) => a.balanceCents >= 0)
-      .reduce((acc, a) => acc + a.balanceCents, 0)
-
-    const debtCents = Math.abs(
-      accounts.filter((a) => a.balanceCents < 0).reduce((acc, a) => acc + a.balanceCents, 0),
-    )
-
+    const { liquidCents, debtCents, netWorthCents } = netWorth(accounts)
+    // Jars are mental accounting over money already counted in `liquidCents`;
+    // they are a separate view, never added to net worth. See domain/net-worth.ts.
     const jarsCents = goals.reduce((acc, g) => acc + g.currentCents, 0)
-    const netWorthCents = liquidCents + jarsCents - debtCents
 
     const weekSpentCents = Number(weekSpentRow?.sum ?? 0)
     const weekTargetCents = 220000 // TODO: presupuesto real
@@ -69,12 +64,7 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
       where: (g, { and, eq, isNull }) => and(eq(g.userId, user.id), isNull(g.archivedAt)),
     })
 
-    const liquidCents = accounts
-      .filter((a) => a.balanceCents >= 0)
-      .reduce((acc, a) => acc + a.balanceCents, 0)
-    const debtCents = Math.abs(
-      accounts.filter((a) => a.balanceCents < 0).reduce((acc, a) => acc + a.balanceCents, 0),
-    )
+    const { liquidCents, debtCents, netWorthCents } = netWorth(accounts)
     const jarsCents = goals.reduce((acc, g) => acc + g.currentCents, 0)
 
     return c.json({
@@ -82,7 +72,7 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
         liquidCents,
         jarsCents,
         debtCents,
-        netWorthCents: liquidCents + jarsCents - debtCents,
+        netWorthCents,
       },
     })
   })

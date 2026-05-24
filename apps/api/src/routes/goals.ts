@@ -75,10 +75,15 @@ export const goalsRoute = new Hono<{ Variables: SessionVariables }>()
     const [updated] = await db
       .update(schema.goal)
       .set({
-        currentCents: sql`LEAST(${schema.goal.currentCents} + ${amountCents}, ${schema.goal.targetCents})`,
+        // Store the real deposited amount. Overflow past the target is a UI
+        // concern (see domain/jar.ts `jarProgress.overflowCents`), not the DB's
+        // call — capping here would silently swallow the user's money.
+        currentCents: sql`${schema.goal.currentCents} + ${amountCents}`,
         updatedAt: new Date(),
       })
-      .where(and(eq(schema.goal.id, id), eq(schema.goal.userId, user.id)))
+      .where(
+        and(eq(schema.goal.id, id), eq(schema.goal.userId, user.id), isNull(schema.goal.archivedAt)),
+      )
       .returning()
 
     if (!updated) return c.json({ error: 'Frasco no encontrado' }, 404)
@@ -92,7 +97,9 @@ export const goalsRoute = new Hono<{ Variables: SessionVariables }>()
     const [archived] = await db
       .update(schema.goal)
       .set({ archivedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(schema.goal.id, id), eq(schema.goal.userId, user.id)))
+      .where(
+        and(eq(schema.goal.id, id), eq(schema.goal.userId, user.id), isNull(schema.goal.archivedAt)),
+      )
       .returning()
 
     if (!archived) return c.json({ error: 'Frasco no encontrado' }, 404)
