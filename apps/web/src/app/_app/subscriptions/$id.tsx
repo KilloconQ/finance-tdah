@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AppBar, Btn, Card, PhoneShell, TabBar } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { daysAgo, formatMoney } from '@/lib/format'
 import { mutations, subscriptionsQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
+import { useTweaks } from '@/lib/use-tweaks'
 
 export const Route = createFileRoute('/_app/subscriptions/$id')({
   loader: () => queryClient.ensureQueryData(subscriptionsQuery()),
@@ -15,7 +15,7 @@ function SubscriptionDetail() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const showBalances = useAppStore((s) => s.tweaks.showBalances)
+  const { showBalances } = useTweaks()
   const { data: subs = [] } = useQuery(subscriptionsQuery())
   const sub = subs.find((x) => x.id === id)
 

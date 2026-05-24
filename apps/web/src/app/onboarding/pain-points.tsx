@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Btn, Hello } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { cn } from '@/lib/cn'
+import { setOnboardingDraft, useOnboardingDraft } from '@/lib/onboarding-draft'
 import { OnboardingLayout } from './-layout'
 
 const OPTIONS = [
@@ -18,11 +18,10 @@ export const Route = createFileRoute('/onboarding/pain-points')({
 
 function OnboardingPain() {
   const navigate = useNavigate()
-  const pain = useAppStore((s) => s.onboarding.pain)
-  const setOnboarding = useAppStore((s) => s.setOnboarding)
+  const { pain } = useOnboardingDraft()
 
   const toggle = (id: string) => {
-    setOnboarding({
+    setOnboardingDraft({
       pain: pain.includes(id) ? pain.filter((p) => p !== id) : [...pain, id],
     })
   }

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Btn, Hello, Jar } from '@/components'
-import { useAppStore } from '@/store/appStore'
+import { Btn, Hello } from '@/components'
+import { JarWithStats } from '@/features/goals'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
+import { setOnboardingDraft } from '@/lib/onboarding-draft'
 import { OnboardingLayout } from './-layout'
 
 const PRESETS = [
@@ -19,12 +20,11 @@ export const Route = createFileRoute('/onboarding/goal')({
 
 function OnboardingGoal() {
   const navigate = useNavigate()
-  const setOnboarding = useAppStore((s) => s.setOnboarding)
   const [chosenIdx, setChosenIdx] = useState(0)
   const chosen = PRESETS[chosenIdx]
 
   const handleNext = () => {
-    setOnboarding({
+    setOnboardingDraft({
       firstGoal: {
         name: chosen.name,
         target: chosen.target,
@@ -44,7 +44,13 @@ function OnboardingGoal() {
       <Hello className="mt-2">Algo cortito. Algo que de verdad quieras.</Hello>
 
       <div className="mt-4 flex justify-center">
-        <Jar fill={0.15} current={750} target={chosen.target} width={130} height={170} />
+        <JarWithStats
+          fraction={0.15}
+          currentCents={750 * 100}
+          targetCents={chosen.target * 100}
+          width={130}
+          height={170}
+        />
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-2">

@@ -1,28 +1,32 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { AppBar, BigNumber, Btn, Hello, Jar, Mini, PhoneShell, TabBar } from '@/components'
-import { useAppStore } from '@/store/appStore'
+import { jarProgress } from '@finance-tdah/shared/domain'
+import { AppBar, BigNumber, Btn, Hello, Mini, PhoneShell, TabBar } from '@/components'
+import { JarWithStats, goalsQueryOptions } from '@/features/goals'
 import { formatMoney } from '@/lib/format'
-import { goalsQuery, homeSummaryQuery } from '@/lib/queries'
+import { homeSummaryQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
+import { useTweaks } from '@/lib/use-tweaks'
 
 export const Route = createFileRoute('/_app/')({
   loader: () => {
     void queryClient.prefetchQuery(homeSummaryQuery())
-    void queryClient.prefetchQuery(goalsQuery())
+    void queryClient.prefetchQuery(goalsQueryOptions())
   },
   component: Home,
 })
 
 function Home() {
   const navigate = useNavigate()
-  const showBalances = useAppStore((s) => s.tweaks.showBalances)
-  const detailed = useAppStore((s) => s.tweaks.density === 'detailed')
+  const { showBalances, density } = useTweaks()
+  const detailed = density === 'detailed'
 
   const summary = useQuery(homeSummaryQuery())
-  const goals = useQuery(goalsQuery())
+  const goals = useQuery(goalsQueryOptions())
   const goal = goals.data?.[0]
-  const goalFill = goal && goal.targetCents > 0 ? goal.currentCents / goal.targetCents : 0
+  const goalProgress = goal
+    ? jarProgress({ currentCents: goal.currentCents, targetCents: goal.targetCents })
+    : null
 
   return (
     <PhoneShell>
@@ -50,13 +54,13 @@ function Home() {
           size="md"
         />
 
-        {goal ? (
+        {goal && goalProgress ? (
           <div className="mt-1 flex justify-center">
-            <Jar
-              fill={goalFill}
+            <JarWithStats
+              fraction={goalProgress.fraction}
               label={`${goal.emoji} ${goal.name} · meta`}
-              current={goal.currentCents / 100}
-              target={goal.targetCents / 100}
+              currentCents={goal.currentCents}
+              targetCents={goal.targetCents}
               hidden={!showBalances}
               width={150}
               height={190}

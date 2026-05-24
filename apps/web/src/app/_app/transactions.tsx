@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AppBar, CatDot, PhoneShell, Row, SectionHeader, TabBar } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { formatMoney } from '@/lib/format'
 import { expensesQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
+import { useTweaks } from '@/lib/use-tweaks'
 
 const CATEGORY_EMOJI: Record<string, string> = {
   café: '☕',
@@ -23,7 +23,7 @@ export const Route = createFileRoute('/_app/transactions')({
 
 function Transactions() {
   const navigate = useNavigate()
-  const showBalances = useAppStore((s) => s.tweaks.showBalances)
+  const { showBalances } = useTweaks()
   const { data: expenses = [] } = useQuery(expensesQuery())
 
   const grouped = expenses.reduce<Record<string, typeof expenses>>((acc, e) => {

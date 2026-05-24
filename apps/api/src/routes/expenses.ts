@@ -28,34 +28,56 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
     const input = c.req.valid('json')
 
-    const [created] = await db
-      .insert(schema.expense)
-      .values({
-        userId: user.id,
-        accountId: input.accountId ?? null,
-        amountCents: input.amountCents,
-        category: input.category,
-        description: input.description,
-        occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
+    try {
+      const created = await db.transaction(async (tx) => {
+        if (input.accountId) {
+          const account = await tx.query.financialAccount.findFirst({
+            where: (a, { and, eq }) =>
+              and(eq(a.id, input.accountId!), eq(a.userId, user.id)),
+            columns: { id: true },
+          })
+          if (!account) {
+            throw new Error('ACCOUNT_NOT_FOUND')
+          }
+        }
+
+        const [expense] = await tx
+          .insert(schema.expense)
+          .values({
+            userId: user.id,
+            accountId: input.accountId ?? null,
+            amountCents: input.amountCents,
+            category: input.category,
+            description: input.description,
+            occurredAt: input.occurredAt ? new Date(input.occurredAt) : new Date(),
+          })
+          .returning()
+
+        if (input.accountId) {
+          await tx
+            .update(schema.financialAccount)
+            .set({
+              balanceCents: sql`${schema.financialAccount.balanceCents} - ${input.amountCents}`,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(schema.financialAccount.id, input.accountId),
+                eq(schema.financialAccount.userId, user.id),
+              ),
+            )
+        }
+
+        return expense
       })
-      .returning()
 
-    if (input.accountId) {
-      await db
-        .update(schema.financialAccount)
-        .set({
-          balanceCents: sql`${schema.financialAccount.balanceCents} - ${input.amountCents}`,
-          updatedAt: new Date(),
-        })
-        .where(
-          and(
-            eq(schema.financialAccount.id, input.accountId),
-            eq(schema.financialAccount.userId, user.id),
-          ),
-        )
+      return c.json({ expense: created }, 201)
+    } catch (err) {
+      if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
+        return c.json({ error: 'Cuenta no encontrada' }, 404)
+      }
+      throw err
     }
-
-    return c.json({ expense: created }, 201)
   })
 
   .post('/voice', zValidator('json', voiceTranscriptSchema), async (c) => {
@@ -73,22 +95,33 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
     const { id } = c.req.valid('param')
 
-    const [deleted] = await db
-      .delete(schema.expense)
-      .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, user.id)))
-      .returning()
+    const deleted = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .delete(schema.expense)
+        .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, user.id)))
+        .returning()
+
+      if (!row) return null
+
+      if (row.accountId) {
+        await tx
+          .update(schema.financialAccount)
+          .set({
+            balanceCents: sql`${schema.financialAccount.balanceCents} + ${row.amountCents}`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.financialAccount.id, row.accountId),
+              eq(schema.financialAccount.userId, user.id),
+            ),
+          )
+      }
+
+      return row
+    })
 
     if (!deleted) return c.json({ error: 'Gasto no encontrado' }, 404)
-
-    if (deleted.accountId) {
-      await db
-        .update(schema.financialAccount)
-        .set({
-          balanceCents: sql`${schema.financialAccount.balanceCents} + ${deleted.amountCents}`,
-          updatedAt: new Date(),
-        })
-        .where(eq(schema.financialAccount.id, deleted.accountId))
-    }
 
     return c.json({ ok: true })
   })

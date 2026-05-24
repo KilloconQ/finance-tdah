@@ -11,3 +11,6 @@ const pool = new Pool({
 export const db = drizzle(pool, { schema })
 export { schema }
 export type Db = typeof db
+// Tx is the transaction handle passed to db.transaction callbacks.
+// Extracted via the Parameters utility to stay in sync with Drizzle's types.
+export type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]

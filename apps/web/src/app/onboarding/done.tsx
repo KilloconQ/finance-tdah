@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Btn, Hello } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { mutations } from '@/lib/queries'
 import { authClient } from '@/lib/auth-client'
+import { clearOnboardingDraft, useOnboardingDraft } from '@/lib/onboarding-draft'
 import { OnboardingLayout } from './-layout'
 
 export const Route = createFileRoute('/onboarding/done')({
@@ -12,8 +12,7 @@ export const Route = createFileRoute('/onboarding/done')({
 
 function OnboardingDone() {
   const navigate = useNavigate()
-  const completeOnboarding = useAppStore((s) => s.completeOnboarding)
-  const onboardingState = useAppStore((s) => s.onboarding)
+  const draft = useOnboardingDraft()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,18 +25,18 @@ function OnboardingDone() {
 
       await mutations.completeOnboarding({
         displayName,
-        pain: onboardingState.pain,
-        inputPreference: onboardingState.inputPreference,
-        firstGoal: onboardingState.firstGoal
+        pain: draft.pain,
+        inputPreference: draft.inputPreference,
+        firstGoal: draft.firstGoal
           ? {
-              name: onboardingState.firstGoal.name,
-              emoji: onboardingState.firstGoal.emoji,
-              targetCents: onboardingState.firstGoal.target * 100,
+              name: draft.firstGoal.name,
+              emoji: draft.firstGoal.emoji,
+              targetCents: draft.firstGoal.target * 100,
             }
           : undefined,
       })
 
-      completeOnboarding()
+      clearOnboardingDraft()
       navigate({ to: '/', replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos guardar tu setup')

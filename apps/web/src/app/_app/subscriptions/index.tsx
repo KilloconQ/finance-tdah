@@ -1,10 +1,10 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { AppBar, BigNumber, Btn, Card, PhoneShell, TabBar } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { daysAgo, formatMoney } from '@/lib/format'
 import { subscriptionsQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
+import { useTweaks } from '@/lib/use-tweaks'
 
 export const Route = createFileRoute('/_app/subscriptions/')({
   loader: () => queryClient.ensureQueryData(subscriptionsQuery()),
@@ -13,8 +13,8 @@ export const Route = createFileRoute('/_app/subscriptions/')({
 
 function Subscriptions() {
   const navigate = useNavigate()
-  const showBalances = useAppStore((s) => s.tweaks.showBalances)
-  const detailed = useAppStore((s) => s.tweaks.density === 'detailed')
+  const { showBalances, density } = useTweaks()
+  const detailed = density === 'detailed'
 
   const { data: subs = [] } = useQuery(subscriptionsQuery())
   const unused = subs.filter((s) => s.unused)

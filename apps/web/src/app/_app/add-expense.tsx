@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AppBar, Btn, Hello, MicButton, PhoneShell } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { cn } from '@/lib/cn'
 import { mutations } from '@/lib/queries'
+import { useTweaks } from '@/lib/use-tweaks'
 import type { ParsedVoiceExpense } from '@finance-tdah/shared/schemas'
 
 const FAKE_TRANSCRIPTS = [
@@ -24,7 +24,7 @@ function AddExpense() {
   const [recording, setRecording] = useState(false)
   const [confirm, setConfirm] = useState<ParsedVoiceExpense | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const detailed = useAppStore((s) => s.tweaks.density === 'detailed')
+  const detailed = useTweaks().density === 'detailed'
 
   const parseMutation = useMutation({
     mutationFn: async (transcript: string) => {

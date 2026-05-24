@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { useAppStore } from '@/store/appStore'
+import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
 import { cn } from '@/lib/cn'
 
 export function TweaksPanel() {
   const [open, setOpen] = useState(false)
-  const tweaks = useAppStore((s) => s.tweaks)
-  const setTweak = useAppStore((s) => s.setTweak)
+  const { showBalances, density } = useTweaks()
+  const setTweak = useSetTweak()
 
   return (
     <div className="pointer-events-none fixed right-3 top-3 z-40 flex justify-end md:right-4 md:top-auto md:bottom-4">
@@ -28,19 +28,19 @@ export function TweaksPanel() {
             <Section label="Modo global" />
             <Radio
               label="Densidad"
-              value={tweaks.density}
+              value={density}
               options={[
                 { value: 'simple', label: 'simple' },
                 { value: 'detailed', label: 'detallado' },
               ]}
-              onChange={(v) => setTweak('density', v as typeof tweaks.density)}
+              onChange={(v) => setTweak.mutate({ densityMode: v as 'simple' | 'detailed' })}
             />
 
             <Section label="Privacidad" />
             <Toggle
               label="Mostrar saldos"
-              value={tweaks.showBalances}
-              onChange={(v) => setTweak('showBalances', v)}
+              value={showBalances}
+              onChange={(v) => setTweak.mutate({ showBalances: v })}
             />
           </div>
         ) : (

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { unitsToCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Chip, Dots, Hello, PhoneShell } from '@/components'
+import { useCreateGoal } from '@/features/goals'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
-import { mutations } from '@/lib/queries'
 
 const PRESETS = [1000, 3000, 5000, 10000, 20000]
 const EMOJI_PRESETS = ['🌵', '🛟', '💻', '🎁', '🌿', '✈️']
@@ -15,30 +15,27 @@ export const Route = createFileRoute('/_app/goals/new')({
 
 function GoalCreate() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const [step, setStep] = useState<0 | 1>(0)
   const [target, setTarget] = useState(5000)
   const [name, setName] = useState('Nueva meta')
   const [emoji, setEmoji] = useState('🌿')
   const [error, setError] = useState<string | null>(null)
 
-  const createMutation = useMutation({
-    mutationFn: mutations.createGoal,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['goals'] })
-      navigate({ to: '/goals', replace: true })
-    },
-    onError: (err) => {
-      setError(err instanceof Error ? err.message : 'No pudimos crear el frasco')
-    },
-  })
+  const createMutation = useCreateGoal()
 
   const handleNext = () => {
     if (step === 0) {
       setStep(1)
       return
     }
-    createMutation.mutate({ name, emoji, targetCents: target * 100 })
+    createMutation.mutate(
+      { name, emoji, targetCents: unitsToCents(target) },
+      {
+        onSuccess: () => navigate({ to: '/goals', replace: true }),
+        onError: (err) =>
+          setError(err instanceof Error ? err.message : 'No pudimos crear el frasco'),
+      },
+    )
   }
 
   return (

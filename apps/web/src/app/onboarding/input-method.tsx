@@ -1,12 +1,15 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Btn, Hello } from '@/components'
-import { useAppStore } from '@/store/appStore'
 import { cn } from '@/lib/cn'
-import type { OnboardingState } from '@/store/types'
+import {
+  setOnboardingDraft,
+  useOnboardingDraft,
+  type OnboardingDraft,
+} from '@/lib/onboarding-draft'
 import { OnboardingLayout } from './-layout'
 
 const OPTIONS: Array<{
-  id: OnboardingState['inputPreference']
+  id: OnboardingDraft['inputPreference']
   emoji: string
   title: string
   sub: string
@@ -22,8 +25,7 @@ export const Route = createFileRoute('/onboarding/input-method')({
 
 function OnboardingInput() {
   const navigate = useNavigate()
-  const preference = useAppStore((s) => s.onboarding.inputPreference)
-  const setOnboarding = useAppStore((s) => s.setOnboarding)
+  const { inputPreference: preference } = useOnboardingDraft()
 
   return (
     <OnboardingLayout step={4}>
@@ -41,7 +43,7 @@ function OnboardingInput() {
             <button
               key={o.id}
               type="button"
-              onClick={() => setOnboarding({ inputPreference: o.id })}
+              onClick={() => setOnboardingDraft({ inputPreference: o.id })}
               className={cn(
                 'wf-tap flex items-center gap-3 rounded-xl border-[1.5px] px-4 py-3.5 text-left',
                 selected ? 'border-ink bg-bg-alt' : 'border-line bg-surface',

@@ -4,15 +4,14 @@ import {
   challengeSchema,
   expenseSchema,
   financialAccountSchema,
-  goalSchema,
   homeSummarySchema,
   subscriptionSchema,
   userProfileSchema,
   type CreateExpenseInput,
-  type CreateGoalInput,
   type CreateSubscriptionInput,
   type CreateChallengeInput,
   type CompleteOnboardingInput,
+  type UpdateProfileInput,
 } from '@finance-tdah/shared/schemas'
 import { api, fetchValidated } from './api'
 
@@ -43,20 +42,6 @@ export const accountsQuery = () =>
         '/accounts',
         z.object({ accounts: z.array(financialAccountSchema) }),
       ).then((r) => r.accounts),
-  })
-
-export const goalsQuery = () =>
-  queryOptions({
-    queryKey: ['goals'],
-    queryFn: () =>
-      fetchValidated('/goals', z.object({ goals: z.array(goalSchema) })).then((r) => r.goals),
-  })
-
-export const goalQuery = (id: string) =>
-  queryOptions({
-    queryKey: ['goals', id],
-    queryFn: () =>
-      fetchValidated(`/goals/${id}`, z.object({ goal: goalSchema })).then((r) => r.goal),
   })
 
 export const expensesQuery = () =>
@@ -92,13 +77,11 @@ export const mutations = {
   completeOnboarding: (input: CompleteOnboardingInput) =>
     api.post('profile/onboarding', { json: input }).json<{ profile: unknown }>(),
 
+  updateProfile: (input: UpdateProfileInput) =>
+    api.patch('profile', { json: input }).json<{ profile: unknown }>(),
+
   createAccount: (input: { name: string; type: string; balanceCents: number }) =>
     api.post('accounts', { json: input }).json(),
-
-  createGoal: (input: CreateGoalInput) => api.post('goals', { json: input }).json(),
-
-  addToGoal: (id: string, amountCents: number) =>
-    api.post(`goals/${id}/add`, { json: { amountCents } }).json(),
 
   createExpense: (input: CreateExpenseInput) => api.post('expenses', { json: input }).json(),
 

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { AppBar, Btn, Dots, Hello, Jar, PhoneShell } from '@/components'
+import { AppBar, Btn, Dots, Hello, PhoneShell } from '@/components'
+import { Jar } from '@/features/goals'
 
 export const Route = createFileRoute('/onboarding/')({
   component: OnboardingWelcome,
@@ -24,7 +25,7 @@ function OnboardingWelcome() {
         </div>
 
         <div className="mt-6 flex justify-center">
-          <Jar fill={0.6} width={150} height={200} />
+          <Jar fraction={0.6} width={150} height={200} />
         </div>
 
         <div className="mt-4 space-y-1.5 text-center text-[13px] text-ink-mid">

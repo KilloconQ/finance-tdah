@@ -26,6 +26,16 @@ export const auth = betterAuth({
   advanced: {
     cookiePrefix: 'finance-tdah',
   },
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 60,
+    customRules: {
+      '/sign-in/email': { window: 60, max: 5 },
+      '/sign-up/email': { window: 60, max: 5 },
+      '/forget-password': { window: 60, max: 3 },
+    },
+  },
 })
 
 export type Auth = typeof auth
