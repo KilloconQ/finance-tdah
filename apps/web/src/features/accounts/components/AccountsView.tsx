@@ -1,12 +1,6 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
-import { netWorth } from '@finance-tdah/shared/domain'
+import type { FinancialAccountDTO } from '@finance-tdah/shared/schemas'
 import { AppBar, BigNumber, PhoneShell, SectionHeader, TabBar } from '@/components'
-import { goalsQueryOptions } from '@/features/goals'
 import { formatMoney } from '@/lib/format'
-import { accountsQuery } from '@/lib/queries'
-import { queryClient } from '@/lib/query-client'
-import { useTweaks } from '@/lib/use-tweaks'
 
 const ACCOUNT_EMOJI: Record<string, string> = {
   debito: '🏦',
@@ -16,51 +10,56 @@ const ACCOUNT_EMOJI: Record<string, string> = {
   ahorro: '🐷',
 }
 
-export const Route = createFileRoute('/_app/accounts')({
-  loader: () => {
-    void queryClient.prefetchQuery(accountsQuery())
-    void queryClient.prefetchQuery(goalsQueryOptions())
-  },
-  component: Accounts,
-})
+interface AccountsViewProps {
+  accounts: FinancialAccountDTO[]
+  goalsTotalCents: number
+  liquidCents: number
+  debtCents: number
+  netWorthCents: number
+  showBalances: boolean
+  detailed: boolean
+  onBack: () => void
+  onAddAccount: () => void
+}
 
-function Accounts() {
-  const navigate = useNavigate()
-  const { showBalances, density } = useTweaks()
-  const detailed = density === 'detailed'
-
-  const { data: accounts = [] } = useQuery(accountsQuery())
-  const { data: goals = [] } = useQuery(goalsQueryOptions())
-
+export function AccountsView({
+  accounts,
+  goalsTotalCents,
+  liquidCents,
+  debtCents,
+  netWorthCents,
+  showBalances,
+  detailed,
+  onBack,
+  onAddAccount,
+}: AccountsViewProps) {
   const positive = accounts.filter((a) => a.balanceCents >= 0)
   const debt = accounts.filter((a) => a.balanceCents < 0)
-  const goalsTotal = goals.reduce((sum, g) => sum + g.currentCents, 0)
-
-  // Single source of truth: jars live inside accounts, so they are never added
-  // to liquid. See packages/shared/src/domain/net-worth.ts.
-  const { liquidCents: grossLiquid, debtCents: debtTotal, netWorthCents: real } = netWorth(accounts)
 
   // The bar splits total assets into the free slice and the jar-earmarked slice
   // (both already part of liquid), then debt — so nothing is counted twice.
-  const freeWeight = Math.max(0, grossLiquid - goalsTotal)
-  const jarsWeight = goalsTotal
-  const debtWeight = debtTotal
-  const totalWeight = Math.max(1, freeWeight + jarsWeight + debtWeight)
+  const freeWeight = Math.max(0, liquidCents - goalsTotalCents)
+  const totalWeight = Math.max(1, freeWeight + goalsTotalCents + debtCents)
 
   return (
     <PhoneShell>
       <AppBar
         title="Cuánto tienes"
         left={
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/' })}
-            className="wf-tap text-[16px] text-ink"
-          >
+          <button type="button" onClick={onBack} className="wf-tap text-[16px] text-ink">
             ←
           </button>
         }
-        right={<span className="text-[16px] text-ink-mid">⚙</span>}
+        right={
+          <button
+            type="button"
+            onClick={onAddAccount}
+            className="wf-tap text-[20px] text-ink-mid"
+            aria-label="Agregar cuenta"
+          >
+            +
+          </button>
+        }
       />
 
       <div className="flex flex-1 flex-col overflow-y-auto px-6 pb-4">
@@ -68,13 +67,12 @@ function Accounts() {
           <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
             Tu plata realmente disponible
           </div>
-          <BigNumber value={real / 100} hidden={!showBalances} size="md" />
+          <BigNumber value={netWorthCents / 100} hidden={!showBalances} size="md" />
           <div className="-mt-3 text-[12px] leading-relaxed text-ink-mid">
             {showBalances ? (
               <>
-                tienes{' '}
-                <span className="wf-mono text-ink">{formatMoney(grossLiquid / 100)}</span> · debes{' '}
-                <span className="wf-mono text-danger">{formatMoney(debtTotal / 100)}</span>
+                tienes <span className="wf-mono text-ink">{formatMoney(liquidCents / 100)}</span> ·
+                debes <span className="wf-mono text-danger">{formatMoney(debtCents / 100)}</span>
               </>
             ) : (
               '•••• · ••••'
@@ -85,11 +83,8 @@ function Accounts() {
         <div className="mt-1 rounded-xl border border-line bg-surface p-3.5">
           <div className="flex h-3.5 overflow-hidden rounded-md bg-line-soft">
             <div className="bg-ink" style={{ flex: freeWeight / totalWeight }} />
-            <div className="bg-accent" style={{ flex: jarsWeight / totalWeight }} />
-            <div
-              className="bg-danger"
-              style={{ flex: debtWeight / totalWeight, opacity: 0.6 }}
-            />
+            <div className="bg-accent" style={{ flex: goalsTotalCents / totalWeight }} />
+            <div className="bg-danger" style={{ flex: debtCents / totalWeight, opacity: 0.6 }} />
           </div>
           <div className="mt-2.5 flex flex-wrap gap-3 text-[11px] text-ink-mid">
             <LegendDot color="ink" label="libre" />
@@ -115,7 +110,7 @@ function Accounts() {
                 <span className="text-[18px]">🐷</span>
                 <span className="flex-1 text-[13px] text-ink">Frascos guardados</span>
                 <span className="wf-mono text-[13px] text-ink">
-                  {formatMoney(goalsTotal / 100, !showBalances)}
+                  {formatMoney(goalsTotalCents / 100, !showBalances)}
                 </span>
               </div>
             </div>

@@ -23,12 +23,13 @@ import { Route as AppTransactionsRouteImport } from './app/_app/transactions'
 import { Route as AppPanicRouteImport } from './app/_app/panic'
 import { Route as AppChallengeRouteImport } from './app/_app/challenge'
 import { Route as AppAddExpenseRouteImport } from './app/_app/add-expense'
-import { Route as AppAccountsRouteImport } from './app/_app/accounts'
 import { Route as AppSubscriptionsIndexRouteImport } from './app/_app/subscriptions/index'
 import { Route as AppGoalsIndexRouteImport } from './app/_app/goals/index'
+import { Route as AppAccountsIndexRouteImport } from './app/_app/accounts/index'
 import { Route as AppSubscriptionsIdRouteImport } from './app/_app/subscriptions/$id'
 import { Route as AppGoalsNewRouteImport } from './app/_app/goals/new'
 import { Route as AppGoalsIdRouteImport } from './app/_app/goals/$id'
+import { Route as AppAccountsNewRouteImport } from './app/_app/accounts/new'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -99,11 +100,6 @@ const AppAddExpenseRoute = AppAddExpenseRouteImport.update({
   path: '/add-expense',
   getParentRoute: () => AppRoute,
 } as any)
-const AppAccountsRoute = AppAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppSubscriptionsIndexRoute = AppSubscriptionsIndexRouteImport.update({
   id: '/subscriptions/',
   path: '/subscriptions/',
@@ -112,6 +108,11 @@ const AppSubscriptionsIndexRoute = AppSubscriptionsIndexRouteImport.update({
 const AppGoalsIndexRoute = AppGoalsIndexRouteImport.update({
   id: '/goals/',
   path: '/goals/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountsIndexRoute = AppAccountsIndexRouteImport.update({
+  id: '/accounts/',
+  path: '/accounts/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSubscriptionsIdRoute = AppSubscriptionsIdRouteImport.update({
@@ -129,10 +130,14 @@ const AppGoalsIdRoute = AppGoalsIdRouteImport.update({
   path: '/goals/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountsNewRoute = AppAccountsNewRouteImport.update({
+  id: '/accounts/new',
+  path: '/accounts/new',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
-  '/accounts': typeof AppAccountsRoute
   '/add-expense': typeof AppAddExpenseRoute
   '/challenge': typeof AppChallengeRoute
   '/panic': typeof AppPanicRoute
@@ -145,14 +150,15 @@ export interface FileRoutesByFullPath {
   '/onboarding/input-method': typeof OnboardingInputMethodRoute
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/accounts/new': typeof AppAccountsNewRoute
   '/goals/$id': typeof AppGoalsIdRoute
   '/goals/new': typeof AppGoalsNewRoute
   '/subscriptions/$id': typeof AppSubscriptionsIdRoute
+  '/accounts/': typeof AppAccountsIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
   '/subscriptions/': typeof AppSubscriptionsIndexRoute
 }
 export interface FileRoutesByTo {
-  '/accounts': typeof AppAccountsRoute
   '/add-expense': typeof AppAddExpenseRoute
   '/challenge': typeof AppChallengeRoute
   '/panic': typeof AppPanicRoute
@@ -166,16 +172,17 @@ export interface FileRoutesByTo {
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/accounts/new': typeof AppAccountsNewRoute
   '/goals/$id': typeof AppGoalsIdRoute
   '/goals/new': typeof AppGoalsNewRoute
   '/subscriptions/$id': typeof AppSubscriptionsIdRoute
+  '/accounts': typeof AppAccountsIndexRoute
   '/goals': typeof AppGoalsIndexRoute
   '/subscriptions': typeof AppSubscriptionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
-  '/_app/accounts': typeof AppAccountsRoute
   '/_app/add-expense': typeof AppAddExpenseRoute
   '/_app/challenge': typeof AppChallengeRoute
   '/_app/panic': typeof AppPanicRoute
@@ -189,9 +196,11 @@ export interface FileRoutesById {
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/_app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/_app/accounts/new': typeof AppAccountsNewRoute
   '/_app/goals/$id': typeof AppGoalsIdRoute
   '/_app/goals/new': typeof AppGoalsNewRoute
   '/_app/subscriptions/$id': typeof AppSubscriptionsIdRoute
+  '/_app/accounts/': typeof AppAccountsIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
   '/_app/subscriptions/': typeof AppSubscriptionsIndexRoute
 }
@@ -199,7 +208,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/accounts'
     | '/add-expense'
     | '/challenge'
     | '/panic'
@@ -212,14 +220,15 @@ export interface FileRouteTypes {
     | '/onboarding/input-method'
     | '/onboarding/pain-points'
     | '/onboarding/'
+    | '/accounts/new'
     | '/goals/$id'
     | '/goals/new'
     | '/subscriptions/$id'
+    | '/accounts/'
     | '/goals/'
     | '/subscriptions/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/accounts'
     | '/add-expense'
     | '/challenge'
     | '/panic'
@@ -233,15 +242,16 @@ export interface FileRouteTypes {
     | '/onboarding/pain-points'
     | '/'
     | '/onboarding'
+    | '/accounts/new'
     | '/goals/$id'
     | '/goals/new'
     | '/subscriptions/$id'
+    | '/accounts'
     | '/goals'
     | '/subscriptions'
   id:
     | '__root__'
     | '/_app'
-    | '/_app/accounts'
     | '/_app/add-expense'
     | '/_app/challenge'
     | '/_app/panic'
@@ -255,9 +265,11 @@ export interface FileRouteTypes {
     | '/onboarding/pain-points'
     | '/_app/'
     | '/onboarding/'
+    | '/_app/accounts/new'
     | '/_app/goals/$id'
     | '/_app/goals/new'
     | '/_app/subscriptions/$id'
+    | '/_app/accounts/'
     | '/_app/goals/'
     | '/_app/subscriptions/'
   fileRoutesById: FileRoutesById
@@ -373,13 +385,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAddExpenseRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/accounts': {
-      id: '/_app/accounts'
-      path: '/accounts'
-      fullPath: '/accounts'
-      preLoaderRoute: typeof AppAccountsRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/subscriptions/': {
       id: '/_app/subscriptions/'
       path: '/subscriptions'
@@ -392,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/goals'
       fullPath: '/goals/'
       preLoaderRoute: typeof AppGoalsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/accounts/': {
+      id: '/_app/accounts/'
+      path: '/accounts'
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AppAccountsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/subscriptions/$id': {
@@ -415,35 +427,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGoalsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounts/new': {
+      id: '/_app/accounts/new'
+      path: '/accounts/new'
+      fullPath: '/accounts/new'
+      preLoaderRoute: typeof AppAccountsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
-  AppAccountsRoute: typeof AppAccountsRoute
   AppAddExpenseRoute: typeof AppAddExpenseRoute
   AppChallengeRoute: typeof AppChallengeRoute
   AppPanicRoute: typeof AppPanicRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppWrappedRoute: typeof AppWrappedRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAccountsNewRoute: typeof AppAccountsNewRoute
   AppGoalsIdRoute: typeof AppGoalsIdRoute
   AppGoalsNewRoute: typeof AppGoalsNewRoute
   AppSubscriptionsIdRoute: typeof AppSubscriptionsIdRoute
+  AppAccountsIndexRoute: typeof AppAccountsIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
   AppSubscriptionsIndexRoute: typeof AppSubscriptionsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppAccountsRoute: AppAccountsRoute,
   AppAddExpenseRoute: AppAddExpenseRoute,
   AppChallengeRoute: AppChallengeRoute,
   AppPanicRoute: AppPanicRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppWrappedRoute: AppWrappedRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAccountsNewRoute: AppAccountsNewRoute,
   AppGoalsIdRoute: AppGoalsIdRoute,
   AppGoalsNewRoute: AppGoalsNewRoute,
   AppSubscriptionsIdRoute: AppSubscriptionsIdRoute,
+  AppAccountsIndexRoute: AppAccountsIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
   AppSubscriptionsIndexRoute: AppSubscriptionsIndexRoute,
 }
