@@ -63,6 +63,8 @@ services:
     depends_on:
       - api
       - web
+    ports:
+      - '8080:80'
     volumes:
       - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
@@ -74,6 +76,8 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: ft-cloudflared
     restart: unless-stopped
+    profiles:
+      - public
     depends_on:
       - caddy
     command: tunnel --no-autoupdate run
