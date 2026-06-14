@@ -1,0 +1,21 @@
+# Keep host node_modules out of the build context so they don't clobber the
+# pnpm symlink farms installed inside the image (broken symlinks otherwise).
+**/node_modules
+
+# Build artifacts
+**/dist
+**/dist-ssr
+**/.vite-temp
+
+# VCS / local
+.git
+.gitignore
+*.log
+
+# Env / secrets — never bake into images
+.env
+.env.*
+
+# Tooling caches
+.atl
+.claude

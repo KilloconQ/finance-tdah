@@ -82,7 +82,10 @@ services:
       - caddy
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN requerido}
+      # Profile-gated service: only runs with `--profile public`. Use a soft
+      # default so local dev (without the tunnel) doesn't fail at parse time.
+      # If you DO enable the public profile, set CLOUDFLARE_TUNNEL_TOKEN.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     networks:
       - ft-internal
 
