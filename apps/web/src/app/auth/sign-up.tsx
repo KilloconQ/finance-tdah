@@ -34,7 +34,7 @@ function SignUp() {
   }
 
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar title="Crear cuenta" />
       <form
         onSubmit={handleSubmit}

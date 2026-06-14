@@ -1,18 +1,19 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { cn } from '@/lib/cn'
 
-const TABS = [
+export const TABS = [
   { to: '/', label: 'Hoy' },
   { to: '/transactions', label: 'Mov.' },
   { to: '/subscriptions', label: 'Subs.' },
   { to: '/accounts', label: 'Cuentas' },
+  { to: '/settings', label: 'Ajustes' },
 ] as const
 
 export function TabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   return (
-    <nav className="flex border-t border-line bg-surface px-1 pt-2 pb-6">
+    <nav className="flex border-t border-line bg-surface px-1 pt-2 pb-6 md:hidden">
       {TABS.map((tab) => {
         const isActive =
           tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)

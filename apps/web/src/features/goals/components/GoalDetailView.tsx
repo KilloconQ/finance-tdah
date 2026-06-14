@@ -41,7 +41,6 @@ export function GoalDetailView({
             ←
           </button>
         }
-        right={<span className="text-[16px] text-ink-mid">⋯</span>}
       />
 
       <div className="flex flex-1 flex-col overflow-y-auto px-6">

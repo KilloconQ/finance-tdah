@@ -11,7 +11,7 @@ interface OnboardingLayoutProps {
 export function OnboardingLayout({ step, total = 5, children }: OnboardingLayoutProps) {
   const navigate = useNavigate()
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar
         left={
           <button

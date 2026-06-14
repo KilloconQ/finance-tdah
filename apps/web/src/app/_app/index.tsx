@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { jarProgress } from '@finance-tdah/shared/domain'
 import { AppBar, BigNumber, Btn, Hello, Mini, PhoneShell, TabBar } from '@/components'
 import { JarWithStats, goalsQueryOptions } from '@/features/goals'
+import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
 import { homeSummaryQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
@@ -30,61 +31,60 @@ function Home() {
 
   return (
     <PhoneShell>
-      <AppBar
-        right={
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/wrapped' })}
-            className="wf-tap text-[12px] text-ink-mid"
-          >
-            wrapped ↗
-          </button>
-        }
-      />
+      <AppBar />
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-6">
-        <Hello className="mt-1 text-center">
-          {summary.data ? `${summary.data.greeting} 👋` : '…'}
-        </Hello>
+      <div className="flex flex-1 flex-col overflow-y-auto px-6 md:justify-center md:px-10 md:py-4">
+        <div className="md:grid md:grid-cols-2 md:items-center md:gap-10">
+          <div className="flex flex-col">
+            <Hello className="mt-1 text-center md:mt-0 md:text-left">
+              {summary.data ? `${summary.data.greeting} 👋` : '…'}
+            </Hello>
 
-        <BigNumber
-          label="Hoy puedes gastar"
-          value={(summary.data?.todayAvailableCents ?? 0) / 100}
-          hidden={!showBalances}
-          size="md"
-        />
-
-        {goal && goalProgress ? (
-          <div className="mt-1 flex justify-center">
-            <JarWithStats
-              fraction={goalProgress.fraction}
-              label={`${goal.emoji} ${goal.name} · meta`}
-              currentCents={goal.currentCents}
-              targetCents={goal.targetCents}
+            <BigNumber
+              label="Hoy puedes gastar"
+              value={(summary.data?.todayAvailableCents ?? 0) / 100}
               hidden={!showBalances}
-              width={150}
-              height={190}
+              size="md"
             />
+
+            {summary.data ? (
+              <div
+                className={cn(
+                  'mt-4 rounded-[10px] border border-line bg-surface px-3.5 py-3 text-[12px] text-ink-mid',
+                  detailed ? 'block' : 'hidden md:block',
+                )}
+              >
+                <span className="wf-mono text-ink">
+                  {formatMoney(summary.data.weekSpentCents / 100, !showBalances)}
+                </span>{' '}
+                esta semana · te faltan{' '}
+                <span className="wf-mono text-ink">
+                  {formatMoney(
+                    Math.max(0, summary.data.weekTargetCents - summary.data.weekSpentCents) / 100,
+                    !showBalances,
+                  )}
+                </span>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+
+          {goal && goalProgress ? (
+            <div className="mt-3 flex justify-center md:mt-0">
+              <JarWithStats
+                fraction={goalProgress.fraction}
+                label={`${goal.emoji} ${goal.name} · meta`}
+                currentCents={goal.currentCents}
+                targetCents={goal.targetCents}
+                hidden={!showBalances}
+                width={150}
+                height={190}
+              />
+            </div>
+          ) : null}
+        </div>
 
         {detailed && summary.data ? (
-          <div className="mt-4 rounded-[10px] border border-line bg-surface px-3.5 py-3 text-[12px] text-ink-mid">
-            <span className="wf-mono text-ink">
-              {formatMoney(summary.data.weekSpentCents / 100, !showBalances)}
-            </span>{' '}
-            esta semana · te faltan{' '}
-            <span className="wf-mono text-ink">
-              {formatMoney(
-                Math.max(0, summary.data.weekTargetCents - summary.data.weekSpentCents) / 100,
-                !showBalances,
-              )}
-            </span>
-          </div>
-        ) : null}
-
-        {detailed && summary.data ? (
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-3 gap-2 md:max-w-md">
             <Mini
               compact
               label="gastado"

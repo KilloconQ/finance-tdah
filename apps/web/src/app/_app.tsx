@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { Sidebar } from '@/components'
 import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/_app')({
@@ -13,5 +14,12 @@ export const Route = createFileRoute('/_app')({
 })
 
 function AppLayout() {
-  return <Outlet />
+  return (
+    <div className="flex min-h-dvh w-full">
+      <Sidebar />
+      <main className="flex min-h-dvh min-w-0 flex-1 flex-col">
+        <Outlet />
+      </main>
+    </div>
+  )
 }

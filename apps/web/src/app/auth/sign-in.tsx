@@ -33,7 +33,7 @@ function SignIn() {
   }
 
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar title="Entrar" />
       <form
         onSubmit={handleSubmit}

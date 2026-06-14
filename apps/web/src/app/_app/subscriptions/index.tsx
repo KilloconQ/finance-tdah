@@ -36,7 +36,15 @@ function Subscriptions() {
             ←
           </button>
         }
-        right={<span className="text-[20px] text-ink-mid">+</span>}
+        right={
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/subscriptions/new' })}
+            className="wf-tap text-[20px] text-ink-mid"
+          >
+            +
+          </button>
+        }
       />
 
       <div className="px-6 pt-2 text-center">

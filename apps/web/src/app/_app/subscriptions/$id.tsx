@@ -27,6 +27,13 @@ function SubscriptionDetail() {
     },
   })
 
+  const pauseMutation = useMutation({
+    mutationFn: () => mutations.pauseSubscription(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+    },
+  })
+
   if (!sub) {
     return (
       <PhoneShell>
@@ -66,7 +73,6 @@ function SubscriptionDetail() {
             ←
           </button>
         }
-        right={<span className="text-[16px] text-ink-mid">⋯</span>}
       />
 
       <div className="flex flex-1 flex-col overflow-y-auto px-6 pb-4">
@@ -120,7 +126,13 @@ function SubscriptionDetail() {
           >
             {cancelMutation.isPending ? 'Cancelando…' : 'Cancelar suscripción'}
           </Btn>
-          <Btn kind="ghost">Pausar 1 mes</Btn>
+          <Btn
+            kind="ghost"
+            onClick={() => pauseMutation.mutate()}
+            disabled={pauseMutation.isPending}
+          >
+            {pauseMutation.isPending ? 'Pausando…' : 'Pausar 1 mes'}
+          </Btn>
           <Btn kind="plain" onClick={() => navigate({ to: '..' })}>
             La sigo necesitando
           </Btn>

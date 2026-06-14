@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Btn } from '@/components'
 import { cn } from '@/lib/cn'
 
@@ -46,7 +46,19 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
   const [description, setDescription] = useState('')
   const [accountId, setAccountId] = useState<string>('')
 
-  const canSubmit = amount.trim() !== '' && description.trim() !== '' && category !== '' && !submitting
+  // A gasto should always come out of an account. Default to the first one once
+  // accounts load (the user can still switch). Only screens with zero accounts
+  // are allowed to log without one.
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) setAccountId(accounts[0].id)
+  }, [accounts, accountId])
+
+  const canSubmit =
+    amount.trim() !== '' &&
+    description.trim() !== '' &&
+    category !== '' &&
+    (accounts.length === 0 || accountId !== '') &&
+    !submitting
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -127,7 +139,7 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
             htmlFor="account"
             className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid"
           >
-            De qué cuenta (opcional)
+            De qué cuenta
           </label>
           <select
             id="account"
@@ -135,7 +147,6 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
             onChange={(e) => setAccountId(e.target.value)}
             className="mt-1 w-full rounded-[10px] border border-line bg-surface px-3 py-2.5 text-[14px] text-ink outline-none focus:border-ink"
           >
-            <option value="">Ninguna</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}

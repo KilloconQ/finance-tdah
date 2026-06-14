@@ -90,6 +90,8 @@ export const mutations = {
 
   cancelSubscription: (id: string) => api.post(`subscriptions/${id}/cancel`).json(),
 
+  pauseSubscription: (id: string) => api.post(`subscriptions/${id}/pause`).json(),
+
   createSubscription: (input: CreateSubscriptionInput) =>
     api.post('subscriptions', { json: input }).json(),
 

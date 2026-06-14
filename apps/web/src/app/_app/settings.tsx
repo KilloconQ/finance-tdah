@@ -1,0 +1,173 @@
+import { useState } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+import { AppBar, PhoneShell, TabBar } from '@/components'
+import { cn } from '@/lib/cn'
+import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
+
+export const Route = createFileRoute('/_app/settings')({
+  component: Settings,
+})
+
+function Settings() {
+  const { showBalances, density, weeklyBudgetCents } = useTweaks()
+  const setTweak = useSetTweak()
+
+  return (
+    <PhoneShell>
+      <AppBar title="Ajustes" />
+
+      <div className="flex flex-1 flex-col gap-7 overflow-y-auto px-6 py-4 md:max-w-md">
+        <Section
+          label="Presupuesto"
+          hint="Cuánto querés poder gastar por semana. De acá sale el “hoy puedes gastar”."
+        >
+          <BudgetInput
+            valueCents={weeklyBudgetCents}
+            onCommit={(cents) => setTweak.mutate({ weeklyBudgetCents: cents })}
+          />
+        </Section>
+
+        <Section
+          label="Vista"
+          hint="“Detallado” suma tarjetas con el gasto y la meta de la semana."
+        >
+          <Radio
+            value={density}
+            options={[
+              { value: 'simple', label: 'Simple' },
+              { value: 'detailed', label: 'Detallado' },
+            ]}
+            onChange={(v) => setTweak.mutate({ densityMode: v as 'simple' | 'detailed' })}
+          />
+        </Section>
+
+        <Section
+          label="Privacidad"
+          hint="Oculta los montos en pantalla (los reemplaza por ••••)."
+        >
+          <Toggle
+            label="Mostrar saldos"
+            value={showBalances}
+            onChange={(v) => setTweak.mutate({ showBalances: v })}
+          />
+        </Section>
+      </div>
+
+      <TabBar />
+    </PhoneShell>
+  )
+}
+
+interface SectionProps {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}
+
+function Section({ label, hint, children }: SectionProps) {
+  return (
+    <div>
+      <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
+        {label}
+      </div>
+      {hint ? <div className="mt-1 text-[12px] text-ink-soft">{hint}</div> : null}
+      <div className="mt-3">{children}</div>
+    </div>
+  )
+}
+
+interface RadioProps {
+  value: string
+  options: Array<{ value: string; label: string }>
+  onChange: (value: string) => void
+}
+
+function Radio({ value, options, onChange }: RadioProps) {
+  return (
+    <div className="flex gap-2">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={cn(
+            'wf-tap flex-1 rounded-[10px] border px-3 py-2.5 text-[13px]',
+            value === o.value
+              ? 'border-ink bg-ink text-surface'
+              : 'border-line bg-surface text-ink-mid',
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+interface BudgetInputProps {
+  valueCents: number
+  onCommit: (cents: number) => void
+}
+
+function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
+  const [draft, setDraft] = useState<string>(() => String(Math.round(valueCents / 100)))
+
+  function handleBlur() {
+    const pesos = parseFloat(draft)
+    if (!Number.isFinite(pesos) || pesos < 0) {
+      setDraft(String(Math.round(valueCents / 100)))
+      return
+    }
+    const cents = Math.round(pesos * 100)
+    if (cents !== valueCents) onCommit(cents)
+  }
+
+  return (
+    <div className="flex items-center gap-2 rounded-[10px] border border-line bg-surface px-4 py-3">
+      <span className="text-[15px] text-ink-soft">$</span>
+      <input
+        type="number"
+        min={0}
+        step={100}
+        inputMode="decimal"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={handleBlur}
+        className="wf-mono w-full bg-transparent text-[15px] text-ink outline-none"
+      />
+      <span className="text-[12px] text-ink-soft">/ semana</span>
+    </div>
+  )
+}
+
+interface ToggleProps {
+  label: string
+  value: boolean
+  onChange: (value: boolean) => void
+}
+
+function Toggle({ label, value, onChange }: ToggleProps) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className="flex w-full items-center justify-between rounded-[10px] border border-line bg-surface px-4 py-3 text-left"
+    >
+      <span className="text-[14px] text-ink">{label}</span>
+      <span
+        aria-hidden
+        className={cn(
+          'inline-block h-5 w-9 rounded-full transition-colors',
+          value ? 'bg-ink' : 'bg-line',
+        )}
+      >
+        <span
+          className={cn(
+            'block h-4 w-4 translate-y-[2px] rounded-full bg-surface transition-transform',
+            value ? 'translate-x-[18px]' : 'translate-x-[2px]',
+          )}
+        />
+      </span>
+    </button>
+  )
+}

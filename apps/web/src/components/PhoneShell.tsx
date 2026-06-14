@@ -1,32 +1,49 @@
-import type { ReactNode } from 'react'
-import { cn } from '@/lib/cn'
+import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
 interface PhoneShellProps {
-  children: ReactNode
-  bg?: 'bg' | 'surface' | 'bg-alt'
-  className?: string
+  children: ReactNode;
+  bg?: "bg" | "surface" | "bg-alt";
+  /**
+   * `app` (default): mobile-first column that WIDENS on tablet/desktop to use the
+   * available space inside the app shell. `narrow`: a slim centered column for
+   * focused forms (auth / onboarding) where a wide layout adds nothing.
+   */
+  variant?: "app" | "narrow";
+  className?: string;
 }
 
 const BG_CLASS = {
-  bg: 'bg-bg',
-  surface: 'bg-surface',
-  'bg-alt': 'bg-bg-alt',
-} as const
+  bg: "bg-bg",
+  surface: "bg-surface",
+  "bg-alt": "bg-bg-alt",
+} as const;
 
-export function PhoneShell({ children, bg = 'bg', className }: PhoneShellProps) {
+const VARIANT_CLASS = {
+  // Phone: full-bleed. md+: grows to a comfortable reading width, centered in
+  // the content area next to the sidebar. No device frame.
+  app: "w-full max-w-3xl",
+  // Slim centered column at every size, with a hairline on desktop so the form
+  // reads as an intentional card rather than floating text.
+  narrow: "max-w-[420px] md:border-x md:border-line",
+} as const;
+
+export function PhoneShell({
+  children,
+  bg = "bg",
+  variant = "app",
+  className,
+}: PhoneShellProps) {
   return (
-    <div className={cn('mx-auto flex h-full max-w-[420px] flex-col overflow-hidden md:my-4 md:rounded-[36px] md:border md:border-line md:shadow-sm', BG_CLASS[bg], className)}>
-      <StatusBar />
+    <div
+      className={cn(
+        "mx-auto flex h-full min-h-dvh w-full flex-col overflow-hidden",
+        VARIANT_CLASS[variant],
+        BG_CLASS[bg],
+        className,
+      )}
+    >
       <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
     </div>
-  )
-}
-
-function StatusBar() {
-  return (
-    <div className="wf-mono flex h-7 items-center justify-between px-5 pt-2 text-[11px] text-ink-soft">
-      <span>9:41</span>
-      <span aria-hidden>•••</span>
-    </div>
-  )
+  );
 }

@@ -9,7 +9,7 @@ export const Route = createFileRoute('/onboarding/')({
 function OnboardingWelcome() {
   const navigate = useNavigate()
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar right={<span className="wf-mono text-[12px] text-ink-mid">1 / 5</span>} />
       <div className="flex flex-1 flex-col px-7 pb-6 pt-2">
         <Dots total={5} filled={1} size={6} gap={5} />
