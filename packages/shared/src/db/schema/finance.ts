@@ -37,6 +37,7 @@ export const userProfile = pgTable('user_profile', {
   inputPreference: inputPreferenceEnum('input_preference').default('voice').notNull(),
   densityMode: densityModeEnum('density_mode').default('simple').notNull(),
   showBalances: boolean('show_balances').default(true).notNull(),
+  weeklyBudgetCents: integer('weekly_budget_cents').default(220000).notNull(),
   onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

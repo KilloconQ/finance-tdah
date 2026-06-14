@@ -1,0 +1,1 @@
+ALTER TABLE "user_profile" ADD COLUMN "weekly_budget_cents" integer DEFAULT 220000 NOT NULL;

@@ -8,6 +8,13 @@
       "when": 1779685504919,
       "tag": "0000_sturdy_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781466629295,
+      "tag": "0001_jazzy_catseye",
+      "breakpoints": true
     }
   ]
 }

@@ -75,3 +75,27 @@ export const subscriptionsRoute = new Hono<{ Variables: SessionVariables }>()
     if (!cancelled) return c.json({ error: 'Suscripción no encontrada' }, 404)
     return c.json({ subscription: cancelled })
   })
+
+  .post('/:id/pause', zValidator('param', idParamSchema), async (c) => {
+    const user = c.get('user')
+    const { id } = c.req.valid('param')
+
+    const sub = await db.query.subscription.findFirst({
+      where: (s, { and, eq, isNull }) =>
+        and(eq(s.id, id), eq(s.userId, user.id), isNull(s.cancelledAt)),
+    })
+    if (!sub) return c.json({ error: 'Suscripción no encontrada' }, 404)
+
+    const current = new Date(sub.nextChargeAt + 'T00:00:00Z')
+    current.setUTCMonth(current.getUTCMonth() + 1)
+    const newNextChargeAt = current.toISOString().slice(0, 10)
+
+    const [updated] = await db
+      .update(schema.subscription)
+      .set({ nextChargeAt: newNextChargeAt, updatedAt: new Date() })
+      .where(and(eq(schema.subscription.id, id), eq(schema.subscription.userId, user.id)))
+      .returning()
+
+    if (!updated) return c.json({ error: 'Suscripción no encontrada' }, 404)
+    return c.json({ subscription: updated })
+  })
