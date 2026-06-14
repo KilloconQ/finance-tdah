@@ -10,32 +10,28 @@ export function Sidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col border-r border-line bg-surface px-3 py-5 md:flex">
-      <div className="px-3 pb-6 text-[15px] font-semibold tracking-tight text-ink">
-        finance
+    <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-surface px-3 py-5 md:flex">
+      <div className="flex items-center gap-2 px-3 pb-7">
+        <span className="h-6 w-6 rounded-lg bg-accent" aria-hidden />
+        <span className="text-[15px] font-semibold tracking-tight text-ink">finance</span>
       </div>
       <nav className="flex flex-col gap-1">
         {TABS.map((tab) => {
           const isActive =
             tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)
+          const Icon = tab.icon
           return (
             <Link
               key={tab.to}
               to={tab.to}
               className={cn(
-                'wf-tap flex items-center gap-3 rounded-lg px-3 py-2 text-[13px]',
+                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] transition-colors',
                 isActive
-                  ? 'bg-accent-bg font-semibold text-ink'
-                  : 'text-ink-soft hover:text-ink-mid',
+                  ? 'bg-accent-bg font-semibold text-accent-strong'
+                  : 'text-ink-mid hover:bg-bg-alt hover:text-ink',
               )}
             >
-              <span
-                className={cn(
-                  'h-[18px] w-[18px] rounded-[4px]',
-                  isActive ? 'bg-ink' : 'bg-line-soft',
-                )}
-                aria-hidden
-              />
+              <Icon size={18} strokeWidth={isActive ? 2.4 : 1.9} />
               <span>{tab.label}</span>
             </Link>
           )

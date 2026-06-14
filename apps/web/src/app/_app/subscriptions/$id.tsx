@@ -120,7 +120,7 @@ function SubscriptionDetail() {
 
         <div className="mt-4 flex flex-col gap-2">
           <Btn
-            kind="primary"
+            kind="danger"
             onClick={() => cancelMutation.mutate()}
             disabled={cancelMutation.isPending}
           >

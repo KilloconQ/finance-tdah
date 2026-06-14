@@ -1,13 +1,14 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { Home, Receipt, Repeat, Wallet, Settings, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
-export const TABS = [
-  { to: '/', label: 'Hoy' },
-  { to: '/transactions', label: 'Mov.' },
-  { to: '/subscriptions', label: 'Subs.' },
-  { to: '/accounts', label: 'Cuentas' },
-  { to: '/settings', label: 'Ajustes' },
-] as const
+export const TABS: ReadonlyArray<{ to: string; label: string; icon: LucideIcon }> = [
+  { to: '/', label: 'Hoy', icon: Home },
+  { to: '/transactions', label: 'Mov.', icon: Receipt },
+  { to: '/subscriptions', label: 'Subs.', icon: Repeat },
+  { to: '/accounts', label: 'Cuentas', icon: Wallet },
+  { to: '/settings', label: 'Ajustes', icon: Settings },
+]
 
 export function TabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -17,22 +18,17 @@ export function TabBar() {
       {TABS.map((tab) => {
         const isActive =
           tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)
+        const Icon = tab.icon
         return (
           <Link
             key={tab.to}
             to={tab.to}
             className={cn(
               'flex flex-1 flex-col items-center gap-1 text-[11px]',
-              isActive ? 'text-ink font-semibold' : 'text-ink-soft',
+              isActive ? 'font-semibold text-accent-strong' : 'text-ink-soft',
             )}
           >
-            <span
-              className={cn(
-                'h-[18px] w-[18px] rounded-[4px]',
-                isActive ? 'bg-ink' : 'bg-line-soft',
-              )}
-              aria-hidden
-            />
+            <Icon size={20} strokeWidth={isActive ? 2.4 : 1.9} />
             <span>{tab.label}</span>
           </Link>
         )

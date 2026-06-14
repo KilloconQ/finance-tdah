@@ -16,8 +16,9 @@
   --color-ink-soft: #a3a29d;
   --color-ink-ghost: #c9c8c3;
 
-  --color-accent: #7a8a6e;
-  --color-accent-bg: #eef1ea;
+  --color-accent: #6f8463;
+  --color-accent-strong: #5c7150;
+  --color-accent-bg: #e9eee3;
 
   --color-warn: #b8895c;
   --color-warn-bg: #f6ede3;
@@ -25,6 +26,10 @@
   --color-danger-bg: #f3e6e6;
   --color-good: #6a8a78;
   --color-good-bg: #e8efea;
+
+  /* Warm, soft elevation — gives surfaces depth without the flat wireframe look */
+  --shadow-card: 0 1px 2px rgb(31 30 28 / 0.04), 0 2px 8px -2px rgb(31 30 28 / 0.06);
+  --shadow-soft: 0 1px 2px rgb(31 30 28 / 0.05), 0 8px 24px -8px rgb(31 30 28 / 0.12);
 }
 
 html,
