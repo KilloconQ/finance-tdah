@@ -12,6 +12,10 @@ POSTGRES_DB=finance_tdah
 # 32+ chars. Generá uno con: openssl rand -base64 48
 BETTER_AUTH_SECRET=cambiame-por-uno-de-al-menos-32-caracteres
 
+# Emails habilitados a registrarse, separados por coma. Si queda vacío, el
+# registro queda ABIERTO a cualquiera (la API loguea un warning al arrancar).
+ALLOWED_EMAILS=vos@ejemplo.com,tu-novia@ejemplo.com
+
 # --- Public URL ---
 # El dominio público que Cloudflare Tunnel va a exponer
 PUBLIC_URL=https://finance.tu-dominio.com

@@ -75,7 +75,7 @@ export const challengesRoute = new Hono<{ Variables: SessionVariables }>()
       const [completed] = await db
         .update(schema.challenge)
         .set({ completedAt: new Date() })
-        .where(eq(schema.challenge.id, id))
+        .where(and(eq(schema.challenge.id, id), eq(schema.challenge.userId, user.id)))
         .returning()
       return c.json({ challenge: completed })
     }

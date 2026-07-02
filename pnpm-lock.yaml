@@ -46,7 +46,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.7
-        version: 4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(jiti@2.7.0))
+        version: 4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(esbuild@0.19.12)(jiti@2.7.0))
 
   apps/web:
     dependencies:
@@ -74,6 +74,9 @@ importers:
       react-dom:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
+      react-hook-form:
+        specifier: ^7.77.0
+        version: 7.77.0(react@19.2.6)
       tailwindcss:
         specifier: ^4.3.0
         version: 4.3.0
@@ -135,7 +138,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: ^4.1.7
-        version: 4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(jiti@2.7.0))
+        version: 4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(esbuild@0.19.12)(jiti@2.7.0))
 
 packages:
 
@@ -1837,6 +1840,12 @@ packages:
     peerDependencies:
       react: ^19.2.6
 
+  react-hook-form@7.77.0:
+    resolution: {integrity: sha512-Sslh9YDYc0GDlWT/lxasnIduNo4v3yyvqRGvmGKUre5AFjDs/HV9/OafHGD8d+sB2yoL4UIL9L8X9i0WlZZebg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: ^16.8.0 || ^17 || ^18 || ^19
+
   react@19.2.6:
     resolution: {integrity: sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==}
     engines: {node: '>=0.10.0'}
@@ -2889,7 +2898,7 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.7(vite@8.0.13(@types/node@24.12.4)(jiti@2.7.0))':
+  '@vitest/mocker@4.1.7(vite@8.0.13(@types/node@24.12.4)(esbuild@0.19.12)(jiti@2.7.0))':
     dependencies:
       '@vitest/spy': 4.1.7
       estree-walker: 3.0.3
@@ -2981,7 +2990,7 @@ snapshots:
       pg: 8.20.0
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
-      vitest: 4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(jiti@2.7.0))
+      vitest: 4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(esbuild@0.19.12)(jiti@2.7.0))
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
@@ -3529,6 +3538,10 @@ snapshots:
       react: 19.2.6
       scheduler: 0.27.0
 
+  react-hook-form@7.77.0(react@19.2.6):
+    dependencies:
+      react: 19.2.6
+
   react@19.2.6: {}
 
   readdirp@3.6.0:
@@ -3677,10 +3690,10 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  vitest@4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(jiti@2.7.0)):
+  vitest@4.1.7(@types/node@24.12.4)(vite@8.0.13(@types/node@24.12.4)(esbuild@0.19.12)(jiti@2.7.0)):
     dependencies:
       '@vitest/expect': 4.1.7
-      '@vitest/mocker': 4.1.7(vite@8.0.13(@types/node@24.12.4)(jiti@2.7.0))
+      '@vitest/mocker': 4.1.7(vite@8.0.13(@types/node@24.12.4)(esbuild@0.19.12)(jiti@2.7.0))
       '@vitest/pretty-format': 4.1.7
       '@vitest/runner': 4.1.7
       '@vitest/snapshot': 4.1.7

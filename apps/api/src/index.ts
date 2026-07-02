@@ -41,7 +41,7 @@ app.use(
   }),
 )
 
-app.get('/health', (c) => c.json({ status: 'ok', env: env.NODE_ENV }))
+app.get('/health', (c) => c.json({ status: 'ok' }))
 
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
@@ -71,7 +71,7 @@ app.onError((err, c) => {
     method: c.req.method,
     path: c.req.path,
     message: err instanceof Error ? err.message : String(err),
-    stack: err instanceof Error ? err.stack : undefined,
+    stack: env.NODE_ENV === 'production' ? undefined : err instanceof Error ? err.stack : undefined,
   })
   return c.json({ error: 'Internal server error', requestId: c.get('requestId') }, 500)
 })
@@ -80,6 +80,11 @@ export type AppRouter = typeof api
 export type AppType = typeof app
 
 logger.info('startup', { port: env.PORT })
+if (env.ALLOWED_EMAILS.length === 0) {
+  logger.warn('signup_open', {
+    message: 'ALLOWED_EMAILS is empty — registration is open to anyone. Set it to lock sign-up down.',
+  })
+}
 export default {
   port: env.PORT,
   fetch: app.fetch,

@@ -9,6 +9,19 @@ const envSchema = z.object({
   }),
   BETTER_AUTH_URL: z.url(),
   WEB_ORIGIN: z.url(),
+  // Comma-separated allowlist of emails permitted to register. When empty, sign-up
+  // is open to anyone (a warning is logged at startup). Set it to lock registration
+  // down to the known users.
+  ALLOWED_EMAILS: z
+    .string()
+    .optional()
+    .default('')
+    .transform((s) =>
+      s
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+    ),
 })
 
 const parsed = envSchema.safeParse(process.env)
