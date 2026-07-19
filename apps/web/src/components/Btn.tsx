@@ -21,7 +21,7 @@ export function Btn({ children, kind = 'ghost', className, ...rest }: BtnProps) 
     <button
       type="button"
       className={cn(
-        'wf-tap rounded-xl px-3.5 py-2.5 text-[13px] font-medium transition-colors',
+        'wf-tap inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-colors',
         KIND_CLASS[kind],
         className,
       )}

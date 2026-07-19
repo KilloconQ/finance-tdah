@@ -6,8 +6,8 @@ import { GoalListView } from '../components/GoalListView'
 
 export function GoalListContainer() {
   const navigate = useNavigate()
-  const { showBalances, density } = useTweaks()
-  const { data: goals = [] } = useQuery(goalsQueryOptions())
+  const { showBalances } = useTweaks()
+  const { data: goals = [], isLoading } = useQuery(goalsQueryOptions())
   const totalCents = goals.reduce((sum, g) => sum + g.currentCents, 0)
 
   return (
@@ -15,7 +15,7 @@ export function GoalListContainer() {
       goals={goals}
       totalCents={totalCents}
       showBalances={showBalances}
-      detailed={density === 'detailed'}
+      isLoading={isLoading}
       onAddNew={() => navigate({ to: '/goals/new' })}
       onSelectGoal={(id) => navigate({ to: '/goals/$id', params: { id } })}
     />

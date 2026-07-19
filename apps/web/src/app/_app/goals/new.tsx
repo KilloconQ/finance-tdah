@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { unitsToCents } from '@finance-tdah/shared/domain'
-import { AppBar, Btn, Chip, Dots, Hello, PhoneShell } from '@/components'
+import { X } from 'lucide-react'
+import { AppBar, Btn, Chip, Dots, Hello, IconButton, PhoneShell } from '@/components'
 import { useCreateGoal } from '@/features/goals'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
@@ -39,38 +40,42 @@ function GoalCreate() {
   }
 
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar
         title="Nueva meta"
         left={
-          <button
-            type="button"
-            onClick={() => navigate({ to: '..' })}
-            className="wf-tap text-[16px] text-ink"
-          >
-            ✕
-          </button>
+          <IconButton onClick={() => navigate({ to: '/goals' })} label="Cerrar">
+            <X size={20} strokeWidth={2} />
+          </IconButton>
         }
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-6 pb-4 pt-2">
+      <div className="pb-4">
         <Dots total={2} filled={step + 1} size={6} gap={5} />
 
         {step === 0 ? (
           <>
-            <h1 className="mt-6 text-[24px] font-medium leading-tight text-ink">
+            <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink">
               ¿Cuánto necesitas?
             </h1>
             <Hello className="mt-1.5">El número que te haría feliz.</Hello>
 
-            <div className="wf-mono mt-6 text-[56px] font-light leading-none tracking-[-0.03em] text-ink">
+            <div className="money mt-6 text-5xl font-semibold leading-none tracking-tight text-ink">
               {formatMoney(target)}
-              <span aria-hidden className="text-ink-ghost" style={{ animation: 'blink 1s infinite' }}>
-                |
-              </span>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            {/* Desktop: a normal input; the on-screen keypad is phone-only. */}
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={target || ''}
+              onChange={(e) => setTarget(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+              placeholder="0"
+              className="mt-4 hidden w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg md:block"
+            />
+
+            <div className="mt-4 flex flex-wrap gap-2">
               {PRESETS.map((v) => (
                 <Chip key={v} active={v === target} onClick={() => setTarget(v)}>
                   {formatMoney(v)}
@@ -78,31 +83,28 @@ function GoalCreate() {
               ))}
             </div>
 
-            <div className="flex-1" />
-            <Numpad
-              onPress={(n) => setTarget((prev) => Number(`${prev}${n}`))}
-              onBack={() => setTarget((prev) => Math.floor(prev / 10))}
-            />
+            <div className="mt-6 md:hidden">
+              <Numpad
+                onPress={(n) => setTarget((prev) => Number(`${prev}${n}`))}
+                onBack={() => setTarget((prev) => Math.floor(prev / 10))}
+              />
+            </div>
           </>
         ) : (
           <>
-            <h1 className="mt-6 text-[24px] font-medium leading-tight text-ink">
-              Dale un nombre.
-            </h1>
+            <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink">Dale un nombre.</h1>
             <Hello className="mt-1.5">Cómo lo vas a llamar en tu cabeza.</Hello>
 
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-5 w-full rounded-[10px] border border-line bg-surface px-4 py-3 text-[15px] text-ink focus:border-ink focus:outline-none"
+              className="mt-5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg"
               placeholder="Ej: Vacaciones a Oaxaca"
             />
 
             <div className="mt-4">
-              <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-                Emoji
-              </div>
+              <div className="text-sm font-medium text-ink-mid">Emoji</div>
               <div className="mt-2 flex flex-wrap gap-2">
                 {EMOJI_PRESETS.map((e) => (
                   <button
@@ -110,8 +112,10 @@ function GoalCreate() {
                     type="button"
                     onClick={() => setEmoji(e)}
                     className={cn(
-                      'wf-tap flex h-12 w-12 items-center justify-center rounded-xl border text-[22px]',
-                      emoji === e ? 'border-ink bg-bg-alt' : 'border-line bg-surface',
+                      'wf-tap flex h-12 w-12 items-center justify-center rounded-xl border text-[22px] transition-colors',
+                      emoji === e
+                        ? 'border-accent bg-accent-bg'
+                        : 'border-line bg-surface hover:bg-bg-alt',
                     )}
                   >
                     {e}
@@ -119,27 +123,20 @@ function GoalCreate() {
                 ))}
               </div>
             </div>
-            <div className="flex-1" />
           </>
         )}
 
         {error ? (
-          <div className="mb-3 rounded-[10px] bg-danger-bg px-3 py-2 text-[13px] text-danger">
-            {error}
-          </div>
+          <div className="mt-4 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{error}</div>
         ) : null}
 
         <Btn
           kind="primary"
-          className="mt-3 w-full py-3.5"
+          className="mt-6 w-full"
           onClick={handleNext}
           disabled={createMutation.isPending}
         >
-          {step === 0
-            ? 'Siguiente'
-            : createMutation.isPending
-              ? 'Creando…'
-              : 'Crear frasco'}
+          {step === 0 ? 'Siguiente' : createMutation.isPending ? 'Creando…' : 'Crear frasco'}
         </Btn>
       </div>
     </PhoneShell>
@@ -153,13 +150,13 @@ interface NumpadProps {
 
 function Numpad({ onPress, onBack }: NumpadProps) {
   return (
-    <div className="grid grid-cols-3 gap-1.5 pb-3">
+    <div className="grid grid-cols-3 gap-1.5">
       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
         <button
           key={n}
           type="button"
           onClick={() => onPress(n)}
-          className="wf-tap wf-mono rounded-[10px] border border-line bg-surface py-3 text-[18px] text-ink"
+          className="wf-tap money rounded-xl border border-line bg-surface py-3 text-lg text-ink hover:bg-bg-alt"
         >
           {n}
         </button>
@@ -168,14 +165,14 @@ function Numpad({ onPress, onBack }: NumpadProps) {
       <button
         type="button"
         onClick={() => onPress(0)}
-        className="wf-tap wf-mono rounded-[10px] border border-line bg-surface py-3 text-[18px] text-ink"
+        className="wf-tap money rounded-xl border border-line bg-surface py-3 text-lg text-ink hover:bg-bg-alt"
       >
         0
       </button>
       <button
         type="button"
         onClick={onBack}
-        className="wf-tap wf-mono rounded-[10px] border border-line bg-surface py-3 text-[18px] text-ink"
+        className="wf-tap money rounded-xl border border-line bg-surface py-3 text-lg text-ink hover:bg-bg-alt"
       >
         ⌫
       </button>

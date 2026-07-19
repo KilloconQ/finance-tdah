@@ -9,27 +9,26 @@ interface MiniProps {
   mono?: boolean
 }
 
-export function Mini({ label, value, hidden, compact, mono = true }: MiniProps) {
-  const rendered = typeof value === 'number' ? formatMoney(value, hidden && mono) : value
+export function Mini({ label, value, hidden, compact, mono = false }: MiniProps) {
+  const isNumber = typeof value === 'number'
+  const rendered = isNumber ? formatMoney(value as number, hidden) : value
   return (
     <div
       className={cn(
         compact
-          ? 'flex-1 rounded-[10px] border border-line bg-surface px-3 py-2.5 text-left'
+          ? 'flex-1 rounded-xl border border-line bg-surface px-3.5 py-3 text-left'
           : 'text-center',
       )}
     >
-      <div className="wf-mono text-[10px] uppercase tracking-[0.06em] text-ink-mid">
-        {label}
-      </div>
+      <div className="text-xs font-medium text-ink-mid">{label}</div>
       <div
         className={cn(
-          mono && 'wf-mono',
-          compact ? 'mt-1 text-[14px]' : 'mt-1 text-[16px]',
+          (isNumber || mono) && (mono ? 'wf-mono' : 'money'),
+          compact ? 'mt-1 text-sm font-medium' : 'mt-1 text-base font-medium',
           'text-ink',
         )}
       >
-        {hidden && mono && typeof value === 'string' ? '••••' : rendered}
+        {hidden && typeof value === 'string' ? '••••' : rendered}
       </div>
     </div>
   )

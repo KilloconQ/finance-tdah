@@ -30,16 +30,14 @@ export function VoiceCapture({
 }: VoiceCaptureProps) {
   if (parsed) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-6">
-        <div className="w-full">
-          <div className="rounded-2xl border border-line bg-surface p-5">
-            <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-              Entendí
-            </div>
-            <div className="wf-mono mt-2 text-[40px] font-light leading-none tracking-[-0.02em] text-ink">
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <div className="w-full max-w-sm">
+          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card">
+            <div className="text-sm font-medium text-ink-mid">Entendí</div>
+            <div className="money mt-2 text-4xl font-light leading-none tracking-[-0.02em] text-ink">
               ${(parsed.amountCents / 100).toFixed(0)}
             </div>
-            <div className="mt-2 text-[14px] text-ink">
+            <div className="mt-2 text-sm text-ink">
               {parsed.description} <span className="text-ink-mid">· {parsed.category}</span>
             </div>
           </div>
@@ -57,7 +55,7 @@ export function VoiceCapture({
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6">
+    <div className="flex flex-1 flex-col items-center justify-center">
       <Hello className="mb-7 text-center">
         Solo dilo en voz alta.
         <br />

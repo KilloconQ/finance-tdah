@@ -4,10 +4,10 @@
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Wireframe palette — warm neutrals + sage accent */
+  /* Warm-neutral + sage palette. Single light theme. */
   --color-bg: #fafaf9;
   --color-bg-alt: #f4f4f2;
-  --color-canvas: #f0eee9;
+  --color-canvas: #fafaf9; /* unified with --bg so no grey gutter appears */
   --color-surface: #ffffff;
   --color-line: #e6e5e1;
   --color-line-soft: #eeede9;
@@ -16,6 +16,7 @@
   --color-ink-soft: #a3a29d;
   --color-ink-ghost: #c9c8c3;
 
+  /* Sage is the ONLY selection/active accent — never pure black. */
   --color-accent: #6f8463;
   --color-accent-strong: #5c7150;
   --color-accent-bg: #e9eee3;
@@ -26,6 +27,10 @@
   --color-danger-bg: #f3e6e6;
   --color-good: #6a8a78;
   --color-good-bg: #e8efea;
+
+  /* Radius scale — cards, controls, pills. */
+  --radius-card: 1rem;      /* rounded-2xl surfaces */
+  --radius-control: 0.75rem; /* rounded-xl buttons/inputs */
 
   /* Warm, soft elevation — gives surfaces depth without the flat wireframe look */
   --shadow-card: 0 1px 2px rgb(31 30 28 / 0.04), 0 2px 8px -2px rgb(31 30 28 / 0.06);
@@ -38,7 +43,8 @@ body,
   margin: 0;
   padding: 0;
   height: 100%;
-  background: var(--color-canvas);
+  /* Single tone across shell + main — kills the grey gutter on desktop. */
+  background: var(--color-bg);
   font-family: var(--font-sans);
   color: var(--color-ink);
   -webkit-font-smoothing: antialiased;
@@ -53,6 +59,17 @@ button {
   font-family: inherit;
 }
 
+/*
+ * Money / numeric values: sans font with tabular figures so columns align
+ * without the "source code" feel of monospace. Replaces `.wf-mono` for money.
+ */
+.money {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
+
+/* Legacy: kept so any not-yet-migrated screen keeps rendering. Prefer `.money`. */
 .wf-mono {
   font-family: var(--font-mono);
   font-feature-settings: 'tnum' 1;

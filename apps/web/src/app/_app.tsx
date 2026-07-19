@@ -15,9 +15,10 @@ export const Route = createFileRoute('/_app')({
 
 function AppLayout() {
   return (
-    <div className="flex min-h-dvh w-full">
+    <div className="flex min-h-dvh w-full bg-bg">
       <Sidebar />
-      <main className="flex min-h-dvh min-w-0 flex-1 flex-col">
+      {/* Single-tone main so no grey gutter shows between rail and content. */}
+      <main className="flex min-h-dvh min-w-0 flex-1 flex-col bg-bg">
         <Outlet />
       </main>
     </div>

@@ -5,9 +5,10 @@ interface PhoneShellProps {
   children: ReactNode;
   bg?: "bg" | "surface" | "bg-alt";
   /**
-   * `app` (default): mobile-first column that WIDENS on tablet/desktop to use the
-   * available space inside the app shell. `narrow`: a slim centered column for
-   * focused forms (auth / onboarding) where a wide layout adds nothing.
+   * `app` (default): a responsive page container. Full-bleed on phones, growing
+   * with the viewport up to a comfortable max on desktop — left-aligned inside
+   * the app shell, NOT a phone-width column. `narrow`: a slim centered column
+   * for focused forms (auth / onboarding) where a wide layout adds nothing.
    */
   variant?: "app" | "narrow";
   className?: string;
@@ -20,12 +21,14 @@ const BG_CLASS = {
 } as const;
 
 const VARIANT_CLASS = {
-  // Phone: full-bleed. md+: grows to a comfortable reading width, centered in
-  // the content area next to the sidebar. No device frame.
-  app: "w-full max-w-3xl",
-  // Slim centered column at every size, with a hairline on desktop so the form
-  // reads as an intentional card rather than floating text.
-  narrow: "max-w-[420px] md:border-x md:border-line",
+  // Responsive page container: grows with the viewport, generous gutters on
+  // desktop. Left-aligned next to the sidebar (mx-auto only centers once the
+  // viewport exceeds the max width).
+  app: "mx-auto w-full max-w-[1080px] px-4 sm:px-6 lg:px-8",
+  // Slim centered column at every size for focused forms. On md+ it also
+  // vertically centers its content so the form sits as a centered card instead
+  // of stranded at the top (mobile stays top-aligned).
+  narrow: "mx-auto w-full max-w-[440px] px-4 sm:px-6 md:justify-center",
 } as const;
 
 export function PhoneShell({
@@ -37,13 +40,22 @@ export function PhoneShell({
   return (
     <div
       className={cn(
-        "mx-auto flex h-full min-h-dvh w-full flex-col overflow-hidden",
+        "flex min-h-dvh w-full flex-col",
         VARIANT_CLASS[variant],
         BG_CLASS[bg],
         className,
       )}
     >
-      <div className="flex flex-1 flex-col overflow-hidden">{children}</div>
+      <div
+        className={cn(
+          "flex flex-1 flex-col",
+          // Shrink to content on md+ so the outer `md:justify-center` can center
+          // the focused form vertically; mobile keeps flex-1 (top-aligned).
+          variant === "narrow" && "md:flex-none",
+        )}
+      >
+        {children}
+      </div>
     </div>
   );
 }
