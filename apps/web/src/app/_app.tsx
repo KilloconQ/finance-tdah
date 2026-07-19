@@ -4,7 +4,14 @@ import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async () => {
-    const session = await authClient.getSession()
+    let session: Awaited<ReturnType<typeof authClient.getSession>>
+    try {
+      session = await authClient.getSession()
+    } catch {
+      // Fail closed: a thrown fetch (true network/abort error) redirects to
+      // sign-in rather than escaping to the router error boundary.
+      throw redirect({ to: '/auth/sign-in' })
+    }
     if (session.error || !session.data) {
       throw redirect({ to: '/auth/sign-in' })
     }

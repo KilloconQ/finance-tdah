@@ -13,6 +13,7 @@ export function Chip({ children, active, onClick, className }: ChipProps) {
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
         'wf-tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors',
         active

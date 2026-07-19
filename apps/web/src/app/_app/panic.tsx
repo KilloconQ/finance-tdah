@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import type { LinkProps } from '@tanstack/react-router'
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { Card, Hello, Money } from '@/components'
@@ -53,13 +54,27 @@ function Panic() {
 
   const close = () => navigate({ to: '/' })
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') navigate({ to: '/' })
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [navigate])
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg-alt">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Modo pánico"
+      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-bg-alt"
+    >
       <header className="mx-auto flex w-full max-w-[480px] items-center justify-end px-6 pt-4">
         <button
           type="button"
           onClick={close}
           aria-label="Salir"
+          autoFocus
           className="grid h-11 w-11 place-items-center rounded-xl text-ink-mid transition-colors hover:bg-surface hover:text-ink"
         >
           <X size={20} strokeWidth={2} />
@@ -75,7 +90,9 @@ function Panic() {
             No pasa nada grave.
           </h1>
           <Hello className="mt-3">
-            {overspendCents > 0 ? (
+            {!summary ? (
+              <>Veamos qué podemos hacer ahora mismo.</>
+            ) : overspendCents > 0 ? (
               <>
                 Te excediste por{' '}
                 <Money value={overspendCents / 100} className="text-warn" /> esta semana.

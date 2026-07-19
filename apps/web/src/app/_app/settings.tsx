@@ -82,11 +82,13 @@ interface RadioProps {
 
 function Radio({ value, options, onChange }: RadioProps) {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" role="radiogroup">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
+          role="radio"
+          aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
             'wf-tap flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
@@ -148,6 +150,8 @@ function Toggle({ label, value, onChange }: ToggleProps) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={value}
       onClick={() => onChange(!value)}
       className="flex w-full items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-left transition-colors hover:bg-bg-alt"
     >

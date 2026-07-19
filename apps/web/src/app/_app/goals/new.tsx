@@ -72,6 +72,7 @@ function GoalCreate() {
               value={target || ''}
               onChange={(e) => setTarget(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
               placeholder="0"
+              aria-label="Cuánto necesitas"
               className="mt-4 hidden w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg md:block"
             />
 
