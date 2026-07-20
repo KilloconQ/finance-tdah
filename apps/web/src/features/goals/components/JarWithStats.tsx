@@ -27,7 +27,7 @@ export function JarWithStats({
       <Jar fraction={fraction} width={width} height={height} />
       {label ? <div className="mt-3 text-center text-[12px] text-ink-mid">{label}</div> : null}
       {showAmounts ? (
-        <div className="wf-mono mt-1 text-[13px] text-ink">
+        <div className="money mt-2 text-sm font-medium text-ink">
           {hidden
             ? '•••• / ••••'
             : `${formatMoney((currentCents ?? 0) / 100)} / ${formatMoney((targetCents ?? 0) / 100)}`}

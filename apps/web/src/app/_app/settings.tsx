@@ -16,7 +16,7 @@ function Settings() {
     <PhoneShell>
       <AppBar title="Ajustes" />
 
-      <div className="flex flex-1 flex-col gap-7 overflow-y-auto px-6 py-4 md:max-w-md">
+      <div className="flex w-full max-w-xl flex-1 flex-col gap-8 pb-8">
         <Section
           label="Presupuesto"
           hint="Cuánto querés poder gastar por semana. De acá sale el “hoy puedes gastar”."
@@ -67,10 +67,8 @@ interface SectionProps {
 function Section({ label, hint, children }: SectionProps) {
   return (
     <div>
-      <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-        {label}
-      </div>
-      {hint ? <div className="mt-1 text-[12px] text-ink-soft">{hint}</div> : null}
+      <div className="text-sm font-medium text-ink">{label}</div>
+      {hint ? <div className="mt-1 text-xs text-ink-soft">{hint}</div> : null}
       <div className="mt-3">{children}</div>
     </div>
   )
@@ -84,17 +82,19 @@ interface RadioProps {
 
 function Radio({ value, options, onChange }: RadioProps) {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" role="radiogroup">
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
+          role="radio"
+          aria-checked={value === o.value}
           onClick={() => onChange(o.value)}
           className={cn(
-            'wf-tap flex-1 rounded-[10px] border px-3 py-2.5 text-[13px]',
+            'wf-tap flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
             value === o.value
-              ? 'border-ink bg-ink text-surface'
-              : 'border-line bg-surface text-ink-mid',
+              ? 'border-accent bg-accent text-surface'
+              : 'border-line bg-surface text-ink-mid hover:bg-bg-alt',
           )}
         >
           {o.label}
@@ -123,7 +123,7 @@ function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-[10px] border border-line bg-surface px-4 py-3">
+    <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 transition-colors focus-within:border-accent">
       <span className="text-[15px] text-ink-soft">$</span>
       <input
         type="number"
@@ -133,9 +133,9 @@ function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={handleBlur}
-        className="wf-mono w-full bg-transparent text-[15px] text-ink outline-none"
+        className="money w-full min-w-0 bg-transparent text-[15px] text-ink outline-none"
       />
-      <span className="text-[12px] text-ink-soft">/ semana</span>
+      <span className="whitespace-nowrap text-xs text-ink-soft">/ semana</span>
     </div>
   )
 }
@@ -150,15 +150,17 @@ function Toggle({ label, value, onChange }: ToggleProps) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={value}
       onClick={() => onChange(!value)}
-      className="flex w-full items-center justify-between rounded-[10px] border border-line bg-surface px-4 py-3 text-left"
+      className="flex w-full items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-left transition-colors hover:bg-bg-alt"
     >
-      <span className="text-[14px] text-ink">{label}</span>
+      <span className="text-sm text-ink">{label}</span>
       <span
         aria-hidden
         className={cn(
           'inline-block h-5 w-9 rounded-full transition-colors',
-          value ? 'bg-ink' : 'bg-line',
+          value ? 'bg-accent' : 'bg-line',
         )}
       >
         <span

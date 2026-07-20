@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { jarPace, jarProgress, unitsToCents } from '@finance-tdah/shared/domain'
-import { AppBar, PhoneShell, TabBar } from '@/components'
+import { AppBar, Btn, EmptyState, PhoneShell, TabBar } from '@/components'
 import { useTweaks } from '@/lib/use-tweaks'
 import { goalQueryOptions, useAddToGoal } from '../api'
 import { GoalDetailView } from '../components/GoalDetailView'
@@ -24,21 +24,17 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   if (!goal) {
     return (
       <PhoneShell>
-        <AppBar
-          title="Frasco"
-          left={
-            <button
-              type="button"
-              onClick={() => navigate({ to: '..' })}
-              className="wf-tap text-[16px] text-ink"
-            >
-              ←
-            </button>
+        <AppBar title="Frasco" back onBack={() => navigate({ to: '/goals' })} />
+        <EmptyState
+          className="flex-1"
+          title="No encontramos ese frasco"
+          hint="Puede que lo hayas archivado o que el enlace esté roto."
+          action={
+            <Btn kind="ghost" onClick={() => navigate({ to: '/goals' })}>
+              Volver a frascos
+            </Btn>
           }
         />
-        <div className="flex flex-1 items-center justify-center text-[14px] text-ink-mid">
-          No encontramos ese frasco.
-        </div>
         <TabBar />
       </PhoneShell>
     )

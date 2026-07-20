@@ -21,14 +21,15 @@ export function Money({
   hidden = false,
   className,
   weight = 'medium',
-  mono = true,
+  // Retained for backward-compat; money now renders sans tabular by default.
+  mono = false,
 }: MoneyProps) {
   return (
     <span
       className={cn(
-        mono && 'wf-mono',
+        mono ? 'wf-mono' : 'money',
         WEIGHT[weight],
-        hidden ? 'tracking-[0.1em]' : 'tracking-[-0.01em]',
+        hidden ? 'tracking-[0.1em]' : undefined,
         className,
       )}
     >

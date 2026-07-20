@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
+import { X } from 'lucide-react'
 import { parseAmountToCents, signedBalanceForType } from '@finance-tdah/shared/domain'
-import { AppBar, PhoneShell } from '@/components'
+import { AppBar, IconButton, PhoneShell } from '@/components'
 import { useCreateAccount } from '../api'
 import { AccountForm, type AccountFormFields } from '../components/AccountForm'
 
@@ -43,17 +44,13 @@ export function NewAccountContainer() {
   }
 
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar
         title="Nueva cuenta"
         left={
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/accounts' })}
-            className="wf-tap text-[16px] text-ink"
-          >
-            ✕
-          </button>
+          <IconButton onClick={() => navigate({ to: '/accounts' })} label="Cerrar">
+            <X size={20} strokeWidth={2} />
+          </IconButton>
         }
       />
       <AccountForm submitting={createAccount.isPending} error={error} onSubmit={handleSubmit} />

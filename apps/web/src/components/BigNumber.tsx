@@ -8,13 +8,14 @@ interface BigNumberProps {
   hidden?: boolean
   size?: 'sm' | 'md' | 'lg' | 'xl'
   tone?: 'ink' | 'good' | 'warn' | 'danger' | 'accent'
+  className?: string
 }
 
 const SIZE: Record<NonNullable<BigNumberProps['size']>, string> = {
-  sm: 'text-[40px]',
-  md: 'text-[52px]',
-  lg: 'text-[64px]',
-  xl: 'text-[72px]',
+  sm: 'text-4xl sm:text-5xl',
+  md: 'text-5xl sm:text-6xl',
+  lg: 'text-5xl sm:text-6xl',
+  xl: 'text-6xl sm:text-7xl',
 }
 
 const TONE: Record<NonNullable<BigNumberProps['tone']>, string> = {
@@ -32,24 +33,23 @@ export function BigNumber({
   hidden,
   size = 'lg',
   tone = 'ink',
+  className,
 }: BigNumberProps) {
   return (
-    <div className="text-center px-6 py-5">
+    <div className={cn('px-2 py-4 text-center', className)}>
       {label ? (
-        <div className="wf-mono mb-3 text-[12px] uppercase tracking-[0.1em] text-ink-mid">
-          {label}
-        </div>
+        <div className="mb-2 text-sm font-medium text-ink-mid">{label}</div>
       ) : null}
       <div
         className={cn(
-          'wf-mono font-light leading-none tracking-[-0.03em]',
+          'money font-semibold leading-none tracking-tight',
           SIZE[size],
           TONE[tone],
         )}
       >
         {hidden ? '••••' : formatMoney(value)}
       </div>
-      {sub ? <div className="mt-2 text-[13px] text-ink-mid">{sub}</div> : null}
+      {sub ? <div className="mt-2 text-sm text-ink-mid">{sub}</div> : null}
     </div>
   )
 }

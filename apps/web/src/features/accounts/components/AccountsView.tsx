@@ -1,6 +1,18 @@
 import type { FinancialAccountDTO } from '@finance-tdah/shared/schemas'
-import { AppBar, BigNumber, PhoneShell, SectionHeader, TabBar } from '@/components'
-import { formatMoney } from '@/lib/format'
+import { Plus, Wallet } from 'lucide-react'
+import {
+  AppBar,
+  BigNumber,
+  Btn,
+  Card,
+  EmptyState,
+  IconButton,
+  Money,
+  PhoneShell,
+  SectionHeader,
+  Skeleton,
+  TabBar,
+} from '@/components'
 
 const ACCOUNT_EMOJI: Record<string, string> = {
   debito: '🏦',
@@ -10,6 +22,14 @@ const ACCOUNT_EMOJI: Record<string, string> = {
   ahorro: '🐷',
 }
 
+const ACCOUNT_LABEL: Record<string, string> = {
+  debito: 'Débito',
+  credito: 'Crédito',
+  efectivo: 'Efectivo',
+  wallet: 'Wallet',
+  ahorro: 'Ahorro',
+}
+
 interface AccountsViewProps {
   accounts: FinancialAccountDTO[]
   goalsTotalCents: number
@@ -17,8 +37,7 @@ interface AccountsViewProps {
   debtCents: number
   netWorthCents: number
   showBalances: boolean
-  detailed: boolean
-  onBack: () => void
+  loading: boolean
   onAddAccount: () => void
 }
 
@@ -29,13 +48,9 @@ export function AccountsView({
   debtCents,
   netWorthCents,
   showBalances,
-  detailed,
-  onBack,
+  loading,
   onAddAccount,
 }: AccountsViewProps) {
-  const positive = accounts.filter((a) => a.balanceCents >= 0)
-  const debt = accounts.filter((a) => a.balanceCents < 0)
-
   // The bar splits total assets into the free slice and the jar-earmarked slice
   // (both already part of liquid), then debt — so nothing is counted twice.
   const freeWeight = Math.max(0, liquidCents - goalsTotalCents)
@@ -45,93 +60,75 @@ export function AccountsView({
     <PhoneShell>
       <AppBar
         title="Cuánto tienes"
-        left={
-          <button type="button" onClick={onBack} className="wf-tap text-[16px] text-ink">
-            ←
-          </button>
-        }
         right={
-          <button
-            type="button"
-            onClick={onAddAccount}
-            className="wf-tap text-[20px] text-ink-mid"
-            aria-label="Agregar cuenta"
-          >
-            +
-          </button>
+          <IconButton onClick={onAddAccount} label="Agregar cuenta">
+            <Plus size={20} strokeWidth={2} />
+          </IconButton>
         }
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto px-6 pb-4">
-        <div className="pt-1 text-center">
-          <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-            Tu plata realmente disponible
-          </div>
-          <BigNumber value={netWorthCents / 100} hidden={!showBalances} size="md" />
-          <div className="-mt-3 text-[12px] leading-relaxed text-ink-mid">
-            {showBalances ? (
-              <>
-                tienes <span className="wf-mono text-ink">{formatMoney(liquidCents / 100)}</span> ·
-                debes <span className="wf-mono text-danger">{formatMoney(debtCents / 100)}</span>
-              </>
-            ) : (
-              '•••• · ••••'
-            )}
-          </div>
-        </div>
-
-        <div className="mt-1 rounded-xl border border-line bg-surface p-3.5">
-          <div className="flex h-3.5 overflow-hidden rounded-md bg-line-soft">
-            <div className="bg-ink" style={{ flex: freeWeight / totalWeight }} />
-            <div className="bg-accent" style={{ flex: goalsTotalCents / totalWeight }} />
-            <div className="bg-danger" style={{ flex: debtCents / totalWeight, opacity: 0.6 }} />
-          </div>
-          <div className="mt-2.5 flex flex-wrap gap-3 text-[11px] text-ink-mid">
-            <LegendDot color="ink" label="libre" />
-            <LegendDot color="accent" label="frascos" />
-            <LegendDot color="danger" label="deuda" />
-          </div>
-        </div>
-
-        {detailed ? (
-          <div className="mt-5">
-            <SectionHeader title="A favor" />
-            <div className="divide-y divide-line-soft rounded-xl border border-line bg-surface">
-              {positive.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 px-3.5 py-3">
-                  <span className="text-[18px]">{ACCOUNT_EMOJI[a.type] ?? '·'}</span>
-                  <span className="flex-1 text-[13px] text-ink">{a.name}</span>
-                  <span className="wf-mono text-[13px] text-ink">
-                    {formatMoney(a.balanceCents / 100, !showBalances)}
-                  </span>
-                </div>
-              ))}
-              <div className="flex items-center gap-3 px-3.5 py-3">
-                <span className="text-[18px]">🐷</span>
-                <span className="flex-1 text-[13px] text-ink">Frascos guardados</span>
-                <span className="wf-mono text-[13px] text-ink">
-                  {formatMoney(goalsTotalCents / 100, !showBalances)}
-                </span>
-              </div>
-            </div>
-
-            <SectionHeader title="Por pagar" />
-            <div className="divide-y divide-line-soft rounded-xl border border-line bg-surface">
-              {debt.map((a) => (
-                <div key={a.id} className="flex items-center gap-3 px-3.5 py-3">
-                  <span className="text-[18px]">💳</span>
-                  <div className="flex-1">
-                    <div className="text-[13px] text-ink">{a.name}</div>
-                    <div className="mt-0.5 text-[11px] text-ink-mid">{a.institution}</div>
-                  </div>
-                  <span className="wf-mono text-[13px] text-danger">
-                    {formatMoney(Math.abs(a.balanceCents) / 100, !showBalances)}
-                  </span>
-                </div>
-              ))}
+      <div className="flex flex-1 flex-col gap-5 py-2">
+        {/* Summary + allocation bar */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
+          <div className="text-center lg:text-left">
+            <div className="text-sm font-medium text-ink-mid">Tu plata realmente disponible</div>
+            <BigNumber value={netWorthCents / 100} hidden={!showBalances} size="md" />
+            <div className="-mt-2 text-sm text-ink-mid">
+              {showBalances ? (
+                <>
+                  tienes{' '}
+                  <Money value={liquidCents / 100} className="text-ink" /> · debes{' '}
+                  <Money value={debtCents / 100} className="text-danger" />
+                </>
+              ) : (
+                '•••• · ••••'
+              )}
             </div>
           </div>
-        ) : null}
+
+          <Card>
+            <div className="flex h-3.5 overflow-hidden rounded-full bg-line-soft">
+              <div className="bg-accent" style={{ flex: freeWeight / totalWeight }} />
+              <div className="bg-accent-bg" style={{ flex: goalsTotalCents / totalWeight }} />
+              <div className="bg-danger" style={{ flex: debtCents / totalWeight, opacity: 0.75 }} />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-4 text-xs text-ink-mid">
+              <LegendDot color="accent" label="libre" />
+              <LegendDot color="accent-bg" label="frascos" />
+              <LegendDot color="danger" label="deuda" />
+            </div>
+          </Card>
+        </div>
+
+        {/* Accounts — always rendered as a responsive card grid */}
+        <div>
+          <SectionHeader title="Tus cuentas" />
+          {loading ? (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-2xl" />
+              ))}
+            </div>
+          ) : accounts.length === 0 ? (
+            <EmptyState
+              icon={<Wallet size={22} strokeWidth={1.8} />}
+              title="Aún no tienes cuentas"
+              hint="Agrega la primera para ver tu plata en un solo lugar."
+              action={
+                <Btn kind="primary" onClick={onAddAccount}>
+                  <Plus size={16} strokeWidth={2.2} />
+                  Agregar cuenta
+                </Btn>
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {accounts.map((a) => (
+                <AccountCard key={a.id} account={a} showBalances={showBalances} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <TabBar />
@@ -139,20 +136,55 @@ export function AccountsView({
   )
 }
 
+interface AccountCardProps {
+  account: FinancialAccountDTO
+  showBalances: boolean
+}
+
+function AccountCard({ account, showBalances }: AccountCardProps) {
+  const isNegative = account.balanceCents < 0
+  const meta = [ACCOUNT_LABEL[account.type] ?? account.type, account.institution]
+    .filter(Boolean)
+    .join(' · ')
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex items-start gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-bg text-lg">
+          {ACCOUNT_EMOJI[account.type] ?? '·'}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium text-ink">{account.name}</div>
+          <div className="truncate text-xs text-ink-mid">
+            {meta}
+            {account.last4 ? <span> ·· {account.last4}</span> : null}
+          </div>
+        </div>
+      </div>
+      <Money
+        value={account.balanceCents / 100}
+        hidden={!showBalances}
+        weight="semibold"
+        className={isNegative ? 'text-lg text-danger' : 'text-lg text-ink'}
+      />
+    </Card>
+  )
+}
+
 interface LegendDotProps {
-  color: 'ink' | 'accent' | 'danger'
+  color: 'accent' | 'accent-bg' | 'danger'
   label: string
 }
 
 function LegendDot({ color, label }: LegendDotProps) {
   const cls = {
-    ink: 'bg-ink',
     accent: 'bg-accent',
-    danger: 'bg-danger opacity-60',
+    'accent-bg': 'bg-accent-bg',
+    danger: 'bg-danger opacity-75',
   }[color]
   return (
     <span className="inline-flex items-center gap-1.5">
-      <span className={`inline-block h-2 w-2 rounded-[2px] ${cls}`} aria-hidden />
+      <span className={`inline-block h-2.5 w-2.5 rounded-full ${cls}`} aria-hidden />
       {label}
     </span>
   )

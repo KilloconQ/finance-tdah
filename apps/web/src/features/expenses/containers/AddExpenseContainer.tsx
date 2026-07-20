@@ -3,7 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { CreateExpenseInput, ParsedVoiceExpense } from '@finance-tdah/shared/schemas'
 import { parseAmountToCents } from '@finance-tdah/shared/domain'
-import { AppBar, PhoneShell } from '@/components'
+import { X } from 'lucide-react'
+import { AppBar, IconButton, PhoneShell } from '@/components'
 import { accountsQuery } from '@/lib/queries'
 import { useTweaks } from '@/lib/use-tweaks'
 import { useCreateExpense, useParseVoice } from '../api'
@@ -83,13 +84,13 @@ export function AddExpenseContainer() {
   }
 
   return (
-    <PhoneShell>
+    <PhoneShell variant="narrow">
       <AppBar
         title="Registrar"
         left={
-          <button type="button" onClick={goHome} className="wf-tap text-[16px] text-ink">
-            ✕
-          </button>
+          <IconButton onClick={goHome} label="Cerrar">
+            <X size={20} strokeWidth={2} />
+          </IconButton>
         }
       />
 
