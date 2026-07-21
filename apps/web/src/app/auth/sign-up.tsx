@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { AppBar, Btn, Hello, PhoneShell } from '@/components'
+import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/auth/sign-up')({
@@ -34,54 +34,49 @@ function SignUp() {
   }
 
   return (
-    <PhoneShell>
-      <AppBar title="Crear cuenta" />
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-1 flex-col px-7 pb-6 pt-2"
-      >
-        <h1 className="mt-4 text-[24px] font-medium leading-tight text-ink">
-          Vamos a empezar
-        </h1>
-        <Hello className="mt-2">Solo lo mínimo para arrancar.</Hello>
+    <PhoneShell variant="narrow">
+      <div className="flex flex-1 flex-col justify-center py-8">
+        <Card className="p-6 sm:p-7">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Vamos a empezar</h1>
+          <Hello className="mt-2">Solo lo mínimo para arrancar.</Hello>
 
-        <div className="mt-5 flex flex-col gap-3">
-          <Field label="Tu nombre" type="text" value={name} onChange={setName} required autoComplete="name" />
-          <Field label="Email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
-          <Field
-            label="Contraseña"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            required
-            autoComplete="new-password"
-          />
-          <p className="text-[11px] text-ink-soft">Mínimo 8 caracteres.</p>
-        </div>
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+            <Field label="Tu nombre" type="text" value={name} onChange={setName} required autoComplete="name" />
+            <Field label="Email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
+            <Field
+              label="Contraseña"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              required
+              autoComplete="new-password"
+            />
+            <p className="text-xs text-ink-soft">Mínimo 8 caracteres.</p>
 
-        {error ? (
-          <div className="mt-3 rounded-[10px] bg-danger-bg px-3 py-2 text-[13px] text-danger">
-            {error}
+            {error ? (
+              <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+                {error}
+              </div>
+            ) : null}
+
+            <Btn
+              kind="primary"
+              className="mt-2 w-full"
+              type="submit"
+              disabled={loading || !email || password.length < 8 || !name}
+            >
+              {loading ? 'Creando…' : 'Crear cuenta'}
+            </Btn>
+          </form>
+
+          <div className="mt-5 text-center text-sm text-ink-mid">
+            ¿Ya tenés cuenta?{' '}
+            <Link to="/auth/sign-in" className="font-medium text-accent-strong underline">
+              Entrar
+            </Link>
           </div>
-        ) : null}
-
-        <div className="flex-1" />
-
-        <Btn
-          kind="primary"
-          className="w-full py-4"
-          type="submit"
-          disabled={loading || !email || password.length < 8 || !name}
-        >
-          {loading ? 'Creando…' : 'Crear cuenta'}
-        </Btn>
-        <div className="mt-4 text-center text-[13px] text-ink-mid">
-          ¿Ya tenés cuenta?{' '}
-          <Link to="/auth/sign-in" className="text-ink underline">
-            Entrar
-          </Link>
-        </div>
-      </form>
+        </Card>
+      </div>
     </PhoneShell>
   )
 }
@@ -98,16 +93,14 @@ interface FieldProps {
 function Field({ label, type, value, onChange, required, autoComplete }: FieldProps) {
   return (
     <label className="block">
-      <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-        {label}
-      </div>
+      <div className="mb-1.5 text-sm font-medium text-ink-mid">{label}</div>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
         autoComplete={autoComplete}
-        className="mt-1.5 w-full rounded-[10px] border border-line bg-surface px-4 py-3 text-[15px] text-ink focus:border-ink focus:outline-none"
+        className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-accent"
       />
     </label>
   )

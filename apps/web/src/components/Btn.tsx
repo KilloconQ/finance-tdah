@@ -9,11 +9,11 @@ interface BtnProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const KIND_CLASS: Record<BtnKind, string> = {
-  primary: 'bg-ink text-surface border border-ink',
-  ghost: 'bg-surface text-ink border border-line',
+  primary: 'bg-accent text-surface border border-accent shadow-card hover:bg-accent-strong',
+  ghost: 'bg-surface text-ink border border-line shadow-card hover:bg-bg-alt',
   plain: 'bg-transparent text-ink-mid border-none',
-  danger: 'bg-surface text-danger border border-line',
-  accent: 'bg-accent text-surface border border-accent',
+  danger: 'bg-surface text-danger border border-line shadow-card hover:bg-danger-bg',
+  accent: 'bg-accent text-surface border border-accent shadow-card hover:bg-accent-strong',
 }
 
 export function Btn({ children, kind = 'ghost', className, ...rest }: BtnProps) {
@@ -21,7 +21,7 @@ export function Btn({ children, kind = 'ghost', className, ...rest }: BtnProps) 
     <button
       type="button"
       className={cn(
-        'wf-tap rounded-[10px] px-3.5 py-2.5 text-[13px] font-medium',
+        'wf-tap inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium transition-colors',
         KIND_CLASS[kind],
         className,
       )}

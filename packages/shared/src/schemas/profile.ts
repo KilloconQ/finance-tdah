@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { densityModeSchema, inputPreferenceSchema } from './common'
+import { cents, densityModeSchema, inputPreferenceSchema } from './common'
 
 export const userProfileSchema = z.object({
   userId: z.string(),
@@ -8,6 +8,7 @@ export const userProfileSchema = z.object({
   inputPreference: inputPreferenceSchema,
   densityMode: densityModeSchema,
   showBalances: z.boolean(),
+  weeklyBudgetCents: cents,
   onboardingCompleted: z.boolean(),
   createdAt: z.iso.datetime({ offset: true }),
   updatedAt: z.iso.datetime({ offset: true }),
@@ -32,6 +33,7 @@ export const updateProfileSchema = userProfileSchema
     inputPreference: true,
     densityMode: true,
     showBalances: true,
+    weeklyBudgetCents: true,
   })
   .partial()
 

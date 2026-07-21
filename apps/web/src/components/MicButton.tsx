@@ -26,15 +26,15 @@ export function MicButton({
         onTouchEnd={onRelease}
         style={{ width: size, height: size }}
         className={cn(
-          'wf-tap relative mx-auto flex items-center justify-center rounded-full border-[1.5px] border-ink',
-          recording ? 'bg-ink' : 'bg-surface',
+          'wf-tap relative mx-auto flex items-center justify-center rounded-full border-[1.5px] border-accent',
+          recording ? 'bg-accent' : 'bg-surface',
         )}
         aria-label={label}
       >
         {recording ? (
           <span
             aria-hidden
-            className="absolute inset-[-12px] rounded-full border border-ink opacity-30"
+            className="absolute inset-[-12px] rounded-full border border-accent opacity-30"
             style={{ animation: 'pulse-ring 1.4s ease-out infinite' }}
           />
         ) : null}
@@ -51,12 +51,12 @@ export function MicButton({
             width={6}
             height={12}
             rx={3}
-            stroke={recording ? 'var(--color-surface)' : 'var(--color-ink)'}
+            stroke={recording ? 'var(--color-surface)' : 'var(--color-accent)'}
             strokeWidth={1.5}
           />
           <path
             d="M5 11a7 7 0 0 0 14 0M12 18v3"
-            stroke={recording ? 'var(--color-surface)' : 'var(--color-ink)'}
+            stroke={recording ? 'var(--color-surface)' : 'var(--color-accent)'}
             strokeWidth={1.5}
             strokeLinecap="round"
           />

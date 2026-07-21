@@ -1,6 +1,5 @@
-import { useState } from 'react'
-import { Btn } from '@/components'
-import { cn } from '@/lib/cn'
+import { useEffect, useState } from 'react'
+import { Btn, Chip } from '@/components'
 
 export interface ExpenseFormFields {
   amount: string
@@ -46,7 +45,21 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
   const [description, setDescription] = useState('')
   const [accountId, setAccountId] = useState<string>('')
 
-  const canSubmit = amount.trim() !== '' && description.trim() !== '' && category !== '' && !submitting
+  // A gasto should always come out of an account. Default to the first one once
+  // accounts load (the user can still switch). Only screens with zero accounts
+  // are allowed to log without one.
+  useEffect(() => {
+    if (!accountId && accounts.length > 0) setAccountId(accounts[0].id)
+  }, [accounts, accountId])
+
+  const hasAmount = amount.trim() !== ''
+
+  const canSubmit =
+    hasAmount &&
+    description.trim() !== '' &&
+    category !== '' &&
+    (accounts.length === 0 || accountId !== '') &&
+    !submitting
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,13 +73,15 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-5 px-6 pt-2">
+    <form onSubmit={handleSubmit} className="flex w-full max-w-lg flex-1 flex-col gap-6 pb-8">
       <div>
-        <label htmlFor="amount" className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
+        <label htmlFor="amount" className="text-sm font-medium text-ink-mid">
           Cuánto
         </label>
         <div className="mt-1 flex items-baseline gap-1">
-          <span className="wf-mono text-[28px] font-light text-ink-mid">$</span>
+          <span className={`money text-4xl font-light ${hasAmount ? 'text-ink' : 'text-ink-soft'}`}>
+            $
+          </span>
           <input
             id="amount"
             inputMode="decimal"
@@ -75,40 +90,29 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
-            className="wf-mono w-full bg-transparent text-[40px] font-light leading-none tracking-[-0.02em] text-ink outline-none placeholder:text-ink-soft"
+            className="money w-full bg-transparent text-5xl font-light leading-none tracking-[-0.02em] text-ink outline-none placeholder:text-ink-soft"
           />
         </div>
       </div>
 
       <div>
-        <span className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-          En qué
-        </span>
+        <span className="text-sm font-medium text-ink-mid">En qué</span>
         <div className="mt-2 flex flex-wrap gap-2">
           {CATEGORIES.map((c) => (
-            <button
+            <Chip
               key={c.value}
-              type="button"
+              active={category === c.value}
               onClick={() => setCategory(c.value)}
-              className={cn(
-                'wf-tap rounded-full border px-3 py-1.5 text-[13px] transition-colors',
-                category === c.value
-                  ? 'border-ink bg-ink text-surface'
-                  : 'border-line bg-surface text-ink-mid',
-              )}
             >
-              <span className="mr-1">{c.emoji}</span>
+              <span>{c.emoji}</span>
               {c.label}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
 
       <div>
-        <label
-          htmlFor="description"
-          className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid"
-        >
+        <label htmlFor="description" className="text-sm font-medium text-ink-mid">
           Nota
         </label>
         <input
@@ -117,25 +121,21 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
           onChange={(e) => setDescription(e.target.value)}
           maxLength={120}
           placeholder="Ej: Café con Lu"
-          className="mt-1 w-full rounded-[10px] border border-line bg-surface px-3 py-2.5 text-[14px] text-ink outline-none placeholder:text-ink-soft focus:border-ink"
+          className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-soft focus:border-accent"
         />
       </div>
 
       {accounts.length > 0 ? (
         <div>
-          <label
-            htmlFor="account"
-            className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid"
-          >
-            De qué cuenta (opcional)
+          <label htmlFor="account" className="text-sm font-medium text-ink-mid">
+            De qué cuenta
           </label>
           <select
             id="account"
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
-            className="mt-1 w-full rounded-[10px] border border-line bg-surface px-3 py-2.5 text-[14px] text-ink outline-none focus:border-ink"
+            className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-accent"
           >
-            <option value="">Ninguna</option>
             {accounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
@@ -146,20 +146,18 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
       ) : null}
 
       {error ? (
-        <div className="rounded-[10px] bg-danger-bg px-3 py-2 text-[13px] text-danger">{error}</div>
+        <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{error}</div>
       ) : null}
 
-      <div className="flex-1" />
-
-      <div className="pb-5">
-        <Btn kind="primary" type="submit" className="w-full py-4" disabled={!canSubmit}>
+      <div className="mt-2">
+        <Btn kind="primary" type="submit" className="w-full sm:w-auto sm:min-w-48" disabled={!canSubmit}>
           {submitting ? 'Guardando…' : 'Guardar gasto'}
         </Btn>
         {onUseVoice ? (
           <button
             type="button"
             onClick={onUseVoice}
-            className="wf-tap mt-3 w-full text-center text-[12px] text-ink-mid underline"
+            className="wf-tap mt-3 block w-full text-center text-xs text-ink-mid underline sm:mt-0 sm:ml-4 sm:inline sm:w-auto"
           >
             o usar la voz
           </button>

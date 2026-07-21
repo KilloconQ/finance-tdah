@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { AppBar, Btn, Hello, PhoneShell } from '@/components'
+import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
 
 export const Route = createFileRoute('/auth/sign-in')({
@@ -33,59 +33,54 @@ function SignIn() {
   }
 
   return (
-    <PhoneShell>
-      <AppBar title="Entrar" />
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-1 flex-col px-7 pb-6 pt-2"
-      >
-        <h1 className="mt-6 text-[26px] font-medium leading-tight text-ink">
-          Hola de nuevo 👋
-        </h1>
-        <Hello className="mt-2.5">Entrá con tu email y contraseña.</Hello>
+    <PhoneShell variant="narrow">
+      <div className="flex flex-1 flex-col justify-center py-8">
+        <Card className="p-6 sm:p-7">
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Hola de nuevo 👋</h1>
+          <Hello className="mt-2">Entrá con tu email y contraseña.</Hello>
 
-        <div className="mt-6 flex flex-col gap-3">
-          <Field
-            label="Email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={setEmail}
-            required
-          />
-          <Field
-            label="Contraseña"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={setPassword}
-            required
-          />
-        </div>
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+            <Field
+              label="Email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={setEmail}
+              required
+            />
+            <Field
+              label="Contraseña"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={setPassword}
+              required
+            />
 
-        {error ? (
-          <div className="mt-3 rounded-[10px] bg-danger-bg px-3 py-2 text-[13px] text-danger">
-            {error}
+            {error ? (
+              <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+                {error}
+              </div>
+            ) : null}
+
+            <Btn
+              kind="primary"
+              className="mt-2 w-full"
+              type="submit"
+              disabled={loading || !email || !password}
+            >
+              {loading ? 'Entrando…' : 'Entrar'}
+            </Btn>
+          </form>
+
+          <div className="mt-5 text-center text-sm text-ink-mid">
+            ¿Primera vez?{' '}
+            <Link to="/auth/sign-up" className="font-medium text-accent-strong underline">
+              Crear cuenta
+            </Link>
           </div>
-        ) : null}
-
-        <div className="flex-1" />
-
-        <Btn
-          kind="primary"
-          className="w-full py-4"
-          type="submit"
-          disabled={loading || !email || !password}
-        >
-          {loading ? 'Entrando…' : 'Entrar'}
-        </Btn>
-        <div className="mt-4 text-center text-[13px] text-ink-mid">
-          ¿Primera vez?{' '}
-          <Link to="/auth/sign-up" className="text-ink underline">
-            Crear cuenta
-          </Link>
-        </div>
-      </form>
+        </Card>
+      </div>
     </PhoneShell>
   )
 }
@@ -102,16 +97,14 @@ interface FieldProps {
 function Field({ label, type, value, onChange, required, autoComplete }: FieldProps) {
   return (
     <label className="block">
-      <div className="wf-mono text-[11px] uppercase tracking-[0.08em] text-ink-mid">
-        {label}
-      </div>
+      <div className="mb-1.5 text-sm font-medium text-ink-mid">{label}</div>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={required}
         autoComplete={autoComplete}
-        className="mt-1.5 w-full rounded-[10px] border border-line bg-surface px-4 py-3 text-[15px] text-ink focus:border-ink focus:outline-none"
+        className="w-full rounded-xl border border-line bg-surface px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-accent"
       />
     </label>
   )

@@ -36,6 +36,8 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET requerido}
       BETTER_AUTH_URL: ${PUBLIC_URL:-https://finance.local}
       WEB_ORIGIN: ${PUBLIC_URL:-https://finance.local}
+      # Registration allowlist. Empty = open signup (the api warns at startup).
+      # Set to a comma-separated list of emails to lock signup to you two.
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://localhost:3001/health']
@@ -83,7 +85,10 @@ services:
       - caddy
     command: tunnel --no-autoupdate run
     environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN requerido}
+      # Profile-gated service: only runs with `--profile public`. Use a soft
+      # default so local dev (without the tunnel) doesn't fail at parse time.
+      # If you DO enable the public profile, set CLOUDFLARE_TUNNEL_TOKEN.
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
     networks:
       - ft-internal
 

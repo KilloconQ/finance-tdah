@@ -13,11 +13,12 @@ export function Chip({ children, active, onClick, className }: ChipProps) {
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={cn(
-        'wf-tap inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[12px]',
+        'wf-tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors',
         active
-          ? 'border-ink bg-ink text-surface'
-          : 'border-line bg-surface text-ink-mid',
+          ? 'border-accent bg-accent text-surface'
+          : 'border-line bg-surface text-ink-mid hover:bg-bg-alt',
         className,
       )}
     >

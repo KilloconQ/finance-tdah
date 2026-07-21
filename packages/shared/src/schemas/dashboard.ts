@@ -19,21 +19,5 @@ export const accountsBreakdownSchema = z.object({
   netWorthCents: signedCents,
 })
 
-export const wrappedStorySchema = z.object({
-  id: z.string(),
-  label: z.string(),
-  title: z.string(),
-  big: z.string(),
-  body: z.string(),
-  hint: z.string().optional(),
-})
-
-export const wrappedSchema = z.object({
-  weekLabel: z.string(),
-  stories: z.array(wrappedStorySchema),
-})
-
 export type HomeSummaryDTO = z.infer<typeof homeSummarySchema>
 export type AccountsBreakdownDTO = z.infer<typeof accountsBreakdownSchema>
-export type WrappedDTO = z.infer<typeof wrappedSchema>
-export type WrappedStoryDTO = z.infer<typeof wrappedStorySchema>

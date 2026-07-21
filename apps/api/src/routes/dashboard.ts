@@ -10,13 +10,17 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
   .get('/home', async (c) => {
     const user = c.get('user')
 
-    const accounts = await db.query.financialAccount.findMany({
-      where: (a, { eq }) => eq(a.userId, user.id),
-    })
-
-    const goals = await db.query.goal.findMany({
-      where: (g, { and, eq, isNull }) => and(eq(g.userId, user.id), isNull(g.archivedAt)),
-    })
+    const [accounts, goals, profile] = await Promise.all([
+      db.query.financialAccount.findMany({
+        where: (a, { eq }) => eq(a.userId, user.id),
+      }),
+      db.query.goal.findMany({
+        where: (g, { and, eq, isNull }) => and(eq(g.userId, user.id), isNull(g.archivedAt)),
+      }),
+      db.query.userProfile.findFirst({
+        where: (p, { eq }) => eq(p.userId, user.id),
+      }),
+    ])
 
     const startOfWeek = new Date()
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
@@ -33,7 +37,7 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
     const jarsCents = goals.reduce((acc, g) => acc + g.currentCents, 0)
 
     const weekSpentCents = Number(weekSpentRow?.sum ?? 0)
-    const weekTargetCents = 220000 // TODO: presupuesto real
+    const weekTargetCents = profile?.weeklyBudgetCents ?? 220000
 
     const todayAvailableCents = Math.max(
       0,

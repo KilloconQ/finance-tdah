@@ -8,9 +8,9 @@ import { AccountsView } from '../components/AccountsView'
 
 export function AccountsContainer() {
   const navigate = useNavigate()
-  const { showBalances, density } = useTweaks()
+  const { showBalances } = useTweaks()
 
-  const { data: accounts = [] } = useQuery(accountsQueryOptions())
+  const { data: accounts = [], isLoading } = useQuery(accountsQueryOptions())
   const { data: goals = [] } = useQuery(goalsQueryOptions())
 
   // Jars live inside accounts, so net worth is liquid - debt and jar totals are
@@ -26,8 +26,7 @@ export function AccountsContainer() {
       debtCents={debtCents}
       netWorthCents={netWorthCents}
       showBalances={showBalances}
-      detailed={density === 'detailed'}
-      onBack={() => navigate({ to: '/' })}
+      loading={isLoading}
       onAddAccount={() => navigate({ to: '/accounts/new' })}
     />
   )

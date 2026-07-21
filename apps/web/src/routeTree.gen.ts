@@ -18,14 +18,15 @@ import { Route as OnboardingGoalRouteImport } from './app/onboarding/goal'
 import { Route as OnboardingDoneRouteImport } from './app/onboarding/done'
 import { Route as AuthSignUpRouteImport } from './app/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './app/auth/sign-in'
-import { Route as AppWrappedRouteImport } from './app/_app/wrapped'
 import { Route as AppTransactionsRouteImport } from './app/_app/transactions'
+import { Route as AppSettingsRouteImport } from './app/_app/settings'
 import { Route as AppPanicRouteImport } from './app/_app/panic'
 import { Route as AppChallengeRouteImport } from './app/_app/challenge'
 import { Route as AppAddExpenseRouteImport } from './app/_app/add-expense'
 import { Route as AppSubscriptionsIndexRouteImport } from './app/_app/subscriptions/index'
 import { Route as AppGoalsIndexRouteImport } from './app/_app/goals/index'
 import { Route as AppAccountsIndexRouteImport } from './app/_app/accounts/index'
+import { Route as AppSubscriptionsNewRouteImport } from './app/_app/subscriptions/new'
 import { Route as AppSubscriptionsIdRouteImport } from './app/_app/subscriptions/$id'
 import { Route as AppGoalsNewRouteImport } from './app/_app/goals/new'
 import { Route as AppGoalsIdRouteImport } from './app/_app/goals/$id'
@@ -75,14 +76,14 @@ const AuthSignInRoute = AuthSignInRouteImport.update({
   path: '/auth/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppWrappedRoute = AppWrappedRouteImport.update({
-  id: '/wrapped',
-  path: '/wrapped',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppTransactionsRoute = AppTransactionsRouteImport.update({
   id: '/transactions',
   path: '/transactions',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPanicRoute = AppPanicRouteImport.update({
@@ -115,6 +116,11 @@ const AppAccountsIndexRoute = AppAccountsIndexRouteImport.update({
   path: '/accounts/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSubscriptionsNewRoute = AppSubscriptionsNewRouteImport.update({
+  id: '/subscriptions/new',
+  path: '/subscriptions/new',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSubscriptionsIdRoute = AppSubscriptionsIdRouteImport.update({
   id: '/subscriptions/$id',
   path: '/subscriptions/$id',
@@ -141,8 +147,8 @@ export interface FileRoutesByFullPath {
   '/add-expense': typeof AppAddExpenseRoute
   '/challenge': typeof AppChallengeRoute
   '/panic': typeof AppPanicRoute
+  '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
-  '/wrapped': typeof AppWrappedRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
@@ -154,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/goals/$id': typeof AppGoalsIdRoute
   '/goals/new': typeof AppGoalsNewRoute
   '/subscriptions/$id': typeof AppSubscriptionsIdRoute
+  '/subscriptions/new': typeof AppSubscriptionsNewRoute
   '/accounts/': typeof AppAccountsIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
   '/subscriptions/': typeof AppSubscriptionsIndexRoute
@@ -162,8 +169,8 @@ export interface FileRoutesByTo {
   '/add-expense': typeof AppAddExpenseRoute
   '/challenge': typeof AppChallengeRoute
   '/panic': typeof AppPanicRoute
+  '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
-  '/wrapped': typeof AppWrappedRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/goals/$id': typeof AppGoalsIdRoute
   '/goals/new': typeof AppGoalsNewRoute
   '/subscriptions/$id': typeof AppSubscriptionsIdRoute
+  '/subscriptions/new': typeof AppSubscriptionsNewRoute
   '/accounts': typeof AppAccountsIndexRoute
   '/goals': typeof AppGoalsIndexRoute
   '/subscriptions': typeof AppSubscriptionsIndexRoute
@@ -186,8 +194,8 @@ export interface FileRoutesById {
   '/_app/add-expense': typeof AppAddExpenseRoute
   '/_app/challenge': typeof AppChallengeRoute
   '/_app/panic': typeof AppPanicRoute
+  '/_app/settings': typeof AppSettingsRoute
   '/_app/transactions': typeof AppTransactionsRoute
-  '/_app/wrapped': typeof AppWrappedRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/_app/goals/$id': typeof AppGoalsIdRoute
   '/_app/goals/new': typeof AppGoalsNewRoute
   '/_app/subscriptions/$id': typeof AppSubscriptionsIdRoute
+  '/_app/subscriptions/new': typeof AppSubscriptionsNewRoute
   '/_app/accounts/': typeof AppAccountsIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
   '/_app/subscriptions/': typeof AppSubscriptionsIndexRoute
@@ -211,8 +220,8 @@ export interface FileRouteTypes {
     | '/add-expense'
     | '/challenge'
     | '/panic'
+    | '/settings'
     | '/transactions'
-    | '/wrapped'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/onboarding/done'
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/goals/$id'
     | '/goals/new'
     | '/subscriptions/$id'
+    | '/subscriptions/new'
     | '/accounts/'
     | '/goals/'
     | '/subscriptions/'
@@ -232,8 +242,8 @@ export interface FileRouteTypes {
     | '/add-expense'
     | '/challenge'
     | '/panic'
+    | '/settings'
     | '/transactions'
-    | '/wrapped'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/onboarding/done'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/goals/$id'
     | '/goals/new'
     | '/subscriptions/$id'
+    | '/subscriptions/new'
     | '/accounts'
     | '/goals'
     | '/subscriptions'
@@ -255,8 +266,8 @@ export interface FileRouteTypes {
     | '/_app/add-expense'
     | '/_app/challenge'
     | '/_app/panic'
+    | '/_app/settings'
     | '/_app/transactions'
-    | '/_app/wrapped'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/onboarding/done'
@@ -269,6 +280,7 @@ export interface FileRouteTypes {
     | '/_app/goals/$id'
     | '/_app/goals/new'
     | '/_app/subscriptions/$id'
+    | '/_app/subscriptions/new'
     | '/_app/accounts/'
     | '/_app/goals/'
     | '/_app/subscriptions/'
@@ -350,18 +362,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSignInRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/wrapped': {
-      id: '/_app/wrapped'
-      path: '/wrapped'
-      fullPath: '/wrapped'
-      preLoaderRoute: typeof AppWrappedRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/transactions': {
       id: '/_app/transactions'
       path: '/transactions'
       fullPath: '/transactions'
       preLoaderRoute: typeof AppTransactionsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/panic': {
@@ -406,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountsIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/subscriptions/new': {
+      id: '/_app/subscriptions/new'
+      path: '/subscriptions/new'
+      fullPath: '/subscriptions/new'
+      preLoaderRoute: typeof AppSubscriptionsNewRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/subscriptions/$id': {
       id: '/_app/subscriptions/$id'
       path: '/subscriptions/$id'
@@ -441,13 +460,14 @@ interface AppRouteChildren {
   AppAddExpenseRoute: typeof AppAddExpenseRoute
   AppChallengeRoute: typeof AppChallengeRoute
   AppPanicRoute: typeof AppPanicRoute
+  AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
-  AppWrappedRoute: typeof AppWrappedRoute
   AppIndexRoute: typeof AppIndexRoute
   AppAccountsNewRoute: typeof AppAccountsNewRoute
   AppGoalsIdRoute: typeof AppGoalsIdRoute
   AppGoalsNewRoute: typeof AppGoalsNewRoute
   AppSubscriptionsIdRoute: typeof AppSubscriptionsIdRoute
+  AppSubscriptionsNewRoute: typeof AppSubscriptionsNewRoute
   AppAccountsIndexRoute: typeof AppAccountsIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
   AppSubscriptionsIndexRoute: typeof AppSubscriptionsIndexRoute
@@ -457,13 +477,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppAddExpenseRoute: AppAddExpenseRoute,
   AppChallengeRoute: AppChallengeRoute,
   AppPanicRoute: AppPanicRoute,
+  AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,
-  AppWrappedRoute: AppWrappedRoute,
   AppIndexRoute: AppIndexRoute,
   AppAccountsNewRoute: AppAccountsNewRoute,
   AppGoalsIdRoute: AppGoalsIdRoute,
   AppGoalsNewRoute: AppGoalsNewRoute,
   AppSubscriptionsIdRoute: AppSubscriptionsIdRoute,
+  AppSubscriptionsNewRoute: AppSubscriptionsNewRoute,
   AppAccountsIndexRoute: AppAccountsIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
   AppSubscriptionsIndexRoute: AppSubscriptionsIndexRoute,

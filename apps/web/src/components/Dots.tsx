@@ -17,7 +17,7 @@ export function Dots({ total = 7, filled = 4, size = 10, gap = 6, className }: D
           style={{ width: size, height: size }}
           className={cn(
             'rounded-full border',
-            i < filled ? 'border-ink bg-ink' : 'border-line bg-transparent',
+            i < filled ? 'border-accent bg-accent' : 'border-line bg-transparent',
           )}
           aria-hidden
         />

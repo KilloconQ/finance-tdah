@@ -5,6 +5,7 @@ import { mutations, profileQuery } from './queries'
 const DEFAULTS = {
   showBalances: true,
   density: 'simple' as const,
+  weeklyBudgetCents: 220000,
 }
 
 export function useTweaks() {
@@ -12,6 +13,7 @@ export function useTweaks() {
   return {
     showBalances: profile?.showBalances ?? DEFAULTS.showBalances,
     density: profile?.densityMode ?? DEFAULTS.density,
+    weeklyBudgetCents: profile?.weeklyBudgetCents ?? DEFAULTS.weeklyBudgetCents,
   }
 }
 
