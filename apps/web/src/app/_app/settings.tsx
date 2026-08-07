@@ -91,7 +91,7 @@ function Settings() {
 
         {!deleteConfirm ? (
           <Btn
-            kind="secondary"
+            kind="plain"
             className="w-full"
             onClick={() => setDeleteConfirm(true)}
           >
