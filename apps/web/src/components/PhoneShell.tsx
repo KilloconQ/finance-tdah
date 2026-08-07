@@ -21,10 +21,9 @@ const BG_CLASS = {
 } as const;
 
 const VARIANT_CLASS = {
-  // Responsive page container: grows with the viewport, generous gutters on
-  // desktop. Left-aligned next to the sidebar (mx-auto only centers once the
-  // viewport exceeds the max width).
-  app: "mx-auto w-full max-w-[1080px] px-4 sm:px-6 lg:px-8",
+  // Responsive page container: full-bleed on mobile, grows to a comfortable
+  // width on tablet, then full-width on desktop next to sidebar.
+  app: "w-full max-w-2xl px-4 sm:px-6 md:max-w-none lg:px-8",
   // Slim centered column at every size for focused forms. On md+ it also
   // vertically centers its content so the form sits as a centered card instead
   // of stranded at the top (mobile stays top-aligned).

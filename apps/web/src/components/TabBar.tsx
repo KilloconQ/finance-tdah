@@ -14,7 +14,7 @@ export function TabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   return (
-    <nav className="flex border-t border-line bg-surface px-1 pt-2 pb-6 md:hidden">
+    <nav className="sticky bottom-0 left-0 right-0 flex border-t border-line bg-surface px-1 pt-2 pb-6 md:hidden">
       {TABS.map((tab) => {
         const isActive =
           tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)
