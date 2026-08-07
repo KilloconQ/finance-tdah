@@ -1,8 +1,12 @@
 import { useState } from 'react'
-import { createFileRoute } from '@tanstack/react-router'
-import { AppBar, PhoneShell, TabBar } from '@/components'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useMutation } from '@tanstack/react-query'
+import { AppBar, PhoneShell, TabBar, Btn } from '@/components'
 import { cn } from '@/lib/cn'
 import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
+import { authClient } from '@/lib/auth-client'
+import { fetchValidated } from '@/lib/api'
+import { z } from 'zod'
 
 export const Route = createFileRoute('/_app/settings')({
   component: Settings,
@@ -11,6 +15,27 @@ export const Route = createFileRoute('/_app/settings')({
 function Settings() {
   const { showBalances, density, weeklyBudgetCents } = useTweaks()
   const setTweak = useSetTweak()
+  const navigate = useNavigate()
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+  const deleteAccount = useMutation({
+    mutationFn: async () => {
+      return fetchValidated(
+        '/profile/delete',
+        z.object({ success: z.boolean() }),
+        { method: 'POST' },
+      )
+    },
+    onSuccess: async () => {
+      await authClient.signOut()
+      navigate({ to: '/auth/sign-in' })
+    },
+  })
+
+  const handleLogout = async () => {
+    await authClient.signOut()
+    navigate({ to: '/auth/sign-in' })
+  }
 
   return (
     <PhoneShell>
@@ -51,6 +76,50 @@ function Settings() {
             onChange={(v) => setTweak.mutate({ showBalances: v })}
           />
         </Section>
+
+        <div className="border-t border-line pt-8 mt-8">
+          <div className="flex gap-2">
+            <Btn
+              kind="ghost"
+              className="flex-1"
+              onClick={handleLogout}
+            >
+              Cerrar sesión
+            </Btn>
+          </div>
+        </div>
+
+        {!deleteConfirm ? (
+          <Btn
+            kind="secondary"
+            className="w-full"
+            onClick={() => setDeleteConfirm(true)}
+          >
+            Borrar cuenta
+          </Btn>
+        ) : (
+          <div className="rounded-xl border border-danger bg-danger-bg p-4">
+            <div className="mb-3 text-sm font-medium text-danger">¿Estás seguro?</div>
+            <div className="mb-4 text-xs text-ink-soft">Esta acción no se puede deshacer.</div>
+            <div className="flex gap-2">
+              <Btn
+                kind="ghost"
+                className="flex-1"
+                onClick={() => setDeleteConfirm(false)}
+              >
+                Cancelar
+              </Btn>
+              <Btn
+                kind="danger"
+                className="flex-1"
+                onClick={() => deleteAccount.mutate()}
+                disabled={deleteAccount.isPending}
+              >
+                {deleteAccount.isPending ? 'Borrando...' : 'Confirmar'}
+              </Btn>
+            </div>
+          </div>
+        )}
       </div>
 
       <TabBar />

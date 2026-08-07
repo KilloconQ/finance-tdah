@@ -74,3 +74,19 @@ export const profileRoute = new Hono<{ Variables: SessionVariables }>()
 
     return c.json({ profile })
   })
+
+  .post('/delete', async (c) => {
+    const user = c.get('user')
+
+    await db.transaction(async (tx) => {
+      await tx.delete(schema.userProfile).where(eq(schema.userProfile.userId, user.id))
+      await tx.delete(schema.financialAccount).where(eq(schema.financialAccount.userId, user.id))
+      await tx.delete(schema.goal).where(eq(schema.goal.userId, user.id))
+      await tx.delete(schema.expense).where(eq(schema.expense.userId, user.id))
+      await tx.delete(schema.subscription).where(eq(schema.subscription.userId, user.id))
+      await tx.delete(schema.challenge).where(eq(schema.challenge.userId, user.id))
+      await tx.delete(schema.dailyBudget).where(eq(schema.dailyBudget.userId, user.id))
+    })
+
+    return c.json({ success: true })
+  })
