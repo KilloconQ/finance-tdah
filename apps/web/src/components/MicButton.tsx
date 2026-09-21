@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { cn } from '@/lib/cn'
 
 interface MicButtonProps {
@@ -15,18 +16,33 @@ export function MicButton({
   onPress,
   onRelease,
 }: MicButtonProps) {
+  // Guards against a second finger stealing/ending the press and against a
+  // release event firing without a matching press (lost capture, stray up).
+  const activePointerId = useRef<number | null>(null)
+
+  const release = (e: React.PointerEvent) => {
+    if (e.pointerId !== activePointerId.current) return
+    activePointerId.current = null
+    onRelease?.()
+  }
+
   return (
     <div className="text-center">
       <button
         type="button"
-        onMouseDown={onPress}
-        onMouseUp={onRelease}
-        onMouseLeave={onRelease}
-        onTouchStart={onPress}
-        onTouchEnd={onRelease}
+        onPointerDown={(e) => {
+          if (activePointerId.current !== null) return
+          activePointerId.current = e.pointerId
+          e.preventDefault()
+          e.currentTarget.setPointerCapture(e.pointerId)
+          onPress?.()
+        }}
+        onPointerUp={release}
+        onPointerCancel={release}
+        onLostPointerCapture={release}
         style={{ width: size, height: size }}
         className={cn(
-          'wf-tap relative mx-auto flex items-center justify-center rounded-full border-[1.5px] border-accent',
+          'wf-tap relative mx-auto flex touch-none items-center justify-center rounded-full border-[1.5px] border-accent select-none [-webkit-touch-callout:none]',
           recording ? 'bg-accent' : 'bg-surface',
         )}
         aria-label={label}

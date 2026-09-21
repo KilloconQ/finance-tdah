@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { LifeBuoy, PiggyBank, Plus } from 'lucide-react'
+import { LifeBuoy, PiggyBank, Plus, Settings } from 'lucide-react'
 import { jarProgress } from '@finance-tdah/shared/domain'
 import {
   AppBar,
@@ -9,6 +9,7 @@ import {
   Card,
   EmptyState,
   Hello,
+  IconButton,
   Mini,
   Money,
   PhoneShell,
@@ -65,6 +66,11 @@ function Home() {
     <PhoneShell>
       <AppBar
         title="Hoy"
+        left={
+          <IconButton onClick={() => navigate({ to: '/settings' })} label="Ajustes">
+            <Settings size={20} strokeWidth={2} />
+          </IconButton>
+        }
         right={
           <button
             type="button"

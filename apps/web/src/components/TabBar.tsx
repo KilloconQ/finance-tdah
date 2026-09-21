@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { Home, Receipt, Repeat, Wallet, Settings, type LucideIcon } from 'lucide-react'
+import { Home, Receipt, Repeat, Wallet, Flame, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 export const TABS: ReadonlyArray<{ to: string; label: string; icon: LucideIcon }> = [
@@ -7,7 +7,7 @@ export const TABS: ReadonlyArray<{ to: string; label: string; icon: LucideIcon }
   { to: '/transactions', label: 'Mov.', icon: Receipt },
   { to: '/subscriptions', label: 'Subs.', icon: Repeat },
   { to: '/accounts', label: 'Cuentas', icon: Wallet },
-  { to: '/settings', label: 'Ajustes', icon: Settings },
+  { to: '/challenge', label: 'Retos', icon: Flame },
 ]
 
 export function TabBar() {

@@ -1,4 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { Settings } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { TABS } from './TabBar'
 
@@ -37,6 +38,16 @@ export function Sidebar() {
           )
         })}
       </nav>
+      <div className="flex-1" />
+      <div className="border-t border-line pt-2">
+        <Link
+          to="/settings"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-ink-mid transition-colors hover:bg-bg-alt hover:text-ink"
+        >
+          <Settings size={18} strokeWidth={1.9} />
+          <span>Ajustes</span>
+        </Link>
+      </div>
     </aside>
   )
 }
