@@ -57,4 +57,40 @@ Direct/delegated organic implementation (no SDD). Single feature branch
   settings.tsx confirm pattern line-for-line; not clicked through manually.
 
 ## Status
-Done (T1 + T2 implemented, typecheck clean, lint clean relative to baseline).
+T1 + T2 done. Follow-up work requested by the user while on the same branch:
+
+- [x] T3: regression test pinning `DELETE /expenses/:id` balance reversal for
+  expense/income/transfer (`apps/api/src/routes/expenses.test.ts`). Verified:
+  `vitest run` → 4/4 pass; `tsc --noEmit` clean; full `apps/api` suite 16/16 pass.
+  Commit: `61d0340 test(api): pin balance reversal on expense delete for expense/income/transfer`.
+- [x] T4: after successfully "echando" money into a goal, reset the amount
+  picker back to 0 instead of leaving the last selected/typed amount showing.
+  The success message must still show the amount that was actually added
+  (needs its own state, decoupled from the now-reset selector). `canAdd` must
+  require `amountCents > 0` once 0 is a reachable state (backend's
+  `addToGoalSchema` already requires `cents.min(1)`).
+  Files: `apps/web/src/features/goals/containers/GoalDetailContainer.tsx`,
+  `apps/web/src/features/goals/components/GoalDetailView.tsx`. Added
+  `confirmedCents` state, reset `selected`/`isCustom`/`customAmount` in
+  `onSuccess`, tightened `canAdd` to `amountCents > 0`. Verified via
+  `tsc -b --noEmit` (clean) — no manual/browser click-through.
+  Scope addition (user request while on T4): success message on goal delete
+  too — added `deleted` state; `handleDelete`'s `onSuccess` now shows
+  "✓ Frasco borrado" in place of the confirm box for 1200ms before navigating
+  to `/goals`, instead of navigating immediately with no feedback. Same
+  `GoalDetailContainer.tsx`/`GoalDetailView.tsx` files. The equivalent for
+  expense delete (`transactions.tsx`) was handled by the user/orchestrator in
+  parallel, not touched here.
+- [ ] T5: fire a confetti burst when a goal's progress crosses 100% (only on
+  the crossing during this session — not on every mount/re-render of an
+  already-completed goal). No confetti library is installed yet; add
+  `canvas-confetti` + `@types/canvas-confetti` to `apps/web` (ponytail check:
+  no native/stdlib option covers this, and hand-rolling particle physics is
+  more code and more bug surface than the ~3kb standard library built for
+  exactly this).
+  Files: `apps/web/package.json` (+lockfile), `GoalDetailContainer.tsx`.
+- [ ] T6: regression test confirming `DELETE /goals/:id` actually soft-archives
+  (sets `archivedAt`, never hard-deletes) and can't double-archive/404s when
+  not found — mirrors T3's approach but for `apps/api/src/routes/goals.ts`,
+  which calls `db.update(...)` directly (no `db.transaction`, unlike expenses).
+  File: `apps/api/src/routes/goals.test.ts`.

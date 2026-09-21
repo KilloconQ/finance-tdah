@@ -23,7 +23,9 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const [isCustom, setIsCustom] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
   const [confirming, setConfirming] = useState(false)
+  const [confirmedCents, setConfirmedCents] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleted, setDeleted] = useState(false)
 
   if (!goal) {
     return (
@@ -58,14 +60,18 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
 
   const customCents = parseAmountToCents(customAmount)
   const amountCents = isCustom ? customCents : unitsToCents(selected)
-  const canAdd = amountCents !== null
+  const canAdd = amountCents !== null && amountCents > 0
 
   const handleAdd = () => {
     if (amountCents === null) return
     addMutation.mutate(amountCents, {
       onSuccess: () => {
+        setConfirmedCents(amountCents)
         setConfirming(true)
         window.setTimeout(() => setConfirming(false), 1400)
+        setSelected(0)
+        setIsCustom(false)
+        setCustomAmount('')
       },
     })
   }
@@ -73,7 +79,8 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const handleDelete = () => {
     deleteMutation.mutate(undefined, {
       onSuccess: () => {
-        navigate({ to: '/goals', replace: true })
+        setDeleted(true)
+        window.setTimeout(() => navigate({ to: '/goals', replace: true }), 1200)
       },
     })
   }
@@ -89,10 +96,12 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
       customAmount={customAmount}
       showBalances={showBalances}
       confirming={confirming}
+      confirmedAmountCents={confirmedCents}
       isAdding={addMutation.isPending}
       canAdd={canAdd}
       deleteConfirm={deleteConfirm}
       isDeleting={deleteMutation.isPending}
+      deleted={deleted}
       onBack={() => navigate({ to: '..' })}
       onSelectAmount={(amount) => {
         setIsCustom(false)
