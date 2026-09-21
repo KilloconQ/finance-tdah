@@ -70,7 +70,7 @@ function SignUp() {
           </form>
 
           <div className="mt-5 text-center text-sm text-ink-mid">
-            ¿Ya tenés cuenta?{' '}
+            ¿Ya tienes cuenta?{' '}
             <Link to="/auth/sign-in" className="font-medium text-accent-strong underline">
               Entrar
             </Link>

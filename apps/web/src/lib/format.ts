@@ -1,7 +1,7 @@
 const MXN = new Intl.NumberFormat('es-MX', {
   style: 'currency',
   currency: 'MXN',
-  maximumFractionDigits: 0,
+  maximumFractionDigits: 2,
 })
 
 export function formatMoney(value: number, hidden = false): string {

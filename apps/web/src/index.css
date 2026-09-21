@@ -59,6 +59,14 @@ button {
   font-family: inherit;
 }
 
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 /*
  * Money / numeric values: sans font with tabular figures so columns align
  * without the "source code" feel of monospace. Replaces `.wf-mono` for money.

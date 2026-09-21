@@ -44,7 +44,7 @@ function Settings() {
       <div className="flex w-full max-w-xl flex-1 flex-col gap-8 pb-8">
         <Section
           label="Presupuesto"
-          hint="Cuánto querés poder gastar por semana. De acá sale el “hoy puedes gastar”."
+          hint="Cuánto quieres poder gastar por semana. De aquí sale el “hoy puedes gastar”."
         >
           <BudgetInput
             valueCents={weeklyBudgetCents}

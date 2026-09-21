@@ -31,12 +31,12 @@ export function AppBar({ title, left, right, sub, back, onBack, className }: App
 
   return (
     <header className={cn('pt-3 pb-4', className)}>
-      <div className="flex min-h-11 items-center gap-2">
-        {leading ? <div className="flex shrink-0 items-center">{leading}</div> : null}
-        <h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold tracking-tight text-ink md:text-left md:text-xl">
+      <div className="grid min-h-11 grid-cols-[44px_1fr_44px] items-center gap-2">
+        <div className="flex shrink-0 items-center justify-start">{leading}</div>
+        <h1 className="min-w-0 truncate text-center text-base font-semibold tracking-tight text-ink md:text-left md:text-xl">
           {title}
         </h1>
-        {right ? <div className="flex shrink-0 items-center gap-1">{right}</div> : null}
+        <div className="flex shrink-0 items-center justify-end gap-1">{right}</div>
       </div>
       {sub ? (
         <div className="mt-1 text-center text-[13px] text-ink-mid md:text-left">{sub}</div>
