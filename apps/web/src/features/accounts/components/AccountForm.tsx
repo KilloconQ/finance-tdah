@@ -33,14 +33,16 @@ interface AccountFormProps {
   submitting: boolean
   error: string | null
   onSubmit: (fields: AccountFormFields) => void
+  initial?: Partial<AccountFormFields>
+  submitLabel?: string
 }
 
-export function AccountForm({ submitting, error, onSubmit }: AccountFormProps) {
-  const [name, setName] = useState('')
-  const [type, setType] = useState<AccountType>('debito')
-  const [balance, setBalance] = useState('')
-  const [institution, setInstitution] = useState('')
-  const [last4, setLast4] = useState('')
+export function AccountForm({ submitting, error, onSubmit, initial, submitLabel }: AccountFormProps) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [type, setType] = useState<AccountType>(initial?.type ?? 'debito')
+  const [balance, setBalance] = useState(initial?.balance ?? '')
+  const [institution, setInstitution] = useState(initial?.institution ?? '')
+  const [last4, setLast4] = useState(initial?.last4 ?? '')
 
   const isCard = type === 'debito' || type === 'credito'
   const canSubmit = name.trim() !== '' && !submitting
@@ -150,7 +152,7 @@ export function AccountForm({ submitting, error, onSubmit }: AccountFormProps) {
       ) : null}
 
       <Btn kind="primary" type="submit" className="mt-2 w-full" disabled={!canSubmit}>
-        {submitting ? 'Guardando…' : 'Agregar cuenta'}
+        {submitting ? 'Guardando…' : submitLabel ?? 'Agregar cuenta'}
       </Btn>
     </form>
   )

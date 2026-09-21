@@ -31,6 +31,7 @@ import { Route as AppSubscriptionsIdRouteImport } from './app/_app/subscriptions
 import { Route as AppGoalsNewRouteImport } from './app/_app/goals/new'
 import { Route as AppGoalsIdRouteImport } from './app/_app/goals/$id'
 import { Route as AppAccountsNewRouteImport } from './app/_app/accounts/new'
+import { Route as AppAccountsIdRouteImport } from './app/_app/accounts/$id'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -141,6 +142,11 @@ const AppAccountsNewRoute = AppAccountsNewRouteImport.update({
   path: '/accounts/new',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountsIdRoute = AppAccountsIdRouteImport.update({
+  id: '/accounts/$id',
+  path: '/accounts/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -156,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/input-method': typeof OnboardingInputMethodRoute
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/accounts/$id': typeof AppAccountsIdRoute
   '/accounts/new': typeof AppAccountsNewRoute
   '/goals/$id': typeof AppGoalsIdRoute
   '/goals/new': typeof AppGoalsNewRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/accounts/$id': typeof AppAccountsIdRoute
   '/accounts/new': typeof AppAccountsNewRoute
   '/goals/$id': typeof AppGoalsIdRoute
   '/goals/new': typeof AppGoalsNewRoute
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/_app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/_app/accounts/$id': typeof AppAccountsIdRoute
   '/_app/accounts/new': typeof AppAccountsNewRoute
   '/_app/goals/$id': typeof AppGoalsIdRoute
   '/_app/goals/new': typeof AppGoalsNewRoute
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/onboarding/input-method'
     | '/onboarding/pain-points'
     | '/onboarding/'
+    | '/accounts/$id'
     | '/accounts/new'
     | '/goals/$id'
     | '/goals/new'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/onboarding/pain-points'
     | '/'
     | '/onboarding'
+    | '/accounts/$id'
     | '/accounts/new'
     | '/goals/$id'
     | '/goals/new'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/onboarding/pain-points'
     | '/_app/'
     | '/onboarding/'
+    | '/_app/accounts/$id'
     | '/_app/accounts/new'
     | '/_app/goals/$id'
     | '/_app/goals/new'
@@ -453,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountsNewRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounts/$id': {
+      id: '/_app/accounts/$id'
+      path: '/accounts/$id'
+      fullPath: '/accounts/$id'
+      preLoaderRoute: typeof AppAccountsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -463,6 +482,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppAccountsIdRoute: typeof AppAccountsIdRoute
   AppAccountsNewRoute: typeof AppAccountsNewRoute
   AppGoalsIdRoute: typeof AppGoalsIdRoute
   AppGoalsNewRoute: typeof AppGoalsNewRoute
@@ -480,6 +500,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppAccountsIdRoute: AppAccountsIdRoute,
   AppAccountsNewRoute: AppAccountsNewRoute,
   AppGoalsIdRoute: AppGoalsIdRoute,
   AppGoalsNewRoute: AppGoalsNewRoute,

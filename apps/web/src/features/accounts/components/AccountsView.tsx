@@ -39,6 +39,7 @@ interface AccountsViewProps {
   showBalances: boolean
   loading: boolean
   onAddAccount: () => void
+  onEditAccount: (id: string) => void
 }
 
 export function AccountsView({
@@ -50,6 +51,7 @@ export function AccountsView({
   showBalances,
   loading,
   onAddAccount,
+  onEditAccount,
 }: AccountsViewProps) {
   // The bar splits total assets into the free slice and the jar-earmarked slice
   // (both already part of liquid), then debt — so nothing is counted twice.
@@ -124,7 +126,7 @@ export function AccountsView({
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {accounts.map((a) => (
-                <AccountCard key={a.id} account={a} showBalances={showBalances} />
+                <AccountCard key={a.id} account={a} showBalances={showBalances} onEditAccount={onEditAccount} />
               ))}
             </div>
           )}
@@ -139,16 +141,25 @@ export function AccountsView({
 interface AccountCardProps {
   account: FinancialAccountDTO
   showBalances: boolean
+  onEditAccount: (id: string) => void
 }
 
-function AccountCard({ account, showBalances }: AccountCardProps) {
+function AccountCard({ account, showBalances, onEditAccount }: AccountCardProps) {
   const isNegative = account.balanceCents < 0
   const meta = [ACCOUNT_LABEL[account.type] ?? account.type, account.institution]
     .filter(Boolean)
     .join(' · ')
 
   return (
-    <Card className="flex flex-col gap-3">
+    <Card
+      role="button"
+      tabIndex={0}
+      onClick={() => onEditAccount(account.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onEditAccount(account.id)
+      }}
+      className="flex cursor-pointer flex-col gap-3 transition-colors hover:bg-bg-alt"
+    >
       <div className="flex items-start gap-3">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-bg text-lg">
           {ACCOUNT_EMOJI[account.type] ?? '·'}
