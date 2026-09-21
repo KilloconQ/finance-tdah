@@ -1,2 +1,2 @@
 export { goalQueryOptions, goalsQueryOptions } from './goals.queries'
-export { useAddToGoal, useCreateGoal } from './goals.mutations'
+export { useAddToGoal, useCreateGoal, useDeleteGoal } from './goals.mutations'

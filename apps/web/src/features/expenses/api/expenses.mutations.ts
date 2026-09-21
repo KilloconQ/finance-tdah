@@ -15,6 +15,18 @@ export function useCreateExpense() {
   })
 }
 
+export function useDeleteExpense() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => api.delete(`expenses/${id}`).json(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['expenses'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      void queryClient.invalidateQueries({ queryKey: ['accounts'] })
+    },
+  })
+}
+
 export function useParseVoice() {
   return useMutation({
     mutationFn: async (transcript: string) => {

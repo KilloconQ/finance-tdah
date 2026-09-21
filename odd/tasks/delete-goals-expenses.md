@@ -1,0 +1,116 @@
+# Delete goals (frascos) and expenses (gastos)
+
+## Objective
+Let the user delete a goal ("frasco") and an expense ("gasto") from the web app.
+
+## Why
+Product ask from the user's partner: "Quiero poder borrar frascos y gastos."
+
+## Scope
+- Backend: none needed. `DELETE /api/goals/:id` (soft-archive) and `DELETE /api/expenses/:id`
+  (hard delete + balance reversal) already exist in `apps/api/src/routes/goals.ts` and
+  `apps/api/src/routes/expenses.ts`.
+- Frontend only: add mutations + UI entry points.
+
+## Constraints / conventions
+- Reuse the existing tap-to-confirm danger pattern from `apps/web/src/app/_app/settings.tsx`
+  (`Btn kind="plain"` → confirm box with `Btn kind="ghost"` cancel + `Btn kind="danger"` confirm).
+- `apps/web` has no test script (per root CLAUDE.md) — verification is `pnpm typecheck` and
+  `pnpm lint`, not a test suite. TDD does not apply here.
+
+## Tasks
+- [x] T1: Delete a goal from its detail page
+  - Added `useDeleteGoal(goalId)` to `apps/web/src/features/goals/api/goals.mutations.ts`
+    (DELETE `goals/${goalId}`, invalidate `['goals']` and `['goals', goalId]` on success).
+  - Exported it from `apps/web/src/features/goals/api/index.ts` (explicit named barrel).
+  - Wired delete button + confirm state into `GoalDetailContainer`/`GoalDetailView`
+    (`apps/web/src/features/goals/containers/GoalDetailContainer.tsx`,
+    `apps/web/src/features/goals/components/GoalDetailView.tsx`); navigates to `/goals`
+    (replace) on success. Confirm UX copies the settings.tsx danger-box pattern exactly.
+- [x] T2: Delete an expense from the transactions list
+  - Added `useDeleteExpense()` to `apps/web/src/features/expenses/api/expenses.mutations.ts`
+    (DELETE `expenses/${id}`, invalidate `['expenses']`, `['dashboard']`, `['accounts']` —
+    mirrors `useCreateExpense`'s invalidation since deleting reverses balances too).
+  - Added a per-row delete affordance in `apps/web/src/app/_app/transactions.tsx`: a small
+    `Trash2` `IconButton` next to the amount that sets `confirmingId`; the row in
+    "confirming" state renders the danger confirm box (¿Estás seguro? / Cancelar / Confirmar)
+    in place of the normal `Row`.
+
+## Delivery
+Direct/delegated organic implementation (no SDD). Single feature branch
+`feature/delete-goals-expenses`, work-unit commits per task, no push/PR unless asked.
+
+## Verification
+- `pnpm typecheck` failed in this environment due to a pnpm version mismatch unrelated to the
+  change (global pnpm is 12.3.4, repo pins `packageManager: pnpm@11.1.1`, corepack shim also
+  misbehaved). Worked around with `npx --yes pnpm@11.1.1 -r typecheck` — PASSED (all three
+  workspaces: packages/shared, apps/api, apps/web — "Done" / no errors).
+- `npx --yes pnpm@11.1.1 lint` (same pnpm-version workaround) — `apps/web` reports 31
+  pre-existing `react-refresh/only-export-components` errors (route files exporting `Route`
+  alongside a page component, e.g. `transactions.tsx`, `settings.tsx`, `_app.tsx`, etc.).
+  Verified via `git stash` that this is the exact pre-existing baseline (31 errors, including
+  2 in `transactions.tsx` at the same two component declarations, just at different line
+  numbers) — my changes add zero new lint errors. `pnpm lint` does not run on `apps/api`
+  (no lint script, per root CLAUDE.md) or `packages/shared`.
+- Manual: not run — no dev server/browser session started in this pass. UI wiring was
+  verified by reading the compiled render output (typecheck) and matching the existing
+  settings.tsx confirm pattern line-for-line; not clicked through manually.
+
+## Status
+T1 + T2 done. Follow-up work requested by the user while on the same branch:
+
+- [x] T3: regression test pinning `DELETE /expenses/:id` balance reversal for
+  expense/income/transfer (`apps/api/src/routes/expenses.test.ts`). Verified:
+  `vitest run` → 4/4 pass; `tsc --noEmit` clean; full `apps/api` suite 16/16 pass.
+  Commit: `61d0340 test(api): pin balance reversal on expense delete for expense/income/transfer`.
+- [x] T4: after successfully "echando" money into a goal, reset the amount
+  picker back to 0 instead of leaving the last selected/typed amount showing.
+  The success message must still show the amount that was actually added
+  (needs its own state, decoupled from the now-reset selector). `canAdd` must
+  require `amountCents > 0` once 0 is a reachable state (backend's
+  `addToGoalSchema` already requires `cents.min(1)`).
+  Files: `apps/web/src/features/goals/containers/GoalDetailContainer.tsx`,
+  `apps/web/src/features/goals/components/GoalDetailView.tsx`. Added
+  `confirmedCents` state, reset `selected`/`isCustom`/`customAmount` in
+  `onSuccess`, tightened `canAdd` to `amountCents > 0`. Verified via
+  `tsc -b --noEmit` (clean) — no manual/browser click-through.
+  Scope addition (user request while on T4): success message on goal delete
+  too — added `deleted` state; `handleDelete`'s `onSuccess` now shows
+  "✓ Frasco borrado" in place of the confirm box for 1200ms before navigating
+  to `/goals`, instead of navigating immediately with no feedback. Same
+  `GoalDetailContainer.tsx`/`GoalDetailView.tsx` files. The equivalent for
+  expense delete (`transactions.tsx`) was handled by the user/orchestrator in
+  parallel, not touched here.
+- [x] T5: fire a confetti burst when a goal's progress crosses 100% (only on
+  the crossing during this session — not on every mount/re-render of an
+  already-completed goal). No confetti library is installed yet; add
+  `canvas-confetti` + `@types/canvas-confetti` to `apps/web` (ponytail check:
+  no native/stdlib option covers this, and hand-rolling particle physics is
+  more code and more bug surface than the ~3kb standard library built for
+  exactly this).
+  Files: `apps/web/package.json` (+lockfile), `GoalDetailContainer.tsx`.
+  Added `canvas-confetti@^1.9.3` + `@types/canvas-confetti@^1.9.0`, installed
+  via `npx --yes pnpm@11.1.1 install`. Tracks `previousPercentRef` (starts
+  `null`) in a `useEffect` keyed on `goal`; only fires
+  `confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } })` on a
+  genuine below-100 → 100-or-above transition, and the `null` start
+  deliberately guards against firing on first load of an already-completed
+  goal (adapted from the suggested pattern, which would have fired in that
+  case since `goal` loads asynchronously after mount). `jarProgress()`
+  returns `{ fraction, percent, isComplete, overflowCents }` — used
+  `percent` as specified. Verified via `tsc -b --noEmit` (clean) — no
+  manual/browser click-through of the actual burst.
+- [x] T6: regression test confirming `DELETE /goals/:id` actually soft-archives
+  (sets `archivedAt`, never hard-deletes) and can't double-archive/404s when
+  not found — mirrors T3's approach but for `apps/api/src/routes/goals.ts`,
+  which calls `db.update(...)` directly (no `db.transaction`, unlike expenses).
+  File: `apps/api/src/routes/goals.test.ts`. Fake `db` object has a flat
+  `update().set().where().returning()` chain (no `.delete()` method at all,
+  so a hard-delete path would throw) and records `setArg`/`whereArg` per
+  call. Three cases: successful delete asserts `setArg.archivedAt`
+  `instanceof Date` and `{ ok: true }`/200; a where-condition leaf-walk
+  confirms `goal.archivedAt` (the `isNull(...)` target) is part of the
+  where clause; not-found/already-archived simulates an empty `returning()`
+  result and asserts 404 + `{ error: 'Frasco no encontrado' }`. Verified:
+  `vitest run src/routes/goals.test.ts` → 3/3 pass; full `apps/api` suite
+  19/19 pass; `tsc --noEmit` (api) clean.

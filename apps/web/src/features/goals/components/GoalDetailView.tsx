@@ -1,5 +1,6 @@
 import type { GoalDTO } from '@finance-tdah/shared/schemas'
 import type { JarPace, JarProgress } from '@finance-tdah/shared/domain'
+import { centsToUnits } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, Money, PhoneShell, TabBar } from '@/components'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
@@ -15,13 +16,20 @@ interface GoalDetailViewProps {
   customAmount: string
   showBalances: boolean
   confirming: boolean
+  confirmedAmountCents: number | null
   isAdding: boolean
   canAdd: boolean
+  deleteConfirm: boolean
+  isDeleting: boolean
+  deleted: boolean
   onBack: () => void
   onSelectAmount: (amount: number) => void
   onSelectCustom: () => void
   onCustomAmountChange: (value: string) => void
   onAdd: () => void
+  onRequestDelete: () => void
+  onCancelDelete: () => void
+  onConfirmDelete: () => void
 }
 
 export function GoalDetailView({
@@ -34,13 +42,20 @@ export function GoalDetailView({
   customAmount,
   showBalances,
   confirming,
+  confirmedAmountCents,
   isAdding,
   canAdd,
+  deleteConfirm,
+  isDeleting,
+  deleted,
   onBack,
   onSelectAmount,
   onSelectCustom,
   onCustomAmountChange,
   onAdd,
+  onRequestDelete,
+  onCancelDelete,
+  onConfirmDelete,
 }: GoalDetailViewProps) {
   return (
     <PhoneShell>
@@ -139,10 +154,42 @@ export function GoalDetailView({
             </Btn>
             {confirming ? (
               <div className="text-center text-sm text-good">
-                ✓ {formatMoney(selectedAmount)} guardados al frasco
+                ✓ {formatMoney(centsToUnits(confirmedAmountCents ?? 0))} guardados al frasco
               </div>
             ) : null}
           </Card>
+        </div>
+
+        <div className="mx-auto mt-6 max-w-3xl">
+          {!deleteConfirm ? (
+            <Btn kind="plain" className="w-full" onClick={onRequestDelete}>
+              Borrar frasco
+            </Btn>
+          ) : (
+            <div className="rounded-xl border border-danger bg-danger-bg p-4">
+              {deleted ? (
+                <div className="text-center text-sm text-good">✓ Frasco borrado</div>
+              ) : (
+                <>
+                  <div className="mb-3 text-sm font-medium text-danger">¿Estás seguro?</div>
+                  <div className="mb-4 text-xs text-ink-soft">Esta acción no se puede deshacer.</div>
+                  <div className="flex gap-2">
+                    <Btn kind="ghost" className="flex-1" onClick={onCancelDelete}>
+                      Cancelar
+                    </Btn>
+                    <Btn
+                      kind="danger"
+                      className="flex-1"
+                      onClick={onConfirmDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Borrando...' : 'Confirmar'}
+                    </Btn>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

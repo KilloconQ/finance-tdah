@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Receipt } from 'lucide-react'
+import { Plus, Receipt, Trash2 } from 'lucide-react'
 import {
   AppBar,
   Btn,
@@ -13,6 +14,7 @@ import {
   Skeleton,
   TabBar,
 } from '@/components'
+import { useDeleteExpense } from '@/features/expenses'
 import { formatMoney } from '@/lib/format'
 import { expensesQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
@@ -41,6 +43,9 @@ function Transactions() {
   const navigate = useNavigate()
   const { showBalances } = useTweaks()
   const { data: expenses = [], isLoading } = useQuery(expensesQuery())
+  const deleteMutation = useDeleteExpense()
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [justDeleted, setJustDeleted] = useState(false)
 
   const grouped = expenses.reduce<Record<string, typeof expenses>>((acc, e) => {
     const day = e.occurredAt.slice(0, 10)
@@ -60,6 +65,12 @@ function Transactions() {
           </IconButton>
         }
       />
+
+      {justDeleted ? (
+        <div className="mb-3 rounded-xl border border-good/40 bg-good-bg px-4 py-2.5 text-center text-sm font-medium text-good">
+          ✓ Gasto borrado
+        </div>
+      ) : null}
 
       {isLoading ? (
         <TransactionsSkeleton />
@@ -82,24 +93,73 @@ function Transactions() {
               <div key={date}>
                 <SectionHeader title={prettyDate(date)} />
                 <div className="rounded-2xl border border-line bg-surface px-4 shadow-card [&>*:last-child]:border-b-0">
-                  {list.map((e) => (
-                    <Row
-                      key={e.id}
-                      left={
-                        <CatDot
-                          char={CATEGORY_EMOJI[e.category] ?? CATEGORY_FALLBACK}
-                          tone="neutral"
-                        />
-                      }
-                      title={e.description}
-                      sub={e.category}
-                      right={
-                        <span className={`money text-sm font-medium ${amountToneClass(e.kind)}`}>
-                          {showBalances ? amountLabel(e.kind, e.amountCents) : '••••'}
-                        </span>
-                      }
-                    />
-                  ))}
+                  {list.map((e) =>
+                    confirmingId === e.id ? (
+                      <div key={e.id} className="border-b border-line-soft py-3.5">
+                        <div className="rounded-xl border border-danger bg-danger-bg p-4">
+                          <div className="mb-3 text-sm font-medium text-danger">
+                            ¿Estás seguro?
+                          </div>
+                          <div className="mb-4 text-xs text-ink-soft">
+                            Esta acción no se puede deshacer.
+                          </div>
+                          <div className="flex gap-2">
+                            <Btn
+                              kind="ghost"
+                              className="flex-1"
+                              onClick={() => setConfirmingId(null)}
+                            >
+                              Cancelar
+                            </Btn>
+                            <Btn
+                              kind="danger"
+                              className="flex-1"
+                              onClick={() =>
+                                deleteMutation.mutate(e.id, {
+                                  onSuccess: () => {
+                                    setConfirmingId(null)
+                                    setJustDeleted(true)
+                                    window.setTimeout(() => setJustDeleted(false), 1400)
+                                  },
+                                })
+                              }
+                              disabled={deleteMutation.isPending}
+                            >
+                              {deleteMutation.isPending ? 'Borrando...' : 'Confirmar'}
+                            </Btn>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Row
+                        key={e.id}
+                        left={
+                          <CatDot
+                            char={CATEGORY_EMOJI[e.category] ?? CATEGORY_FALLBACK}
+                            tone="neutral"
+                          />
+                        }
+                        title={e.description}
+                        sub={e.category}
+                        right={
+                          <div className="flex items-center gap-1">
+                            <span
+                              className={`money text-sm font-medium ${amountToneClass(e.kind)}`}
+                            >
+                              {showBalances ? amountLabel(e.kind, e.amountCents) : '••••'}
+                            </span>
+                            <IconButton
+                              className="h-8 w-8"
+                              onClick={() => setConfirmingId(e.id)}
+                              label="Borrar gasto"
+                            >
+                              <Trash2 size={16} strokeWidth={2} />
+                            </IconButton>
+                          </div>
+                        }
+                      />
+                    ),
+                  )}
                 </div>
               </div>
             ))}
