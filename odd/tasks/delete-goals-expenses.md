@@ -100,8 +100,17 @@ T1 + T2 done. Follow-up work requested by the user while on the same branch:
   returns `{ fraction, percent, isComplete, overflowCents }` — used
   `percent` as specified. Verified via `tsc -b --noEmit` (clean) — no
   manual/browser click-through of the actual burst.
-- [ ] T6: regression test confirming `DELETE /goals/:id` actually soft-archives
+- [x] T6: regression test confirming `DELETE /goals/:id` actually soft-archives
   (sets `archivedAt`, never hard-deletes) and can't double-archive/404s when
   not found — mirrors T3's approach but for `apps/api/src/routes/goals.ts`,
   which calls `db.update(...)` directly (no `db.transaction`, unlike expenses).
-  File: `apps/api/src/routes/goals.test.ts`.
+  File: `apps/api/src/routes/goals.test.ts`. Fake `db` object has a flat
+  `update().set().where().returning()` chain (no `.delete()` method at all,
+  so a hard-delete path would throw) and records `setArg`/`whereArg` per
+  call. Three cases: successful delete asserts `setArg.archivedAt`
+  `instanceof Date` and `{ ok: true }`/200; a where-condition leaf-walk
+  confirms `goal.archivedAt` (the `isNull(...)` target) is part of the
+  where clause; not-found/already-archived simulates an empty `returning()`
+  result and asserts 404 + `{ error: 'Frasco no encontrado' }`. Verified:
+  `vitest run src/routes/goals.test.ts` → 3/3 pass; full `apps/api` suite
+  19/19 pass; `tsc --noEmit` (api) clean.
