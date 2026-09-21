@@ -1,5 +1,6 @@
 FROM node:22-alpine AS base
 RUN corepack enable && corepack prepare pnpm@11.1.1 --activate
+ENV NODE_OPTIONS=--max-old-space-size=4096
 WORKDIR /repo
 
 FROM base AS deps
