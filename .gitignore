@@ -31,3 +31,4 @@ dist-ssr
 # Tooling caches
 .atl/
 .claude/
+.codegraph/
