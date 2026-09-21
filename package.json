@@ -19,6 +19,7 @@
     "db:studio": "pnpm --filter @finance-tdah/api db:studio",
     "auth:schema": "pnpm --filter @finance-tdah/api auth:schema",
     "docker:up": "docker compose --env-file .env up -d",
+    "docker:up:public": "docker compose --profile public --env-file .env up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
     "docker:build": "docker compose build"

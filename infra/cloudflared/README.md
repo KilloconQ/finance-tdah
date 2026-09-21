@@ -16,9 +16,9 @@ Este proyecto usa un **token tunnel** (más simple, sin credentials.json local).
    - **Service**: `http://caddy:80`
    - Path: vacío
 
-5. Levantá todo:
+5. Levantá todo (con el profile `public`, si no `cloudflared` no arranca):
    ```bash
-   pnpm docker:up
+   pnpm docker:up:public
    ```
 
 6. Tu app va a estar en `https://finance.tu-dominio.com` con TLS gestionado por Cloudflare. El tunnel evita abrir puertos en tu router.
