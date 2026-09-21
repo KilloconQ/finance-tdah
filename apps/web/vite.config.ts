@@ -20,13 +20,13 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg'],
+        includeAssets: ['favicon.svg', 'favicon-32x32.png', 'apple-touch-icon.png'],
         manifest: {
-          name: 'Finance · TDAH',
-          short_name: 'Finance TDAH',
-          description: 'Gestor de finanzas personales pensado para TDAH',
-          theme_color: '#f0eee9',
-          background_color: '#f0eee9',
+          name: 'Cada Quien',
+          short_name: 'Cada Quien',
+          description: 'Finanzas personales, a tu manera.',
+          theme_color: '#fafaf9',
+          background_color: '#fafaf9',
           display: 'standalone',
           start_url: '/',
           icons: [
@@ -35,6 +35,22 @@ export default defineConfig(({ mode }) => {
               sizes: 'any',
               type: 'image/svg+xml',
               purpose: 'any',
+            },
+            {
+              src: '/pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: '/pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+            {
+              src: '/pwa-maskable-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
             },
           ],
         },
