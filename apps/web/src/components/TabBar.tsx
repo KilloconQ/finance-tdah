@@ -14,7 +14,7 @@ export function TabBar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
   return (
-    <nav className="sticky bottom-0 left-0 right-0 flex border-t border-line bg-surface px-1 pt-2 pb-6 md:hidden">
+    <nav className="sticky bottom-0 left-0 right-0 -mx-4 flex border-t border-line bg-surface px-2 pt-2 pb-6 sm:-mx-6 sm:px-4 md:hidden">
       {TABS.map((tab) => {
         const isActive =
           tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)
@@ -24,11 +24,11 @@ export function TabBar() {
             key={tab.to}
             to={tab.to}
             className={cn(
-              'flex flex-1 flex-col items-center gap-1 text-[11px]',
+              'flex flex-1 flex-col items-center gap-1 py-1.5 text-xs',
               isActive ? 'font-semibold text-accent-strong' : 'text-ink-soft',
             )}
           >
-            <Icon size={20} strokeWidth={isActive ? 2.4 : 1.9} />
+            <Icon size={24} strokeWidth={isActive ? 2.4 : 1.9} />
             <span>{tab.label}</span>
           </Link>
         )
