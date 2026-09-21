@@ -16,9 +16,20 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
   const [error, setError] = useState<string | null>(null)
   const inFlight = useRef(false)
 
-  const { data: accounts } = useQuery(accountsQueryOptions())
+  const { data: accounts, isLoading } = useQuery(accountsQueryOptions())
   const account = accounts?.find((a) => a.id === accountId)
   const updateAccount = useUpdateAccount(accountId)
+
+  if (isLoading) {
+    return (
+      <PhoneShell variant="narrow">
+        <AppBar title="Editar cuenta" back onBack={() => navigate({ to: '/accounts' })} />
+        <div className="flex flex-1 items-center justify-center text-sm text-ink-mid">
+          Cargando…
+        </div>
+      </PhoneShell>
+    )
+  }
 
   if (!account) {
     return (
@@ -42,13 +53,26 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
       return
     }
 
+    // Preserve the account's existing sign when the type is unchanged and it
+    // actually has one, so an account tracked outside the type's canonical
+    // sign (e.g. an overdrawn debit account) doesn't get silently flipped by
+    // an unrelated edit. A zero balance has no sign to preserve, and changing
+    // the type is a deliberate re-signing — both fall back to the canonical
+    // sign for the type, matching the pre-edit create behavior.
+    const balanceCents =
+      fields.type === account.type && account.balanceCents !== 0
+        ? account.balanceCents < 0
+          ? -magnitudeCents
+          : magnitudeCents
+        : signedBalanceForType(fields.type, magnitudeCents)
+
     if (inFlight.current) return
     inFlight.current = true
     updateAccount.mutate(
       {
         name: fields.name,
         type: fields.type,
-        balanceCents: signedBalanceForType(fields.type, magnitudeCents),
+        balanceCents,
         institution: fields.institution,
         last4: fields.last4,
       },
