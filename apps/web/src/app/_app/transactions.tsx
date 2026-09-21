@@ -94,8 +94,8 @@ function Transactions() {
                       title={e.description}
                       sub={e.category}
                       right={
-                        <span className="money text-sm font-medium text-ink">
-                          {showBalances ? `−${formatMoney(e.amountCents / 100)}` : '••••'}
+                        <span className={`money text-sm font-medium ${amountToneClass(e.kind)}`}>
+                          {showBalances ? amountLabel(e.kind, e.amountCents) : '••••'}
                         </span>
                       }
                     />
@@ -135,6 +135,19 @@ function TransactionsSkeleton() {
       </div>
     </div>
   )
+}
+
+function amountLabel(kind: 'expense' | 'income' | 'transfer', amountCents: number): string {
+  const amount = formatMoney(amountCents / 100)
+  if (kind === 'income') return `+${amount}`
+  if (kind === 'transfer') return `→ ${amount}`
+  return `−${amount}`
+}
+
+function amountToneClass(kind: 'expense' | 'income' | 'transfer'): string {
+  if (kind === 'income') return 'text-good'
+  if (kind === 'transfer') return 'text-ink-mid'
+  return 'text-ink'
 }
 
 function prettyDate(d: string): string {

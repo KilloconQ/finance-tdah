@@ -7,6 +7,7 @@ import {
   voiceTranscriptSchema,
   type ParsedVoiceExpense,
 } from '@finance-tdah/shared/schemas'
+import { sourceBalanceDeltaCents } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 import { parseVoiceTranscript } from '../services/voice-parser'
@@ -30,7 +31,23 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
 
     try {
       const created = await db.transaction(async (tx) => {
-        if (input.accountId) {
+        if (input.kind === 'transfer') {
+          const [sourceAccount, targetAccount] = await Promise.all([
+            tx.query.financialAccount.findFirst({
+              where: (a, { and, eq }) =>
+                and(eq(a.id, input.accountId!), eq(a.userId, user.id)),
+              columns: { id: true },
+            }),
+            tx.query.financialAccount.findFirst({
+              where: (a, { and, eq }) =>
+                and(eq(a.id, input.toAccountId!), eq(a.userId, user.id)),
+              columns: { id: true },
+            }),
+          ])
+          if (!sourceAccount || !targetAccount) {
+            throw new Error('ACCOUNT_NOT_FOUND')
+          }
+        } else if (input.accountId) {
           const account = await tx.query.financialAccount.findFirst({
             where: (a, { and, eq }) =>
               and(eq(a.id, input.accountId!), eq(a.userId, user.id)),
@@ -46,6 +63,8 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           .values({
             userId: user.id,
             accountId: input.accountId ?? null,
+            toAccountId: input.kind === 'transfer' ? (input.toAccountId ?? null) : null,
+            kind: input.kind,
             amountCents: input.amountCents,
             category: input.category,
             description: input.description,
@@ -54,15 +73,31 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           .returning()
 
         if (input.accountId) {
+          const delta = sourceBalanceDeltaCents(input.kind, input.amountCents)
           await tx
             .update(schema.financialAccount)
             .set({
-              balanceCents: sql`${schema.financialAccount.balanceCents} - ${input.amountCents}`,
+              balanceCents: sql`${schema.financialAccount.balanceCents} + ${delta}`,
               updatedAt: new Date(),
             })
             .where(
               and(
                 eq(schema.financialAccount.id, input.accountId),
+                eq(schema.financialAccount.userId, user.id),
+              ),
+            )
+        }
+
+        if (input.kind === 'transfer' && input.toAccountId) {
+          await tx
+            .update(schema.financialAccount)
+            .set({
+              balanceCents: sql`${schema.financialAccount.balanceCents} + ${input.amountCents}`,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(schema.financialAccount.id, input.toAccountId),
                 eq(schema.financialAccount.userId, user.id),
               ),
             )
@@ -104,15 +139,31 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
       if (!row) return null
 
       if (row.accountId) {
+        const delta = sourceBalanceDeltaCents(row.kind, row.amountCents)
         await tx
           .update(schema.financialAccount)
           .set({
-            balanceCents: sql`${schema.financialAccount.balanceCents} + ${row.amountCents}`,
+            balanceCents: sql`${schema.financialAccount.balanceCents} - ${delta}`,
             updatedAt: new Date(),
           })
           .where(
             and(
               eq(schema.financialAccount.id, row.accountId),
+              eq(schema.financialAccount.userId, user.id),
+            ),
+          )
+      }
+
+      if (row.kind === 'transfer' && row.toAccountId) {
+        await tx
+          .update(schema.financialAccount)
+          .set({
+            balanceCents: sql`${schema.financialAccount.balanceCents} - ${row.amountCents}`,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(schema.financialAccount.id, row.toAccountId),
               eq(schema.financialAccount.userId, user.id),
             ),
           )

@@ -60,6 +60,8 @@ export function AddExpenseContainer() {
       category: fields.category,
       description: fields.description,
       accountId: fields.accountId,
+      kind: fields.kind,
+      toAccountId: fields.toAccountId,
     })
   }
 

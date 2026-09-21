@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Btn, Chip } from '@/components'
 
+export type MovementKind = 'expense' | 'income' | 'transfer'
+
 export interface ExpenseFormFields {
   amount: string
   category: string
   description: string
   accountId?: string
+  kind: MovementKind
+  toAccountId?: string
 }
 
 export interface ExpenseFormAccount {
@@ -31,6 +35,20 @@ const CATEGORIES: ExpenseCategory[] = [
   { value: 'otro', label: 'Otro', emoji: '•' },
 ]
 
+const KIND_OPTIONS: { value: MovementKind; label: string }[] = [
+  { value: 'expense', label: 'Gasto' },
+  { value: 'income', label: 'Ingreso' },
+  { value: 'transfer', label: 'Transferencia' },
+]
+
+const TRANSFER_CATEGORY = 'transferencia'
+
+const SUBMIT_LABEL: Record<MovementKind, string> = {
+  expense: 'Guardar gasto',
+  income: 'Guardar ingreso',
+  transfer: 'Transferir',
+}
+
 interface ExpenseFormProps {
   accounts: ExpenseFormAccount[]
   submitting: boolean
@@ -40,10 +58,12 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice }: ExpenseFormProps) {
+  const [kind, setKind] = useState<MovementKind>('expense')
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
   const [accountId, setAccountId] = useState<string>('')
+  const [toAccountId, setToAccountId] = useState<string>('')
 
   // A gasto should always come out of an account. Default to the first one once
   // accounts load (the user can still switch). Only screens with zero accounts
@@ -53,12 +73,22 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
   }, [accounts, accountId])
 
   const hasAmount = amount.trim() !== ''
+  const isTransfer = kind === 'transfer'
+
+  // A transfer's destination can't be the source. If the explicit selection
+  // is missing or now collides with the source, fall back to the first
+  // different account — derived, not stored, so it never needs an effect.
+  const effectiveToAccountId =
+    toAccountId && toAccountId !== accountId
+      ? toAccountId
+      : (accounts.find((a) => a.id !== accountId)?.id ?? '')
 
   const canSubmit =
     hasAmount &&
     description.trim() !== '' &&
-    category !== '' &&
+    (isTransfer || category !== '') &&
     (accounts.length === 0 || accountId !== '') &&
+    (!isTransfer || effectiveToAccountId !== '') &&
     !submitting
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,14 +96,29 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
     if (!canSubmit) return
     onSubmit({
       amount,
-      category,
+      category: isTransfer ? TRANSFER_CATEGORY : category,
       description: description.trim(),
       accountId: accountId || undefined,
+      kind,
+      toAccountId: isTransfer ? effectiveToAccountId || undefined : undefined,
     })
   }
 
+  const sourceLabel = isTransfer ? 'Desde qué cuenta' : kind === 'income' ? 'A qué cuenta' : 'De qué cuenta'
+
   return (
     <form onSubmit={handleSubmit} className="flex w-full max-w-lg flex-1 flex-col gap-6 pb-8">
+      <div>
+        <span className="text-sm font-medium text-ink-mid">Tipo</span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {KIND_OPTIONS.map((k) => (
+            <Chip key={k.value} active={kind === k.value} onClick={() => setKind(k.value)}>
+              {k.label}
+            </Chip>
+          ))}
+        </div>
+      </div>
+
       <div>
         <label htmlFor="amount" className="text-sm font-medium text-ink-mid">
           Cuánto
@@ -95,21 +140,23 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
         </div>
       </div>
 
-      <div>
-        <span className="text-sm font-medium text-ink-mid">En qué</span>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
-            <Chip
-              key={c.value}
-              active={category === c.value}
-              onClick={() => setCategory(c.value)}
-            >
-              <span>{c.emoji}</span>
-              {c.label}
-            </Chip>
-          ))}
+      {isTransfer ? null : (
+        <div>
+          <span className="text-sm font-medium text-ink-mid">En qué</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <Chip
+                key={c.value}
+                active={category === c.value}
+                onClick={() => setCategory(c.value)}
+              >
+                <span>{c.emoji}</span>
+                {c.label}
+              </Chip>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div>
         <label htmlFor="description" className="text-sm font-medium text-ink-mid">
@@ -128,7 +175,7 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
       {accounts.length > 0 ? (
         <div>
           <label htmlFor="account" className="text-sm font-medium text-ink-mid">
-            De qué cuenta
+            {sourceLabel}
           </label>
           <select
             id="account"
@@ -145,13 +192,35 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
         </div>
       ) : null}
 
+      {isTransfer && accounts.length > 0 ? (
+        <div>
+          <label htmlFor="to-account" className="text-sm font-medium text-ink-mid">
+            Hacia qué cuenta
+          </label>
+          <select
+            id="to-account"
+            value={effectiveToAccountId}
+            onChange={(e) => setToAccountId(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-accent"
+          >
+            {accounts
+              .filter((a) => a.id !== accountId)
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+          </select>
+        </div>
+      ) : null}
+
       {error ? (
         <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{error}</div>
       ) : null}
 
       <div className="mt-2">
         <Btn kind="primary" type="submit" className="w-full sm:w-auto sm:min-w-48" disabled={!canSubmit}>
-          {submitting ? 'Guardando…' : 'Guardar gasto'}
+          {submitting ? 'Guardando…' : SUBMIT_LABEL[kind]}
         </Btn>
         {onUseVoice ? (
           <button

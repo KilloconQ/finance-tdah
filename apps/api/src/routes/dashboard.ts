@@ -29,7 +29,13 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
     const [weekSpentRow] = await db
       .select({ sum: sum(schema.expense.amountCents) })
       .from(schema.expense)
-      .where(and(eq(schema.expense.userId, user.id), gte(schema.expense.occurredAt, startOfWeek)))
+      .where(
+        and(
+          eq(schema.expense.userId, user.id),
+          eq(schema.expense.kind, 'expense'),
+          gte(schema.expense.occurredAt, startOfWeek),
+        ),
+      )
 
     const { liquidCents, debtCents, netWorthCents } = netWorth(accounts)
     // Jars are mental accounting over money already counted in `liquidCents`;

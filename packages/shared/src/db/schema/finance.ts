@@ -28,6 +28,8 @@ export const inputPreferenceEnum = pgEnum('input_preference', ['voice', 'widget'
 
 export const densityModeEnum = pgEnum('density_mode', ['simple', 'detailed'])
 
+export const expenseKindEnum = pgEnum('expense_kind', ['expense', 'income', 'transfer'])
+
 export const userProfile = pgTable('user_profile', {
   userId: text('user_id')
     .primaryKey()
@@ -84,6 +86,10 @@ export const expense = pgTable('expense', {
   accountId: uuid('account_id').references(() => financialAccount.id, {
     onDelete: 'set null',
   }),
+  toAccountId: uuid('to_account_id').references(() => financialAccount.id, {
+    onDelete: 'set null',
+  }),
+  kind: expenseKindEnum('kind').default('expense').notNull(),
   amountCents: integer('amount_cents').notNull(),
   category: text('category').notNull(),
   description: text('description').notNull(),
@@ -162,6 +168,12 @@ export const expenseRelations = relations(expense, ({ one }) => ({
   account: one(financialAccount, {
     fields: [expense.accountId],
     references: [financialAccount.id],
+    relationName: 'expense_account',
+  }),
+  toAccount: one(financialAccount, {
+    fields: [expense.toAccountId],
+    references: [financialAccount.id],
+    relationName: 'expense_to_account',
   }),
 }))
 
@@ -180,4 +192,5 @@ export const ENUMS = {
   subscriptionCadence: subscriptionCadenceEnum,
   inputPreference: inputPreferenceEnum,
   densityMode: densityModeEnum,
+  expenseKind: expenseKindEnum,
 }
