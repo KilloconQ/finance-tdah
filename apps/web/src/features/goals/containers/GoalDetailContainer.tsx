@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { centsToUnits, jarPace, jarProgress, parseAmountToCents, unitsToCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, EmptyState, PhoneShell, TabBar } from '@/components'
 import { useTweaks } from '@/lib/use-tweaks'
-import { goalQueryOptions, useAddToGoal } from '../api'
+import { goalQueryOptions, useAddToGoal, useDeleteGoal } from '../api'
 import { GoalDetailView } from '../components/GoalDetailView'
 
 const PRESET_AMOUNTS = [50, 100, 250]
@@ -18,10 +18,12 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const { showBalances } = useTweaks()
   const { data: goal } = useQuery(goalQueryOptions(goalId))
   const addMutation = useAddToGoal(goalId)
+  const deleteMutation = useDeleteGoal(goalId)
   const [selected, setSelected] = useState<number>(100)
   const [isCustom, setIsCustom] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
   const [confirming, setConfirming] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   if (!goal) {
     return (
@@ -68,6 +70,14 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
     })
   }
 
+  const handleDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
+        navigate({ to: '/goals', replace: true })
+      },
+    })
+  }
+
   return (
     <GoalDetailView
       goal={goal}
@@ -81,6 +91,8 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
       confirming={confirming}
       isAdding={addMutation.isPending}
       canAdd={canAdd}
+      deleteConfirm={deleteConfirm}
+      isDeleting={deleteMutation.isPending}
       onBack={() => navigate({ to: '..' })}
       onSelectAmount={(amount) => {
         setIsCustom(false)
@@ -89,6 +101,9 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
       onSelectCustom={() => setIsCustom(true)}
       onCustomAmountChange={setCustomAmount}
       onAdd={handleAdd}
+      onRequestDelete={() => setDeleteConfirm(true)}
+      onCancelDelete={() => setDeleteConfirm(false)}
+      onConfirmDelete={handleDelete}
     />
   )
 }

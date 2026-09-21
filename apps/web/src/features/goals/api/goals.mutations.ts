@@ -23,3 +23,14 @@ export function useAddToGoal(goalId: string) {
     },
   })
 }
+
+export function useDeleteGoal(goalId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.delete(`goals/${goalId}`).json(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['goals'] })
+      void queryClient.invalidateQueries({ queryKey: ['goals', goalId] })
+    },
+  })
+}
