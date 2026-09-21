@@ -135,7 +135,7 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
-            className="money w-full bg-transparent text-5xl font-light leading-none tracking-[-0.02em] text-ink outline-none placeholder:text-ink-soft"
+            className="money money-lg w-full bg-transparent text-5xl font-light leading-none tracking-[-0.02em] text-ink outline-none placeholder:text-ink-soft"
           />
         </div>
       </div>

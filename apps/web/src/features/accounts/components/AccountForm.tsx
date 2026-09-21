@@ -111,7 +111,7 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
             value={balance}
             onChange={(e) => setBalance(e.target.value)}
             placeholder="0"
-            className="money w-full bg-transparent text-3xl font-semibold leading-none tracking-tight text-ink caret-accent outline-none placeholder:font-normal placeholder:text-ink-soft"
+            className="money money-lg w-full bg-transparent text-3xl font-semibold leading-none tracking-tight text-ink caret-accent outline-none placeholder:font-normal placeholder:text-ink-soft"
           />
         </div>
       </div>
