@@ -23,6 +23,7 @@ pnpm dev:api            # api only (Bun --hot, :3001)
 pnpm build              # builds both apps
 pnpm typecheck          # tsc --noEmit across all workspaces
 pnpm lint               # eslint (web only — api has no lint script)
+pnpm test               # vitest run across workspaces (apps/api + packages/shared)
 
 # Database (proxies to apps/api)
 pnpm db:generate        # drizzle-kit generate from packages/shared/src/db/schema
@@ -37,7 +38,7 @@ pnpm docker:down
 pnpm docker:logs
 ```
 
-There is **no test runner configured** in this repo yet. Don't claim "tests pass" — there are none.
+Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test`, which today reaches `apps/api` and `packages/shared` (both declare `vitest run`). `apps/web` has no test script, so nothing in the SPA is covered. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
 
 The api has no lint script; `pnpm lint` only hits `apps/web`.
 
