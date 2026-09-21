@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { jarPace, jarProgress, unitsToCents } from '@finance-tdah/shared/domain'
+import { centsToUnits, jarPace, jarProgress, parseAmountToCents, unitsToCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, EmptyState, PhoneShell, TabBar } from '@/components'
 import { useTweaks } from '@/lib/use-tweaks'
 import { goalQueryOptions, useAddToGoal } from '../api'
@@ -19,6 +19,8 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const { data: goal } = useQuery(goalQueryOptions(goalId))
   const addMutation = useAddToGoal(goalId)
   const [selected, setSelected] = useState<number>(100)
+  const [isCustom, setIsCustom] = useState(false)
+  const [customAmount, setCustomAmount] = useState('')
   const [confirming, setConfirming] = useState(false)
 
   if (!goal) {
@@ -52,13 +54,19 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
     deadline: goal.deadline,
   })
 
-  const handleAdd = () =>
-    addMutation.mutate(unitsToCents(selected), {
+  const customCents = parseAmountToCents(customAmount)
+  const amountCents = isCustom ? customCents : unitsToCents(selected)
+  const canAdd = amountCents !== null
+
+  const handleAdd = () => {
+    if (amountCents === null) return
+    addMutation.mutate(amountCents, {
       onSuccess: () => {
         setConfirming(true)
         window.setTimeout(() => setConfirming(false), 1400)
       },
     })
+  }
 
   return (
     <GoalDetailView
@@ -66,12 +74,20 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
       progress={progress}
       pace={pace}
       presetAmounts={PRESET_AMOUNTS}
-      selectedAmount={selected}
+      selectedAmount={isCustom ? (customCents !== null ? centsToUnits(customCents) : 0) : selected}
+      isCustom={isCustom}
+      customAmount={customAmount}
       showBalances={showBalances}
       confirming={confirming}
       isAdding={addMutation.isPending}
+      canAdd={canAdd}
       onBack={() => navigate({ to: '..' })}
-      onSelectAmount={setSelected}
+      onSelectAmount={(amount) => {
+        setIsCustom(false)
+        setSelected(amount)
+      }}
+      onSelectCustom={() => setIsCustom(true)}
+      onCustomAmountChange={setCustomAmount}
       onAdd={handleAdd}
     />
   )

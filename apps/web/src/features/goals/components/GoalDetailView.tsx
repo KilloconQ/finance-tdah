@@ -11,11 +11,16 @@ interface GoalDetailViewProps {
   pace: JarPace | null
   presetAmounts: number[]
   selectedAmount: number
+  isCustom: boolean
+  customAmount: string
   showBalances: boolean
   confirming: boolean
   isAdding: boolean
+  canAdd: boolean
   onBack: () => void
   onSelectAmount: (amount: number) => void
+  onSelectCustom: () => void
+  onCustomAmountChange: (value: string) => void
   onAdd: () => void
 }
 
@@ -25,11 +30,16 @@ export function GoalDetailView({
   pace,
   presetAmounts,
   selectedAmount,
+  isCustom,
+  customAmount,
   showBalances,
   confirming,
   isAdding,
+  canAdd,
   onBack,
   onSelectAmount,
+  onSelectCustom,
+  onCustomAmountChange,
   onAdd,
 }: GoalDetailViewProps) {
   return (
@@ -81,7 +91,7 @@ export function GoalDetailView({
 
           <Card className="flex flex-col gap-3">
             <div className="text-sm font-medium text-ink-mid">Echar al frasco</div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {presetAmounts.map((amount) => (
                 <button
                   key={amount}
@@ -89,7 +99,7 @@ export function GoalDetailView({
                   onClick={() => onSelectAmount(amount)}
                   className={cn(
                     'wf-tap rounded-xl border px-1 py-3 text-sm font-medium transition-colors',
-                    selectedAmount === amount
+                    !isCustom && selectedAmount === amount
                       ? 'border-accent bg-accent text-surface'
                       : 'border-line bg-surface text-ink hover:bg-bg-alt',
                   )}
@@ -97,8 +107,34 @@ export function GoalDetailView({
                   {formatMoney(amount)}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={onSelectCustom}
+                className={cn(
+                  'wf-tap rounded-xl border px-1 py-3 text-sm font-medium transition-colors',
+                  isCustom
+                    ? 'border-accent bg-accent text-surface'
+                    : 'border-line bg-surface text-ink hover:bg-bg-alt',
+                )}
+              >
+                Otra
+              </button>
             </div>
-            <Btn kind="primary" onClick={onAdd} disabled={isAdding}>
+            {isCustom ? (
+              <div className="flex items-baseline gap-1.5 border-b border-line pb-2 focus-within:border-accent">
+                <span className="money text-2xl font-medium text-ink">$</span>
+                <input
+                  inputMode="decimal"
+                  autoComplete="off"
+                  autoFocus
+                  value={customAmount}
+                  onChange={(e) => onCustomAmountChange(e.target.value)}
+                  placeholder="0"
+                  className="money w-full bg-transparent text-3xl font-semibold leading-none tracking-tight text-ink caret-accent outline-none placeholder:font-normal placeholder:text-ink-soft"
+                />
+              </div>
+            ) : null}
+            <Btn kind="primary" onClick={onAdd} disabled={isAdding || !canAdd}>
               {isAdding ? 'Guardando…' : `Echar ${formatMoney(selectedAmount)}`}
             </Btn>
             {confirming ? (
