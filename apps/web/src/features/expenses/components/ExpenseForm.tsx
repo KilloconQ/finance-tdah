@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Btn, Chip } from '@/components'
 
 export type MovementKind = 'expense' | 'income' | 'transfer'
@@ -15,6 +15,7 @@ export interface ExpenseFormFields {
 export interface ExpenseFormAccount {
   id: string
   name: string
+  type: string
 }
 
 interface ExpenseCategory {
@@ -42,6 +43,7 @@ const KIND_OPTIONS: { value: MovementKind; label: string }[] = [
 ]
 
 const TRANSFER_CATEGORY = 'transferencia'
+const INCOME_CATEGORY = 'ingreso'
 
 const SUBMIT_LABEL: Record<MovementKind, string> = {
   expense: 'Guardar gasto',
@@ -65,29 +67,35 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
   const [accountId, setAccountId] = useState<string>('')
   const [toAccountId, setToAccountId] = useState<string>('')
 
-  // A gasto should always come out of an account. Default to the first one once
-  // accounts load (the user can still switch). Only screens with zero accounts
-  // are allowed to log without one.
-  useEffect(() => {
-    if (!accountId && accounts.length > 0) setAccountId(accounts[0].id)
-  }, [accounts, accountId])
-
   const hasAmount = amount.trim() !== ''
   const isTransfer = kind === 'transfer'
+  const isIncome = kind === 'income'
+
+  // Income can't land on a credit account — that account only ever holds
+  // debt, it doesn't receive money coming in.
+  const availableAccounts = isIncome ? accounts.filter((a) => a.type !== 'credito') : accounts
+
+  // If the selected account isn't in the currently allowed set (e.g. it was
+  // a credit account and the kind just switched to income), fall back to the
+  // first available one — derived, not stored, so it never needs an effect.
+  const effectiveAccountId =
+    accountId && availableAccounts.some((a) => a.id === accountId)
+      ? accountId
+      : (availableAccounts[0]?.id ?? '')
 
   // A transfer's destination can't be the source. If the explicit selection
   // is missing or now collides with the source, fall back to the first
   // different account — derived, not stored, so it never needs an effect.
   const effectiveToAccountId =
-    toAccountId && toAccountId !== accountId
+    toAccountId && toAccountId !== effectiveAccountId
       ? toAccountId
-      : (accounts.find((a) => a.id !== accountId)?.id ?? '')
+      : (accounts.find((a) => a.id !== effectiveAccountId)?.id ?? '')
 
   const canSubmit =
     hasAmount &&
     description.trim() !== '' &&
-    (isTransfer || category !== '') &&
-    (accounts.length === 0 || accountId !== '') &&
+    (isTransfer || isIncome || category !== '') &&
+    (availableAccounts.length === 0 || effectiveAccountId !== '') &&
     (!isTransfer || effectiveToAccountId !== '') &&
     !submitting
 
@@ -96,9 +104,9 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
     if (!canSubmit) return
     onSubmit({
       amount,
-      category: isTransfer ? TRANSFER_CATEGORY : category,
+      category: isTransfer ? TRANSFER_CATEGORY : isIncome ? INCOME_CATEGORY : category,
       description: description.trim(),
-      accountId: accountId || undefined,
+      accountId: effectiveAccountId || undefined,
       kind,
       toAccountId: isTransfer ? effectiveToAccountId || undefined : undefined,
     })
@@ -140,7 +148,7 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
         </div>
       </div>
 
-      {isTransfer ? null : (
+      {isTransfer || isIncome ? null : (
         <div>
           <span className="text-sm font-medium text-ink-mid">En qué</span>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -172,18 +180,18 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
         />
       </div>
 
-      {accounts.length > 0 ? (
+      {availableAccounts.length > 0 ? (
         <div>
           <label htmlFor="account" className="text-sm font-medium text-ink-mid">
             {sourceLabel}
           </label>
           <select
             id="account"
-            value={accountId}
+            value={effectiveAccountId}
             onChange={(e) => setAccountId(e.target.value)}
             className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-accent"
           >
-            {accounts.map((a) => (
+            {availableAccounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
               </option>
@@ -204,7 +212,7 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
             className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-accent"
           >
             {accounts
-              .filter((a) => a.id !== accountId)
+              .filter((a) => a.id !== effectiveAccountId)
               .map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
