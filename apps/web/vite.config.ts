@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.svg', 'favicon-32x32.png', 'apple-touch-icon.png'],
+        includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png'],
         manifest: {
           name: 'Cada Quien',
           short_name: 'Cada Quien',
@@ -30,12 +30,6 @@ export default defineConfig(({ mode }) => {
           display: 'standalone',
           start_url: '/',
           icons: [
-            {
-              src: '/favicon.svg',
-              sizes: 'any',
-              type: 'image/svg+xml',
-              purpose: 'any',
-            },
             {
               src: '/pwa-192x192.png',
               sizes: '192x192',
