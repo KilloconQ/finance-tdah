@@ -49,6 +49,8 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
           navigateFallbackDenylist: [/^\/api\//],
           runtimeCaching: [
             {
