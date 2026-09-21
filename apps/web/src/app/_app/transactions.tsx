@@ -45,6 +45,7 @@ function Transactions() {
   const { data: expenses = [], isLoading } = useQuery(expensesQuery())
   const deleteMutation = useDeleteExpense()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [justDeleted, setJustDeleted] = useState(false)
 
   const grouped = expenses.reduce<Record<string, typeof expenses>>((acc, e) => {
     const day = e.occurredAt.slice(0, 10)
@@ -64,6 +65,12 @@ function Transactions() {
           </IconButton>
         }
       />
+
+      {justDeleted ? (
+        <div className="mb-3 rounded-xl border border-good/40 bg-good-bg px-4 py-2.5 text-center text-sm font-medium text-good">
+          ✓ Gasto borrado
+        </div>
+      ) : null}
 
       {isLoading ? (
         <TransactionsSkeleton />
@@ -109,7 +116,11 @@ function Transactions() {
                               className="flex-1"
                               onClick={() =>
                                 deleteMutation.mutate(e.id, {
-                                  onSuccess: () => setConfirmingId(null),
+                                  onSuccess: () => {
+                                    setConfirmingId(null)
+                                    setJustDeleted(true)
+                                    window.setTimeout(() => setJustDeleted(false), 1400)
+                                  },
                                 })
                               }
                               disabled={deleteMutation.isPending}
