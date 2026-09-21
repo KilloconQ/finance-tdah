@@ -73,7 +73,7 @@ export function AccountsView({
         {/* Summary + allocation bar */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
           <div className="text-center lg:text-left">
-            <div className="text-sm font-medium text-ink-mid">Tu plata realmente disponible</div>
+            <div className="text-sm font-medium text-ink-mid">Tu dinero realmente disponible</div>
             <BigNumber value={netWorthCents / 100} hidden={!showBalances} size="md" />
             <div className="-mt-2 text-sm text-ink-mid">
               {showBalances ? (
@@ -115,7 +115,7 @@ export function AccountsView({
             <EmptyState
               icon={<Wallet size={22} strokeWidth={1.8} />}
               title="Aún no tienes cuentas"
-              hint="Agrega la primera para ver tu plata en un solo lugar."
+              hint="Agrega la primera para ver tu dinero en un solo lugar."
               action={
                 <Btn kind="primary" onClick={onAddAccount}>
                   <Plus size={16} strokeWidth={2.2} />
