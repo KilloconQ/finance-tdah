@@ -81,7 +81,7 @@ T1 + T2 done. Follow-up work requested by the user while on the same branch:
   `GoalDetailContainer.tsx`/`GoalDetailView.tsx` files. The equivalent for
   expense delete (`transactions.tsx`) was handled by the user/orchestrator in
   parallel, not touched here.
-- [ ] T5: fire a confetti burst when a goal's progress crosses 100% (only on
+- [x] T5: fire a confetti burst when a goal's progress crosses 100% (only on
   the crossing during this session — not on every mount/re-render of an
   already-completed goal). No confetti library is installed yet; add
   `canvas-confetti` + `@types/canvas-confetti` to `apps/web` (ponytail check:
@@ -89,6 +89,17 @@ T1 + T2 done. Follow-up work requested by the user while on the same branch:
   more code and more bug surface than the ~3kb standard library built for
   exactly this).
   Files: `apps/web/package.json` (+lockfile), `GoalDetailContainer.tsx`.
+  Added `canvas-confetti@^1.9.3` + `@types/canvas-confetti@^1.9.0`, installed
+  via `npx --yes pnpm@11.1.1 install`. Tracks `previousPercentRef` (starts
+  `null`) in a `useEffect` keyed on `goal`; only fires
+  `confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } })` on a
+  genuine below-100 → 100-or-above transition, and the `null` start
+  deliberately guards against firing on first load of an already-completed
+  goal (adapted from the suggested pattern, which would have fired in that
+  case since `goal` loads asynchronously after mount). `jarProgress()`
+  returns `{ fraction, percent, isComplete, overflowCents }` — used
+  `percent` as specified. Verified via `tsc -b --noEmit` (clean) — no
+  manual/browser click-through of the actual burst.
 - [ ] T6: regression test confirming `DELETE /goals/:id` actually soft-archives
   (sets `archivedAt`, never hard-deletes) and can't double-archive/404s when
   not found — mirrors T3's approach but for `apps/api/src/routes/goals.ts`,

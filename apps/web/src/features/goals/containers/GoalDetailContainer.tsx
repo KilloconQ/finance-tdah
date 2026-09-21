@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
+import confetti from 'canvas-confetti'
 import { centsToUnits, jarPace, jarProgress, parseAmountToCents, unitsToCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, EmptyState, PhoneShell, TabBar } from '@/components'
 import { useTweaks } from '@/lib/use-tweaks'
@@ -26,6 +27,19 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const [confirmedCents, setConfirmedCents] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleted, setDeleted] = useState(false)
+  const previousPercentRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!goal) return
+    const percent = jarProgress({ currentCents: goal.currentCents, targetCents: goal.targetCents }).percent
+    // previousPercentRef starts as null until the goal first loads, so an
+    // already-completed goal never fires confetti on first mount — only a
+    // later crossing while the page stays open does.
+    if (previousPercentRef.current !== null && previousPercentRef.current < 100 && percent >= 100) {
+      confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } })
+    }
+    previousPercentRef.current = percent
+  }, [goal])
 
   if (!goal) {
     return (
