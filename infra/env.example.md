@@ -29,6 +29,12 @@ DATABASE_URL=postgres://finance:changeme-en-prod@localhost:5432/finance_tdah
 BETTER_AUTH_URL=http://localhost:3001
 WEB_ORIGIN=http://localhost:5173
 PORT=3001
+
+# --- Web Push (notificaciones) ---
+# Generá un par con: bun -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:soporte@finance-tdah.local
 ```
 
 ## Notas

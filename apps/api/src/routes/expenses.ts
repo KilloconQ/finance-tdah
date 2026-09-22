@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, gte, sql, sum } from 'drizzle-orm'
 import {
   createExpenseSchema,
   idParamSchema,
@@ -11,6 +11,8 @@ import { sourceBalanceDeltaCents } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 import { parseVoiceTranscript } from '../services/voice-parser'
+import { sendPushToUser } from '../services/push-sender'
+import { logger } from '../lib/logger'
 
 export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
   .use('*', sessionMiddleware)
@@ -106,6 +108,10 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
         return expense
       })
 
+      if (input.kind === 'expense') {
+        await notifyIfBudgetCrossed(user.id, created.amountCents)
+      }
+
       return c.json({ expense: created }, 201)
     } catch (err) {
       if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
@@ -176,3 +182,50 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
 
     return c.json({ ok: true })
   })
+
+// Notify only on the crossing moment (before < target <= after), not on
+// every expense once the user is already over budget — otherwise they'd
+// get spammed for the rest of the week.
+async function notifyIfBudgetCrossed(userId: string, createdAmountCents: number): Promise<void> {
+  try {
+    const [profile, weekSpentRow] = await Promise.all([
+      db.query.userProfile.findFirst({
+        where: (p, { eq }) => eq(p.userId, userId),
+      }),
+      (() => {
+        const startOfWeek = new Date()
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
+        startOfWeek.setHours(0, 0, 0, 0)
+
+        return db
+          .select({ sum: sum(schema.expense.amountCents) })
+          .from(schema.expense)
+          .where(
+            and(
+              eq(schema.expense.userId, userId),
+              eq(schema.expense.kind, 'expense'),
+              gte(schema.expense.occurredAt, startOfWeek),
+            ),
+          )
+          .then(([row]) => row)
+      })(),
+    ])
+
+    const weekSpentAfter = Number(weekSpentRow?.sum ?? 0)
+    const weekSpentBefore = weekSpentAfter - createdAmountCents
+    const weekTargetCents = profile?.weeklyBudgetCents ?? 220000
+
+    if (weekSpentBefore < weekTargetCents && weekSpentAfter >= weekTargetCents) {
+      await sendPushToUser(userId, {
+        title: 'Presupuesto semanal',
+        body: 'Llegaste al límite de tu presupuesto de esta semana.',
+        url: '/',
+      })
+    }
+  } catch (err) {
+    logger.error('budget_notification_failed', {
+      userId,
+      message: err instanceof Error ? err.message : String(err),
+    })
+  }
+}
