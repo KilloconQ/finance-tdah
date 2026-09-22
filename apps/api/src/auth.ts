@@ -50,21 +50,32 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     minPasswordLength: 8,
     maxPasswordLength: 128,
+    // This callback runs only once better-auth has resolved a user, so ANY way of
+    // failing out of it answers differently for a registered address than for an
+    // unknown one — an account-existence oracle. It always resolves; delivery
+    // problems are a server-side concern and go to the log.
     sendResetPassword: async ({ user, url }) => {
-      // Unreachable: the before-hook rejects an unconfigured reset first. Never
-      // throw from here — by this point a user exists, so a failure leaks that.
       if (!resend) {
+        // Unreachable: the before-hook rejects an unconfigured reset first.
         logger.error('password_reset_unavailable', {
           message: 'RESEND_API_KEY no está configurada — no se pudo enviar el email de reset',
         })
         return
       }
-      await resend.emails.send({
-        from: env.RESEND_FROM_EMAIL,
-        to: user.email,
-        subject: 'Restablecé tu contraseña',
-        html: `<p>Hacé click para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignorá este email.</p>`,
-      })
+      try {
+        await resend.emails.send({
+          from: env.RESEND_FROM_EMAIL,
+          to: user.email,
+          subject: 'Restablecé tu contraseña',
+          html: `<p>Hacé click para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignorá este email.</p>`,
+        })
+      } catch (err) {
+        // Resend being down would otherwise turn every registered address into a
+        // 5xx while unknown ones keep getting the generic success.
+        logger.error('password_reset_send_failed', {
+          message: err instanceof Error ? err.message : String(err),
+        })
+      }
     },
   },
   session: {
