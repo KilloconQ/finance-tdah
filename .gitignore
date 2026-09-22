@@ -25,8 +25,7 @@ dev-dist
 *.sw?
 
 # Secrets
-.env
-.env.*
+.env*
 !.env.example
 
 # Tooling caches
