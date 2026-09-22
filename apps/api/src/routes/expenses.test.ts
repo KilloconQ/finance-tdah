@@ -5,7 +5,7 @@ import { Hono } from 'hono'
 // build query fragments, not real Column instances — good enough to
 // introspect which account and delta a query fragment targets without a
 // live Postgres to execute the SQL against.
-const { financialAccount, expense, state, fakeTx } = vi.hoisted(() => {
+const { financialAccount, expense, state, fakeDb, sendPushToUser } = vi.hoisted(() => {
   const financialAccount = {
     id: { name: 'financial_account.id' },
     userId: { name: 'financial_account.user_id' },
@@ -15,17 +15,29 @@ const { financialAccount, expense, state, fakeTx } = vi.hoisted(() => {
   const expense = {
     id: { name: 'expense.id' },
     userId: { name: 'expense.user_id' },
+    kind: { name: 'expense.kind' },
+    amountCents: { name: 'expense.amount_cents' },
+    occurredAt: { name: 'expense.occurred_at' },
   }
 
   const state: {
     expenseRow: Record<string, unknown> | null
     updateCalls: Array<{ whereArg: unknown; setArg: { balanceCents: unknown } }>
+    profile: Record<string, unknown> | null
+    weekSumCents: number | null
   } = {
     expenseRow: null,
     updateCalls: [],
+    profile: null,
+    weekSumCents: null,
   }
 
   const fakeTx = {
+    insert: () => ({
+      values: (values: Record<string, unknown>) => ({
+        returning: async () => [{ id: 'expense-1', ...values }],
+      }),
+    }),
     delete: () => ({
       where: () => ({
         returning: async () => (state.expenseRow ? [state.expenseRow] : []),
@@ -41,7 +53,23 @@ const { financialAccount, expense, state, fakeTx } = vi.hoisted(() => {
     }),
   }
 
-  return { financialAccount, expense, state, fakeTx }
+  const fakeDb = {
+    transaction: (cb: (tx: unknown) => unknown) => cb(fakeTx),
+    query: {
+      userProfile: {
+        findFirst: async () => state.profile,
+      },
+    },
+    select: () => ({
+      from: () => ({
+        where: async () => [{ sum: state.weekSumCents === null ? null : String(state.weekSumCents) }],
+      }),
+    }),
+  }
+
+  const sendPushToUser = vi.fn()
+
+  return { financialAccount, expense, state, fakeDb, sendPushToUser }
 })
 
 vi.mock('../middleware/session', () => ({
@@ -53,11 +81,19 @@ vi.mock('../middleware/session', () => ({
 
 vi.mock('../db/client', () => ({
   schema: { expense, financialAccount },
-  db: { transaction: (cb: (tx: unknown) => unknown) => cb(fakeTx) },
+  db: fakeDb,
 }))
 
 vi.mock('../services/voice-parser', () => ({
   parseVoiceTranscript: () => null,
+}))
+
+vi.mock('../services/push-sender', () => ({
+  sendPushToUser,
+}))
+
+vi.mock('../env', () => ({
+  env: { NODE_ENV: 'test' },
 }))
 
 const { expensesRoute } = await import('./expenses')
@@ -70,6 +106,14 @@ const OTHER_ID = '22222222-2222-4222-8222-222222222222'
 
 function deleteExpense(id: string) {
   return app.request(`/${id}`, { method: 'DELETE' })
+}
+
+function createExpense(body: Record<string, unknown>) {
+  return app.request('/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
 }
 
 // Walks a drizzle SQL/condition fragment and returns its literal leaves
@@ -164,5 +208,53 @@ describe('DELETE /expenses/:id reverses the balance movement it caused', () => {
 
     expect(res.status).toBe(404)
     expect(state.updateCalls).toHaveLength(0)
+  })
+})
+
+describe('POST /expenses sends a weekly-budget push only on the crossing moment', () => {
+  beforeEach(() => {
+    sendPushToUser.mockClear()
+    state.profile = { weeklyBudgetCents: 10_000 }
+  })
+
+  function expenseBody(amountCents: number, kind: 'expense' | 'income' = 'expense') {
+    return { amountCents, category: 'food', description: 'lunch', kind }
+  }
+
+  it('notifies when this expense pushes the week total past the target', async () => {
+    state.weekSumCents = 12_000 // after; before = 12_000 - 5_000 = 7_000 < 10_000 target
+
+    const res = await createExpense(expenseBody(5_000))
+
+    expect(res.status).toBe(201)
+    expect(sendPushToUser).toHaveBeenCalledTimes(1)
+    expect(sendPushToUser).toHaveBeenCalledWith('user-1', expect.objectContaining({ title: expect.any(String) }))
+  })
+
+  it('does not re-notify when already over budget before this expense', async () => {
+    state.weekSumCents = 20_000 // after; before = 15_000, already >= 10_000 target
+
+    const res = await createExpense(expenseBody(5_000))
+
+    expect(res.status).toBe(201)
+    expect(sendPushToUser).not.toHaveBeenCalled()
+  })
+
+  it('does not notify when still under budget after this expense', async () => {
+    state.weekSumCents = 8_000 // after; before = 5_000, after = 8_000 < 10_000 target
+
+    const res = await createExpense(expenseBody(3_000))
+
+    expect(res.status).toBe(201)
+    expect(sendPushToUser).not.toHaveBeenCalled()
+  })
+
+  it('does not notify for an income entry even if the week total crosses the target', async () => {
+    state.weekSumCents = 12_000
+
+    const res = await createExpense(expenseBody(5_000, 'income'))
+
+    expect(res.status).toBe(201)
+    expect(sendPushToUser).not.toHaveBeenCalled()
   })
 })

@@ -5,7 +5,7 @@ import { Hono } from 'hono'
 // build query fragments, not real Column instances — good enough to
 // introspect which condition/patch a query targets without a live Postgres
 // to execute the SQL against.
-const { goal, state, fakeDb } = vi.hoisted(() => {
+const { goal, state, fakeDb, sendPushToUser } = vi.hoisted(() => {
   const goal = {
     id: { name: 'goal.id' },
     userId: { name: 'goal.user_id' },
@@ -33,7 +33,9 @@ const { goal, state, fakeDb } = vi.hoisted(() => {
     }),
   }
 
-  return { goal, state, fakeDb }
+  const sendPushToUser = vi.fn()
+
+  return { goal, state, fakeDb, sendPushToUser }
 })
 
 vi.mock('../middleware/session', () => ({
@@ -48,6 +50,14 @@ vi.mock('../db/client', () => ({
   db: fakeDb,
 }))
 
+vi.mock('../services/push-sender', () => ({
+  sendPushToUser,
+}))
+
+vi.mock('../env', () => ({
+  env: { NODE_ENV: 'test' },
+}))
+
 const { goalsRoute } = await import('./goals')
 const app = new Hono().route('/', goalsRoute)
 
@@ -58,6 +68,14 @@ const OTHER_ID = '22222222-2222-4222-8222-222222222222'
 
 function deleteGoal(id: string) {
   return app.request(`/${id}`, { method: 'DELETE' })
+}
+
+function addToGoal(id: string, amountCents: number) {
+  return app.request(`/${id}/add`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amountCents }),
+  })
 }
 
 // Walks a drizzle SQL/condition fragment and returns its literal leaves
@@ -119,5 +137,60 @@ describe('DELETE /goals/:id soft-archives instead of hard-deleting', () => {
     expect(res.status).toBe(404)
     expect(body).toEqual({ error: 'Frasco no encontrado' })
     expect(state.updateCalls).toHaveLength(1)
+  })
+})
+
+describe('POST /goals/:id/add sends a goal-reached push only on the crossing moment', () => {
+  beforeEach(() => {
+    sendPushToUser.mockClear()
+  })
+
+  it('notifies when this deposit completes the goal', async () => {
+    state.updatedRow = {
+      id: GOAL_ID,
+      userId: 'user-1',
+      name: 'Vacaciones',
+      emoji: '✈️',
+      targetCents: 10_000,
+      currentCents: 12_000, // after; before = 12_000 - 5_000 = 7_000 < 10_000 target
+    }
+
+    const res = await addToGoal(GOAL_ID, 5_000)
+
+    expect(res.status).toBe(200)
+    expect(sendPushToUser).toHaveBeenCalledTimes(1)
+    expect(sendPushToUser).toHaveBeenCalledWith('user-1', expect.objectContaining({ title: expect.any(String) }))
+  })
+
+  it('does not notify when the deposit keeps the goal incomplete', async () => {
+    state.updatedRow = {
+      id: GOAL_ID,
+      userId: 'user-1',
+      name: 'Vacaciones',
+      emoji: '✈️',
+      targetCents: 10_000,
+      currentCents: 8_000, // after; before = 5_000, after = 8_000 < 10_000 target
+    }
+
+    const res = await addToGoal(GOAL_ID, 3_000)
+
+    expect(res.status).toBe(200)
+    expect(sendPushToUser).not.toHaveBeenCalled()
+  })
+
+  it('does not re-notify on an overflow deposit into an already-complete goal', async () => {
+    state.updatedRow = {
+      id: GOAL_ID,
+      userId: 'user-1',
+      name: 'Vacaciones',
+      emoji: '✈️',
+      targetCents: 10_000,
+      currentCents: 15_000, // after; before = 10_000, already >= target
+    }
+
+    const res = await addToGoal(GOAL_ID, 5_000)
+
+    expect(res.status).toBe(200)
+    expect(sendPushToUser).not.toHaveBeenCalled()
   })
 })

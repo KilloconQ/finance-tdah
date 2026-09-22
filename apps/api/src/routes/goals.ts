@@ -9,6 +9,8 @@ import {
 } from '@finance-tdah/shared/schemas'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
+import { sendPushToUser } from '../services/push-sender'
+import { logger } from '../lib/logger'
 
 export const goalsRoute = new Hono<{ Variables: SessionVariables }>()
   .use('*', sessionMiddleware)
@@ -87,6 +89,25 @@ export const goalsRoute = new Hono<{ Variables: SessionVariables }>()
       .returning()
 
     if (!updated) return c.json({ error: 'Frasco no encontrado' }, 404)
+
+    // Crossing detection: before < target <= after, so overflow deposits
+    // into an already-complete goal don't re-notify.
+    const currentBefore = updated.currentCents - amountCents
+    if (currentBefore < updated.targetCents && updated.currentCents >= updated.targetCents) {
+      try {
+        await sendPushToUser(user.id, {
+          title: '¡Meta cumplida!',
+          body: `Completaste tu meta "${updated.name}" ${updated.emoji}`,
+          url: '/',
+        })
+      } catch (err) {
+        logger.error('goal_notification_failed', {
+          userId: user.id,
+          message: err instanceof Error ? err.message : String(err),
+        })
+      }
+    }
+
     return c.json({ goal: updated })
   })
 
