@@ -9,6 +9,10 @@ const envSchema = z.object({
   }),
   BETTER_AUTH_URL: z.url(),
   WEB_ORIGIN: z.url(),
+  RESEND_API_KEY: z.string().min(1, {
+    error: 'RESEND_API_KEY es requerido para enviar emails de reset de contraseña',
+  }),
+  RESEND_FROM_EMAIL: z.string().default('onboarding@resend.dev'),
   VAPID_PUBLIC_KEY: z.string().min(1, { error: 'VAPID_PUBLIC_KEY es requerida para push notifications' }),
   VAPID_PRIVATE_KEY: z.string().min(1, { error: 'VAPID_PRIVATE_KEY es requerida para push notifications' }),
   VAPID_SUBJECT: z.string().default('mailto:soporte@finance-tdah.local'),

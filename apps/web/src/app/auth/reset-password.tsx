@@ -3,28 +3,29 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
 
-export const Route = createFileRoute('/auth/sign-in')({
-  component: SignIn,
+export const Route = createFileRoute('/auth/reset-password')({
+  component: ResetPassword,
 })
 
-function SignIn() {
+function ResetPassword() {
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
+  const token = new URLSearchParams(window.location.search).get('token')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!token) return
     setLoading(true)
     setError(null)
     try {
-      const result = await authClient.signIn.email({ email, password })
+      const result = await authClient.resetPassword({ newPassword: password, token })
       if (result.error) {
-        setError(result.error.message ?? 'No pudimos entrar')
+        setError(result.error.message ?? 'No pudimos restablecer tu contraseña')
         return
       }
-      navigate({ to: '/', replace: true })
+      navigate({ to: '/auth/sign-in', replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado')
     } finally {
@@ -32,36 +33,42 @@ function SignIn() {
     }
   }
 
+  if (!token) {
+    return (
+      <PhoneShell variant="narrow">
+        <div className="flex flex-1 flex-col justify-center py-8">
+          <Card className="p-6 sm:p-7">
+            <h1 className="text-2xl font-semibold tracking-tight text-ink">Link inválido o vencido.</h1>
+            <Hello className="mt-2">Pedí un nuevo link para restablecer tu contraseña.</Hello>
+
+            <div className="mt-5 text-center text-sm text-ink-mid">
+              <Link to="/auth/forgot-password" className="font-medium text-accent-strong underline">
+                Pedir link nuevo
+              </Link>
+            </div>
+          </Card>
+        </div>
+      </PhoneShell>
+    )
+  }
+
   return (
     <PhoneShell variant="narrow">
       <div className="flex flex-1 flex-col justify-center py-8">
         <Card className="p-6 sm:p-7">
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Hola de nuevo 👋</h1>
-          <Hello className="mt-2">Entrá con tu email y contraseña.</Hello>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">Nueva contraseña</h1>
+          <Hello className="mt-2">Elegí una contraseña nueva.</Hello>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
             <Field
-              label="Email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={setEmail}
-              required
-            />
-            <Field
-              label="Contraseña"
+              label="Contraseña nueva"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               value={password}
               onChange={setPassword}
               required
             />
-
-            <div className="text-right text-sm">
-              <Link to="/auth/forgot-password" className="text-ink-soft underline">
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
+            <p className="text-xs text-ink-soft">Mínimo 8 caracteres.</p>
 
             {error ? (
               <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
@@ -73,18 +80,11 @@ function SignIn() {
               kind="primary"
               className="mt-2 w-full"
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading || password.length < 8}
             >
-              {loading ? 'Entrando…' : 'Entrar'}
+              {loading ? 'Guardando…' : 'Restablecer contraseña'}
             </Btn>
           </form>
-
-          <div className="mt-5 text-center text-sm text-ink-mid">
-            ¿Primera vez?{' '}
-            <Link to="/auth/sign-up" className="font-medium text-accent-strong underline">
-              Crear cuenta
-            </Link>
-          </div>
         </Card>
       </div>
     </PhoneShell>
