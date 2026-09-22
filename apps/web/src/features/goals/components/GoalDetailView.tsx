@@ -1,7 +1,8 @@
+import { Pencil } from 'lucide-react'
 import type { GoalDTO } from '@finance-tdah/shared/schemas'
 import type { JarPace, JarProgress } from '@finance-tdah/shared/domain'
 import { centsToUnits } from '@finance-tdah/shared/domain'
-import { AppBar, Btn, Card, Money, PhoneShell, TabBar } from '@/components'
+import { AppBar, Btn, Card, IconButton, Money, PhoneShell, TabBar } from '@/components'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
 import { JarWithStats } from './JarWithStats'
@@ -23,6 +24,7 @@ interface GoalDetailViewProps {
   isDeleting: boolean
   deleted: boolean
   onBack: () => void
+  onEdit: () => void
   onSelectAmount: (amount: number) => void
   onSelectCustom: () => void
   onCustomAmountChange: (value: string) => void
@@ -49,6 +51,7 @@ export function GoalDetailView({
   isDeleting,
   deleted,
   onBack,
+  onEdit,
   onSelectAmount,
   onSelectCustom,
   onCustomAmountChange,
@@ -59,7 +62,16 @@ export function GoalDetailView({
 }: GoalDetailViewProps) {
   return (
     <PhoneShell>
-      <AppBar title="Mi frasco" back onBack={onBack} />
+      <AppBar
+        title="Mi frasco"
+        back
+        onBack={onBack}
+        right={
+          <IconButton onClick={onEdit} label="Editar">
+            <Pencil size={20} strokeWidth={2} />
+          </IconButton>
+        }
+      />
 
       <div className="flex-1 pb-4">
         <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2 md:items-start">

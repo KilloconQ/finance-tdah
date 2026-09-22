@@ -117,6 +117,7 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
       isDeleting={deleteMutation.isPending}
       deleted={deleted}
       onBack={() => navigate({ to: '..' })}
+      onEdit={() => navigate({ to: '/goals/$id/edit', params: { id: goalId } })}
       onSelectAmount={(amount) => {
         setIsCustom(false)
         setSelected(amount)
