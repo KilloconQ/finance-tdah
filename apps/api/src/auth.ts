@@ -5,6 +5,8 @@ import { Resend } from 'resend'
 import { db } from './db/client'
 import { env } from './env'
 
+const resend = new Resend(env.RESEND_API_KEY)
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
@@ -18,7 +20,6 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     sendResetPassword: async ({ user, url }) => {
-      const resend = new Resend(env.RESEND_API_KEY)
       await resend.emails.send({
         from: env.RESEND_FROM_EMAIL,
         to: user.email,

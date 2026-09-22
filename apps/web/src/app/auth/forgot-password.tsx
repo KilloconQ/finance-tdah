@@ -18,10 +18,14 @@ function ForgotPassword() {
     setLoading(true)
     setError(null)
     try {
-      await authClient.requestPasswordReset({
+      const result = await authClient.requestPasswordReset({
         email,
         redirectTo: `${window.location.origin}/auth/reset-password`,
       })
+      if (result.error) {
+        setError(result.error.message ?? 'No pudimos procesar el pedido')
+        return
+      }
       setSent(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado')
