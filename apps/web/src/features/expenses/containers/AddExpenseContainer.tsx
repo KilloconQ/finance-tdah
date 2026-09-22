@@ -121,8 +121,13 @@ export function AddExpenseContainer() {
     recognition.onend = () => setRecording(false)
 
     recognitionRef.current = recognition
-    recognition.start()
-    setRecording(true)
+    try {
+      recognition.start()
+      setRecording(true)
+    } catch {
+      // start() throws synchronously if a recognizer is already active for this tab
+      setError('No pude activar el micrófono, probá de nuevo')
+    }
   }
 
   const handleRelease = () => {

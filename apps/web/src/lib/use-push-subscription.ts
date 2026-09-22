@@ -34,10 +34,14 @@ export function usePushSubscription() {
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') throw new Error('Permiso de notificaciones denegado')
       const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      })
+      // subscribe() throws if a subscription already exists (e.g. left over from
+      // a previous session) — reuse it instead of failing the toggle
+      const subscription =
+        (await registration.pushManager.getSubscription()) ??
+        (await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        }))
       await api.post('push/subscribe', { json: subscription.toJSON() })
       return subscription
     },

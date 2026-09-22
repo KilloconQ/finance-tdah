@@ -23,7 +23,12 @@ registerRoute(
 )
 
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() ?? {}
+  let data: { title?: string; body?: string; url?: string } = {}
+  try {
+    data = event.data?.json() ?? {}
+  } catch {
+    // malformed or empty payload — still show a generic notification instead of dropping it
+  }
   const title = data.title ?? 'Cada Quien'
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -38,9 +43,13 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const url = event.notification.data?.url ?? '/'
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
       for (const client of clientList) {
-        if ('focus' in client) return client.focus()
+        if ('focus' in client) {
+          await client.focus()
+          if ('navigate' in client) await client.navigate(url)
+          return
+        }
       }
       return self.clients.openWindow(url)
     }),
