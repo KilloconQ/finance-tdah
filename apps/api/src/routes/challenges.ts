@@ -61,15 +61,26 @@ export const challengesRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
     const { id } = c.req.valid('param')
 
+    const [existing] = await db
+      .select()
+      .from(schema.challenge)
+      .where(and(eq(schema.challenge.id, id), eq(schema.challenge.userId, user.id)))
+
+    if (!existing) return c.json({ error: 'Reto no encontrado' }, 404)
+
+    const today = new Date().toISOString().slice(0, 10)
+    if (existing.lastCheckedAt === today) {
+      return c.json({ error: 'Ya marcaste el día de hoy' }, 409)
+    }
+
     const [updated] = await db
       .update(schema.challenge)
       .set({
         doneDays: sql`LEAST(${schema.challenge.doneDays} + 1, ${schema.challenge.days})`,
+        lastCheckedAt: today,
       })
       .where(and(eq(schema.challenge.id, id), eq(schema.challenge.userId, user.id)))
       .returning()
-
-    if (!updated) return c.json({ error: 'Reto no encontrado' }, 404)
 
     if (updated.doneDays >= updated.days) {
       const [completed] = await db
@@ -83,13 +94,13 @@ export const challengesRoute = new Hono<{ Variables: SessionVariables }>()
     return c.json({ challenge: updated })
   })
 
-  .post('/:id/fail', zValidator('param', idParamSchema), async (c) => {
+  .post('/:id/reset', zValidator('param', idParamSchema), async (c) => {
     const user = c.get('user')
     const { id } = c.req.valid('param')
 
     const [updated] = await db
       .update(schema.challenge)
-      .set({ failedAt: new Date() })
+      .set({ doneDays: 0, lastCheckedAt: null })
       .where(and(eq(schema.challenge.id, id), eq(schema.challenge.userId, user.id)))
       .returning()
 

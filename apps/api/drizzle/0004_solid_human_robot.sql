@@ -1,0 +1,1 @@
+ALTER TABLE "challenge" ADD COLUMN "last_checked_at" date;

@@ -10,7 +10,7 @@ interface DotsProps {
 
 export function Dots({ total = 7, filled = 4, size = 10, gap = 6, className }: DotsProps) {
   return (
-    <div className={cn('inline-flex', className)} style={{ gap }}>
+    <div className={cn('flex flex-wrap', className)} style={{ gap }}>
       {Array.from({ length: total }).map((_, i) => (
         <span
           key={i}

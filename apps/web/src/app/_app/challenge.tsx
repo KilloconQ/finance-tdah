@@ -17,17 +17,21 @@ function Challenge() {
 
   const [challengeName, setChallengeName] = useState('')
   const [description, setDescription] = useState('')
-  const [days, setDays] = useState(7)
+  const [daysInput, setDaysInput] = useState('7')
+  const days = Math.max(1, Math.min(30, parseInt(daysInput) || 7))
   const [savings, setSavings] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
 
   const checkMutation = useMutation({
     mutationFn: (id: string) => mutations.checkChallengeDay(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
+    onSuccess: () => {
+      playCheckSound()
+      queryClient.invalidateQueries({ queryKey: ['challenges'] })
+    },
   })
 
-  const failMutation = useMutation({
-    mutationFn: (id: string) => mutations.failChallenge(id),
+  const resetMutation = useMutation({
+    mutationFn: (id: string) => mutations.resetChallenge(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
   })
 
@@ -86,8 +90,9 @@ function Challenge() {
             <Field label="Duración (días)">
               <input
                 type="number"
-                value={days}
-                onChange={(e) => setDays(Math.max(1, Math.min(30, parseInt(e.target.value) || 7)))}
+                value={daysInput}
+                onChange={(e) => setDaysInput(e.target.value)}
+                onBlur={() => setDaysInput(String(days))}
                 min={1}
                 max={30}
                 className={INPUT_CLASS}
@@ -129,6 +134,7 @@ function Challenge() {
   const savedSoFarCents = Math.round(
     (challenge.expectedSavingsCents / challenge.days) * challenge.doneDays,
   )
+  const checkedToday = challenge.lastCheckedAt === new Date().toISOString().slice(0, 10)
 
   return (
     <PhoneShell>
@@ -163,23 +169,42 @@ function Challenge() {
           <Btn
             kind="ghost"
             className="flex-1 sm:flex-none sm:min-w-32"
-            onClick={() => failMutation.mutate(challenge.id)}
-            disabled={failMutation.isPending || checkMutation.isPending}
+            onClick={() => resetMutation.mutate(challenge.id)}
+            disabled={resetMutation.isPending || checkMutation.isPending}
           >
-            {failMutation.isPending ? '…' : 'Saltar'}
+            {resetMutation.isPending ? '…' : 'Saltar'}
           </Btn>
           <Btn
             kind="primary"
             className="flex-[2] sm:flex-none sm:min-w-48"
             onClick={() => checkMutation.mutate(challenge.id)}
-            disabled={checkMutation.isPending || failMutation.isPending}
+            disabled={checkMutation.isPending || resetMutation.isPending || checkedToday}
           >
-            {checkMutation.isPending ? '…' : 'Sigo en el reto 💪'}
+            {checkMutation.isPending ? '…' : checkedToday ? 'Ya marcaste hoy ✓' : 'Sigo en el reto 💪'}
           </Btn>
         </div>
       </div>
     </PhoneShell>
   )
+}
+
+function playCheckSound() {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(660, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12)
+    gain.gain.setValueAtTime(0.15, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.3)
+  } catch {
+    // ponytail: best-effort chime, ignore if AudioContext is unavailable/blocked
+  }
 }
 
 const INPUT_CLASS =

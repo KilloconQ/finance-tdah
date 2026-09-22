@@ -100,5 +100,5 @@ export const mutations = {
 
   checkChallengeDay: (id: string) => api.post(`challenges/${id}/check`).json(),
 
-  failChallenge: (id: string) => api.post(`challenges/${id}/fail`).json(),
+  resetChallenge: (id: string) => api.post(`challenges/${id}/reset`).json(),
 }

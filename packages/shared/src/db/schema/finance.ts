@@ -124,6 +124,7 @@ export const challenge = pgTable('challenge', {
   days: integer('days').default(7).notNull(),
   doneDays: integer('done_days').default(0).notNull(),
   expectedSavingsCents: integer('expected_savings_cents').default(0).notNull(),
+  lastCheckedAt: date('last_checked_at'),
   startedAt: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
   completedAt: timestamp('completed_at', { withTimezone: true }),
   failedAt: timestamp('failed_at', { withTimezone: true }),

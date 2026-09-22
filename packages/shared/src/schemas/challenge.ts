@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cents } from './common'
+import { cents, isoDate } from './common'
 
 export const challengeSchema = z.object({
   id: z.uuid(),
@@ -9,6 +9,7 @@ export const challengeSchema = z.object({
   days: z.number().int().min(1).max(30),
   doneDays: z.number().int().min(0),
   expectedSavingsCents: cents,
+  lastCheckedAt: isoDate.nullable(),
   startedAt: z.iso.datetime({ offset: true }),
   completedAt: z.iso.datetime({ offset: true }).nullable(),
   failedAt: z.iso.datetime({ offset: true }).nullable(),
