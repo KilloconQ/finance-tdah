@@ -59,4 +59,16 @@ Fuente: `Strict TDD Mode: enabled` (CLAUDE.md global) + verificación en repo.
 - Push/PR: decisión del usuario, no se hace automáticamente.
 
 ## Progreso
+
+### T1 — Gentle AI review (lente reliability, riesgo medio) — APROBADO
+Commit `e75ac37`, lineage `review-13ca7a4df4f192fc`, acknowledged (authority burned).
+Hallazgos no bloqueantes (deuda para más adelante, no reabrir esta revisión por ellos):
+- **WARNING** falta prueba end-to-end real (submit → PATCH → navegación) — coincide con lo ya
+  documentado arriba.
+- **SUGGESTION** `useUpdateGoal` invalida `['goals', id]` a mano; debería derivar la key de
+  `goalQueryOptions(id).queryKey` para no asumir su forma.
+- **SUGGESTION** el `EmptyState` de "meta no encontrada" en `EditGoalContainer` probablemente es
+  inalcanzable — el loader (`ensureQueryData`) rechazaría antes y el error iría al error boundary
+  del router, no a ese branch. Mismo patrón que ya tiene `EditAccountContainer`, revisar ambos.
+
 (se actualiza tras cada tarea con evidencia de verificación y commit)
