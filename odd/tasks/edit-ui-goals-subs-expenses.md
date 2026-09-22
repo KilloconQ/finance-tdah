@@ -38,12 +38,13 @@ Fuente: `Strict TDD Mode: enabled` (CLAUDE.md global) + verificación en repo.
   - **Bug encontrado y corregido en revisión**: la ruta inicial `goals/$id/edit.tsx` anidaba bajo `goals/$id.tsx`, que no renderiza `<Outlet />` — el edit nunca se hubiera mostrado. Corregido con el patrón "non-nested route" de TanStack Router (sufijo `_`: `$id_.edit.tsx`), confirmado en `routeTree.gen.ts` (rutas hermanas, no `WithChildren`).
   - **Prueba manual en navegador: NO realizada.** El stack local ya tenía un proceso `bun` corriendo en :3001 contra una base de datos persistente (no una DB descartable), y el seed de demo está bloqueado por un allowlist de email (`FORBIDDEN`). No se intentó loguear ni sembrar datos para no tocar esa base sin permiso. Verificación real quedó en: typecheck + build + inspección estructural de `routeTree.gen.ts` + revisión manual del código (lógica de centavos, invalidación de queries) contra el patrón de referencia `AccountForm`/`EditAccountContainer`.
 
-- [ ] **T2 — Suscripciones: scaffold `features/subscriptions/` + mutation + form + ruta**
-  - Migrar de `lib/queries.ts` a `features/subscriptions/{api,components,containers}` (mismo patrón que accounts/goals)
-  - `useUpdateSubscription`
-  - Extraer `SubscriptionForm` (hoy inline en `subscriptions/new.tsx`)
-  - Ruta `apps/web/src/app/_app/subscriptions/$id/edit.tsx` + botón editar en el detalle
-  - Verificación: typecheck, lint, prueba manual
+- [x] **T2 — Suscripciones: scaffold `features/subscriptions/` + mutation + form + ruta**
+  - Migrado de `lib/queries.ts` a `features/subscriptions/{api,components,containers}` (mismo patrón que accounts/goals); `lib/queries.ts` limpiado de exports de suscripciones (sin otros consumidores, verificado con `rg`)
+  - `useUpdateSubscription` — invalidación vía `subscriptionsQueryOptions().queryKey` derivada, no hardcodeada (aplica la corrección del review de T1)
+  - `SubscriptionForm` extraído, usa `parseAmountToCents` (mejora sobre el `Math.round(parseFloat(...))` original)
+  - Ruta `apps/web/src/app/_app/subscriptions/$id_.edit.tsx` (convención non-nested desde el arranque, sin repetir el bug de T1) + botón editar en el detalle
+  - Verificación: typecheck ✅, build ✅, lint sin regresiones, `routeTree.gen.ts` confirma ruta hermana (no anidada)
+  - **Prueba manual en navegador: NO realizada** (mismo motivo que T1 — DB local persistente, seed bloqueado por allowlist)
 
 - [ ] **T3 — Gastos: endpoint + schema (TDD) + UI de edición**
   - `updateExpenseSchema` en `packages/shared/src/schemas/expense.ts` (partial de `createExpenseSchema`)

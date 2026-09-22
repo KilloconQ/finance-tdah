@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, Repeat } from 'lucide-react'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { daysAgo } from '@/lib/format'
-import { subscriptionsQuery } from '@/lib/queries'
+import { subscriptionsQueryOptions } from '@/features/subscriptions'
 import { queryClient } from '@/lib/query-client'
 import { useTweaks } from '@/lib/use-tweaks'
 
@@ -24,7 +24,7 @@ function initialAvatarStyle(name: string): { backgroundColor: string; color: str
 }
 
 export const Route = createFileRoute('/_app/subscriptions/')({
-  loader: () => queryClient.ensureQueryData(subscriptionsQuery()),
+  loader: () => queryClient.ensureQueryData(subscriptionsQueryOptions()),
   component: Subscriptions,
 })
 
@@ -32,7 +32,7 @@ function Subscriptions() {
   const navigate = useNavigate()
   const { showBalances } = useTweaks()
 
-  const { data: subs = [], isLoading } = useQuery(subscriptionsQuery())
+  const { data: subs = [], isLoading } = useQuery(subscriptionsQueryOptions())
   const unused = subs.filter((s) => s.unused)
   const active = subs.filter((s) => !s.unused)
 
