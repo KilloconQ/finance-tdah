@@ -141,6 +141,21 @@ export const dailyBudget = pgTable('daily_budget', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+export const pushSubscription = pgTable(
+  'push_subscription',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    endpoint: text('endpoint').notNull(),
+    p256dh: text('p256dh').notNull(),
+    auth: text('auth').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('push_subscription_endpoint_idx').on(t.endpoint)],
+)
+
 export const userRelations = relations(user, ({ one, many }) => ({
   profile: one(userProfile, {
     fields: [user.id],
@@ -152,6 +167,11 @@ export const userRelations = relations(user, ({ one, many }) => ({
   subscriptions: many(subscription),
   challenges: many(challenge),
   budgets: many(dailyBudget),
+  pushSubscriptions: many(pushSubscription),
+}))
+
+export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) => ({
+  user: one(user, { fields: [pushSubscription.userId], references: [user.id] }),
 }))
 
 export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({
