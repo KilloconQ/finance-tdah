@@ -3,7 +3,7 @@ import { cors } from 'hono/cors'
 import { requestId } from 'hono/request-id'
 import { secureHeaders } from 'hono/secure-headers'
 import { auth } from './auth'
-import { env } from './env'
+import { env, features } from './env'
 import { logger } from './lib/logger'
 import { mapErrorToResponse } from './shared/http/error-mapper'
 import { DomainError } from './shared/errors/domain-error'
@@ -85,6 +85,18 @@ logger.info('startup', { port: env.PORT })
 if (env.ALLOWED_EMAILS.length === 0) {
   logger.warn('signup_open', {
     message: 'ALLOWED_EMAILS is empty — registration is open to anyone. Set it to lock sign-up down.',
+  })
+}
+if (!features.passwordResetEmail) {
+  logger.warn('feature_disabled', {
+    feature: 'password_reset_email',
+    message: 'RESEND_API_KEY is not set — password reset emails will fail. Sign-in is unaffected.',
+  })
+}
+if (!features.webPush) {
+  logger.warn('feature_disabled', {
+    feature: 'web_push',
+    message: 'VAPID keys are not set — push notifications are disabled. Sign-in is unaffected.',
   })
 }
 export default {

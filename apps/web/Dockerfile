@@ -12,6 +12,8 @@ RUN pnpm install --frozen-lockfile=false
 FROM base AS build
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=${VITE_API_URL}
+ARG VITE_VAPID_PUBLIC_KEY=
+ENV VITE_VAPID_PUBLIC_KEY=${VITE_VAPID_PUBLIC_KEY}
 COPY --from=deps /repo /repo
 COPY packages/shared packages/shared
 COPY apps/web apps/web

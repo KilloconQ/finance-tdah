@@ -13,9 +13,11 @@ precacheAndRoute(self.__WB_MANIFEST)
 self.skipWaiting()
 clientsClaim()
 
-// mirrors the old generateSW runtimeCaching entry: API calls stay off the app-shell precache
+// mirrors the old generateSW runtimeCaching entry: API calls stay off the app-shell precache.
+// /api/auth/* is deliberately excluded — caching session responses can hand a stale
+// (or another account's) session back to the app and bounce people to sign-in.
 registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/'),
+  ({ url }) => url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/auth/'),
   new NetworkFirst({
     cacheName: 'api-cache',
     networkTimeoutSeconds: 5,

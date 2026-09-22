@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
+import { authErrorMessage, thrownErrorMessage } from '@/lib/auth-errors'
 
 export const Route = createFileRoute('/auth/forgot-password')({
   component: ForgotPassword,
@@ -23,12 +24,12 @@ function ForgotPassword() {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       })
       if (result.error) {
-        setError(result.error.message ?? 'No pudimos procesar el pedido')
+        setError(authErrorMessage(result.error, 'No pudimos procesar el pedido'))
         return
       }
       setSent(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado')
+      setError(thrownErrorMessage(err))
     } finally {
       setLoading(false)
     }

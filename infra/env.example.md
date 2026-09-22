@@ -30,11 +30,14 @@ BETTER_AUTH_URL=http://localhost:3001
 WEB_ORIGIN=http://localhost:5173
 PORT=3001
 
-# --- Resend (password reset) ---
+# --- Resend (password reset) --- OPCIONAL
+# Si queda vacío, el reset por email queda deshabilitado (la API avisa al arrancar).
+# La API arranca igual: nunca bloquea el login.
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=onboarding@resend.dev
 
-# --- Web Push (notificaciones) ---
+# --- Web Push (notificaciones) --- OPCIONAL
+# Si quedan vacías, las push quedan deshabilitadas. La API arranca igual.
 # Generá un par con: bun -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
@@ -45,4 +48,7 @@ VAPID_SUBJECT=mailto:soporte@finance-tdah.local
 - `BETTER_AUTH_SECRET`: cambialo siempre antes de prod. Tirá una variable distinta entre `staging` y `prod`.
 - `PUBLIC_URL`: tiene que matchear el hostname público del tunnel.
 - `CLOUDFLARE_TUNNEL_TOKEN`: ver `infra/cloudflared/README.md`.
+- `RESEND_*` y `VAPID_*` son **opcionales**: vacías sólo apagan reset-por-email y push.
+  `docker-compose.yml` ya las pasa al contenedor `api`, y `VAPID_PUBLIC_KEY` también entra
+  al build del web como `VITE_VAPID_PUBLIC_KEY` (hay que rebuildear el web si la cambiás).
 - En dev sin docker, sumá un Postgres local (`brew install postgresql@17 && brew services start postgresql@17`) o levantá solo `postgres` con `docker compose up -d postgres`.
