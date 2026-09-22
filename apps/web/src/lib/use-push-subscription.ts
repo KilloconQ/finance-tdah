@@ -8,8 +8,18 @@ export function isPushSupported(): boolean {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
+/**
+ * The key is baked in at build time from VAPID_PUBLIC_KEY. Without it the browser
+ * cannot subscribe at all, so the UI has to hide the toggle rather than offer a
+ * switch that throws on flip.
+ */
+export function isPushConfigured(): boolean {
+  return Boolean(VAPID_PUBLIC_KEY)
+}
+
 export function usePushSubscription() {
   const supported = isPushSupported()
+  const configured = isPushConfigured()
   const [subscribed, setSubscribed] = useState(false)
 
   useEffect(() => {
@@ -36,13 +46,29 @@ export function usePushSubscription() {
       const registration = await navigator.serviceWorker.ready
       // subscribe() throws if a subscription already exists (e.g. left over from
       // a previous session) — reuse it instead of failing the toggle
+      const existing = await registration.pushManager.getSubscription()
       const subscription =
-        (await registration.pushManager.getSubscription()) ??
+        existing ??
         (await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         }))
-      await api.post('push/subscribe', { json: subscription.toJSON() })
+
+      try {
+        await api.post('push/subscribe', { json: subscription.toJSON() })
+      } catch (err) {
+        // Roll back a subscription this call created. Left in place, the browser
+        // holds one the server never recorded — and the effect above reads it
+        // back on the next mount and shows the toggle as on, silently.
+        // An `existing` one is left alone: it is not ours to revoke.
+        if (!existing) {
+          await subscription.unsubscribe().catch(() => {
+            // best effort — the request failure is the one worth reporting
+          })
+        }
+        throw err
+      }
+
       return subscription
     },
     onSuccess: () => setSubscribed(true),
@@ -62,7 +88,17 @@ export function usePushSubscription() {
   const subscribe = useCallback(() => subscribeMutation.mutate(), [subscribeMutation])
   const unsubscribe = useCallback(() => unsubscribeMutation.mutate(), [unsubscribeMutation])
 
-  return { supported, subscribed, subscribe, unsubscribe }
+  // Surfaced so a failed flip says why instead of leaving the toggle looking on.
+  const error = subscribeMutation.error ?? unsubscribeMutation.error
+
+  return {
+    supported,
+    configured,
+    subscribed,
+    subscribe,
+    unsubscribe,
+    error: error instanceof Error ? error.message : null,
+  }
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {

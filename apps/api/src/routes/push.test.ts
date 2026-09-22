@@ -44,6 +44,11 @@ const { pushSubscription, state, fakeDb } = vi.hoisted(() => {
   return { pushSubscription, state, fakeDb }
 })
 
+vi.mock('../env', () => ({
+  env: {},
+  features: { passwordResetEmail: true, webPush: true },
+}))
+
 vi.mock('../middleware/session', () => ({
   sessionMiddleware: async (c: { set: (k: string, v: unknown) => void }, next: () => Promise<void>) => {
     c.set('user', { id: 'user-1' })

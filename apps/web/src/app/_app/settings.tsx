@@ -5,7 +5,7 @@ import { AppBar, PhoneShell, TabBar, Btn } from '@/components'
 import { cn } from '@/lib/cn'
 import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
 import { usePushSubscription } from '@/lib/use-push-subscription'
-import { authClient } from '@/lib/auth-client'
+import { signOutAndClear } from '@/lib/session-reset'
 import { fetchValidated } from '@/lib/api'
 import { z } from 'zod'
 
@@ -29,13 +29,13 @@ function Settings() {
       )
     },
     onSuccess: async () => {
-      await authClient.signOut()
+      await signOutAndClear()
       navigate({ to: '/auth/sign-in' })
     },
   })
 
   const handleLogout = async () => {
-    await authClient.signOut()
+    await signOutAndClear()
     navigate({ to: '/auth/sign-in' })
   }
 
@@ -79,7 +79,7 @@ function Settings() {
           />
         </Section>
 
-        {push.supported ? (
+        {push.supported && push.configured ? (
           <Section
             label="Notificaciones"
             hint="Avisos cuando llegás al presupuesto semanal o completás una meta."
@@ -89,6 +89,11 @@ function Settings() {
               value={push.subscribed}
               onChange={(v) => (v ? push.subscribe() : push.unsubscribe())}
             />
+            {push.error ? (
+              <div className="mt-2 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+                {push.error}
+              </div>
+            ) : null}
           </Section>
         ) : null}
 
