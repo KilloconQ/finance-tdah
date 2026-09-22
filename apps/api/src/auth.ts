@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { APIError } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { Resend } from 'resend'
 import { db } from './db/client'
 import { env } from './env'
 
@@ -16,6 +17,15 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     minPasswordLength: 8,
     maxPasswordLength: 128,
+    sendResetPassword: async ({ user, url }) => {
+      const resend = new Resend(env.RESEND_API_KEY)
+      await resend.emails.send({
+        from: env.RESEND_FROM_EMAIL,
+        to: user.email,
+        subject: 'Restablecé tu contraseña',
+        html: `<p>Hacé click para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignorá este email.</p>`,
+      })
+    },
   },
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 días

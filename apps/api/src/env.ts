@@ -9,6 +9,10 @@ const envSchema = z.object({
   }),
   BETTER_AUTH_URL: z.url(),
   WEB_ORIGIN: z.url(),
+  RESEND_API_KEY: z.string().min(1, {
+    error: 'RESEND_API_KEY es requerido para enviar emails de reset de contraseña',
+  }),
+  RESEND_FROM_EMAIL: z.string().default('onboarding@resend.dev'),
   // Comma-separated allowlist of emails permitted to register. When empty, sign-up
   // is open to anyone (a warning is logged at startup). Set it to lock registration
   // down to the known users.

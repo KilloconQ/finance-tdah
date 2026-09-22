@@ -18,6 +18,8 @@ import { Route as OnboardingGoalRouteImport } from './app/onboarding/goal'
 import { Route as OnboardingDoneRouteImport } from './app/onboarding/done'
 import { Route as AuthSignUpRouteImport } from './app/auth/sign-up'
 import { Route as AuthSignInRouteImport } from './app/auth/sign-in'
+import { Route as AuthResetPasswordRouteImport } from './app/auth/reset-password'
+import { Route as AuthForgotPasswordRouteImport } from './app/auth/forgot-password'
 import { Route as AppTransactionsRouteImport } from './app/_app/transactions'
 import { Route as AppSettingsRouteImport } from './app/_app/settings'
 import { Route as AppPanicRouteImport } from './app/_app/panic'
@@ -75,6 +77,16 @@ const AuthSignUpRoute = AuthSignUpRouteImport.update({
 const AuthSignInRoute = AuthSignInRouteImport.update({
   id: '/auth/sign-in',
   path: '/auth/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/auth/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppTransactionsRoute = AppTransactionsRouteImport.update({
@@ -155,6 +167,8 @@ export interface FileRoutesByFullPath {
   '/panic': typeof AppPanicRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
@@ -178,6 +192,8 @@ export interface FileRoutesByTo {
   '/panic': typeof AppPanicRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
@@ -204,6 +220,8 @@ export interface FileRoutesById {
   '/_app/panic': typeof AppPanicRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/transactions': typeof AppTransactionsRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/sign-in': typeof AuthSignInRoute
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
@@ -231,6 +249,8 @@ export interface FileRouteTypes {
     | '/panic'
     | '/settings'
     | '/transactions'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/onboarding/done'
@@ -254,6 +274,8 @@ export interface FileRouteTypes {
     | '/panic'
     | '/settings'
     | '/transactions'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/onboarding/done'
@@ -279,6 +301,8 @@ export interface FileRouteTypes {
     | '/_app/panic'
     | '/_app/settings'
     | '/_app/transactions'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/onboarding/done'
@@ -300,6 +324,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignInRoute: typeof AuthSignInRoute
   AuthSignUpRoute: typeof AuthSignUpRoute
   OnboardingDoneRoute: typeof OnboardingDoneRoute
@@ -372,6 +398,20 @@ declare module '@tanstack/react-router' {
       path: '/auth/sign-in'
       fullPath: '/auth/sign-in'
       preLoaderRoute: typeof AuthSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/auth/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app/transactions': {
@@ -515,6 +555,8 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignInRoute: AuthSignInRoute,
   AuthSignUpRoute: AuthSignUpRoute,
   OnboardingDoneRoute: OnboardingDoneRoute,

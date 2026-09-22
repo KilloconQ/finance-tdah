@@ -29,6 +29,10 @@ DATABASE_URL=postgres://finance:changeme-en-prod@localhost:5432/finance_tdah
 BETTER_AUTH_URL=http://localhost:3001
 WEB_ORIGIN=http://localhost:5173
 PORT=3001
+
+# --- Resend (password reset) ---
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=onboarding@resend.dev
 ```
 
 ## Notas
