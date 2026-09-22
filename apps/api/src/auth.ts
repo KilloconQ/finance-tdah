@@ -1,5 +1,5 @@
 import { betterAuth } from 'better-auth'
-import { APIError } from 'better-auth/api'
+import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { Resend } from 'resend'
 import { db } from './db/client'
@@ -9,6 +9,34 @@ import { logger } from './lib/logger'
 // Password-reset email is an optional feature: without a Resend key the reset
 // endpoint fails loudly, but sign-in/sign-up keep working.
 const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null
+
+/**
+ * better-auth renamed the endpoint to `/request-password-reset`; `/forget-password`
+ * is kept here because the rate limiter still ships rules under the old name.
+ */
+const PASSWORD_RESET_PATHS = new Set(['/request-password-reset', '/forget-password'])
+
+export function isPasswordResetPath(path: string): boolean {
+  return PASSWORD_RESET_PATHS.has(path)
+}
+
+export const PASSWORD_RESET_UNAVAILABLE = 'PASSWORD_RESET_UNAVAILABLE'
+
+/**
+ * Rejects the reset request before better-auth looks the address up.
+ *
+ * `sendResetPassword` only runs once a user has been resolved, so failing in
+ * there answers 503 for a registered address and the usual generic success for
+ * an unknown one — an account-existence oracle. Refusing up front keeps the
+ * response identical for every address.
+ */
+function requirePasswordResetConfigured(path: string): void {
+  if (resend || !isPasswordResetPath(path)) return
+  throw new APIError('SERVICE_UNAVAILABLE', {
+    code: PASSWORD_RESET_UNAVAILABLE,
+    message: 'El reset por email no está configurado. Contactá al admin.',
+  })
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -23,13 +51,13 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     sendResetPassword: async ({ user, url }) => {
+      // Unreachable: the before-hook rejects an unconfigured reset first. Never
+      // throw from here — by this point a user exists, so a failure leaks that.
       if (!resend) {
         logger.error('password_reset_unavailable', {
           message: 'RESEND_API_KEY no está configurada — no se pudo enviar el email de reset',
         })
-        throw new APIError('SERVICE_UNAVAILABLE', {
-          message: 'El envío de emails no está configurado. Contactá al admin.',
-        })
+        return
       }
       await resend.emails.send({
         from: env.RESEND_FROM_EMAIL,
@@ -74,6 +102,11 @@ export const auth = betterAuth({
       },
     },
   },
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      requirePasswordResetConfigured(ctx.path)
+    }),
+  },
   rateLimit: {
     enabled: true,
     window: 60,
@@ -81,6 +114,9 @@ export const auth = betterAuth({
     customRules: {
       '/sign-in/email': { window: 60, max: 5 },
       '/sign-up/email': { window: 60, max: 5 },
+      // The endpoint is '/request-password-reset' since better-auth 1.6; the old
+      // name stays so the rule still applies if the alias is ever routed again.
+      '/request-password-reset': { window: 60, max: 3 },
       '/forget-password': { window: 60, max: 3 },
     },
   },

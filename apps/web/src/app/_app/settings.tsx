@@ -79,7 +79,7 @@ function Settings() {
           />
         </Section>
 
-        {push.supported ? (
+        {push.supported && push.configured ? (
           <Section
             label="Notificaciones"
             hint="Avisos cuando llegás al presupuesto semanal o completás una meta."
@@ -89,6 +89,11 @@ function Settings() {
               value={push.subscribed}
               onChange={(v) => (v ? push.subscribe() : push.unsubscribe())}
             />
+            {push.error ? (
+              <div className="mt-2 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+                {push.error}
+              </div>
+            ) : null}
           </Section>
         ) : null}
 

@@ -5,24 +5,24 @@ declare const self: ServiceWorkerGlobalScope
 
 import { precacheAndRoute } from 'workbox-precaching'
 import { clientsClaim } from 'workbox-core'
-import { registerRoute } from 'workbox-routing'
-import { NetworkFirst } from 'workbox-strategies'
 
 precacheAndRoute(self.__WB_MANIFEST)
 
 self.skipWaiting()
 clientsClaim()
 
-// mirrors the old generateSW runtimeCaching entry: API calls stay off the app-shell precache.
-// /api/auth/* is deliberately excluded — caching session responses can hand a stale
-// (or another account's) session back to the app and bounce people to sign-in.
-registerRoute(
-  ({ url }) => url.pathname.startsWith('/api/') && !url.pathname.startsWith('/api/auth/'),
-  new NetworkFirst({
-    cacheName: 'api-cache',
-    networkTimeoutSeconds: 5,
-  }),
-)
+// No runtime caching for /api/*. Every API response here is user-scoped, and
+// workbox keys its cache by URL alone — not by the session cookie — so a
+// NetworkFirst entry for /api/accounts survives a logout and can be replayed to
+// whoever signs in next on the same device (the 5s network timeout was enough to
+// trigger it). Unregistered requests go straight to the network, which is what
+// authenticated data needs; TanStack Query already handles in-memory caching.
+// Any future offline support has to partition per user and clear on sign-out.
+
+// Drop the cache a previous version of this worker populated.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(caches.delete('api-cache'))
+})
 
 self.addEventListener('push', (event) => {
   let data: { title?: string; body?: string; url?: string } = {}

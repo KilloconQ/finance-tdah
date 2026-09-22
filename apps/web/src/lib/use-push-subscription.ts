@@ -8,8 +8,18 @@ export function isPushSupported(): boolean {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
+/**
+ * The key is baked in at build time from VAPID_PUBLIC_KEY. Without it the browser
+ * cannot subscribe at all, so the UI has to hide the toggle rather than offer a
+ * switch that throws on flip.
+ */
+export function isPushConfigured(): boolean {
+  return Boolean(VAPID_PUBLIC_KEY)
+}
+
 export function usePushSubscription() {
   const supported = isPushSupported()
+  const configured = isPushConfigured()
   const [subscribed, setSubscribed] = useState(false)
 
   useEffect(() => {
@@ -62,7 +72,17 @@ export function usePushSubscription() {
   const subscribe = useCallback(() => subscribeMutation.mutate(), [subscribeMutation])
   const unsubscribe = useCallback(() => unsubscribeMutation.mutate(), [unsubscribeMutation])
 
-  return { supported, subscribed, subscribe, unsubscribe }
+  // Surfaced so a failed flip says why instead of leaving the toggle looking on.
+  const error = subscribeMutation.error ?? unsubscribeMutation.error
+
+  return {
+    supported,
+    configured,
+    subscribed,
+    subscribe,
+    unsubscribe,
+    error: error instanceof Error ? error.message : null,
+  }
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {

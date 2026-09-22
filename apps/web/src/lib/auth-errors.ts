@@ -20,6 +20,7 @@ const CODE_MESSAGES: Record<string, string> = {
   PASSWORD_TOO_SHORT: 'La contraseña tiene que tener al menos 8 caracteres.',
   PASSWORD_TOO_LONG: 'La contraseña es demasiado larga.',
   INVALID_TOKEN: 'El link venció o ya se usó. Pedí uno nuevo.',
+  PASSWORD_RESET_UNAVAILABLE: 'El reset por email no está configurado. Contactá al admin.',
 }
 
 const OFFLINE = 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.'
@@ -34,10 +35,18 @@ export function authErrorMessage(error: AuthErrorLike | null | undefined, fallba
   // status 0 = the fetch itself never completed (API unreachable, DNS, offline).
   if (status === 0) return OFFLINE
   if (status === 429) return RATE_LIMITED
-  // A crash-looping API behind a proxy answers 502/503/504 with no usable body.
-  if (status >= 500) return `${SERVER_DOWN} (error ${status})`
 
+  // Checked before the generic 5xx branch: a healthy API answering 503 for a
+  // disabled feature carries an actionable code, and that message beats
+  // "el servidor no está respondiendo".
   if (error.code && CODE_MESSAGES[error.code]) return CODE_MESSAGES[error.code]
+
+  // A crash-looping API behind a proxy answers 502/503/504 with no usable body —
+  // no code means the body did not come from our own error handler.
+  if (status >= 500) {
+    return error.code && error.message ? error.message : `${SERVER_DOWN} (error ${status})`
+  }
+
   if (status === 401 || status === 403) return error.message ?? CODE_MESSAGES.INVALID_EMAIL_OR_PASSWORD
   return error.message ?? fallback
 }
