@@ -1,10 +1,14 @@
 import webpush, { WebPushError } from 'web-push'
 import { eq } from 'drizzle-orm'
 import { db, schema } from '../db/client'
-import { env } from '../env'
+import { env, features } from '../env'
 import { logger } from '../lib/logger'
 
-webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY)
+// Web push is optional: without VAPID keys we skip sending instead of throwing at
+// import time, which would otherwise crash the API on startup and block sign-in.
+if (features.webPush) {
+  webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY!, env.VAPID_PRIVATE_KEY!)
+}
 
 export type PushPayload = {
   title: string
@@ -13,6 +17,11 @@ export type PushPayload = {
 }
 
 export async function sendPushToUser(userId: string, payload: PushPayload): Promise<void> {
+  if (!features.webPush) {
+    logger.warn('push_skipped', { userId, message: 'VAPID keys no configuradas' })
+    return
+  }
+
   const subscriptions = await db.query.pushSubscription.findMany({
     where: (s, { eq }) => eq(s.userId, userId),
   })

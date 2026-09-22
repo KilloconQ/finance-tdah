@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
+import { authErrorMessage, thrownErrorMessage } from '@/lib/auth-errors'
 
 export const Route = createFileRoute('/auth/reset-password')({
   component: ResetPassword,
@@ -22,12 +23,12 @@ function ResetPassword() {
     try {
       const result = await authClient.resetPassword({ newPassword: password, token })
       if (result.error) {
-        setError(result.error.message ?? 'No pudimos restablecer tu contraseña')
+        setError(authErrorMessage(result.error, 'No pudimos restablecer tu contraseña'))
         return
       }
       navigate({ to: '/auth/sign-in', replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado')
+      setError(thrownErrorMessage(err))
     } finally {
       setLoading(false)
     }

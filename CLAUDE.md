@@ -46,7 +46,7 @@ The api has no lint script; `pnpm lint` only hits `apps/web`.
 
 Two distinct env stories (don't mix them):
 
-1. **API runtime** (`apps/api/src/env.ts`): strict Zod validation, exits on any missing var. Requires `DATABASE_URL`, `BETTER_AUTH_SECRET` (≥32 chars), `BETTER_AUTH_URL`, `WEB_ORIGIN`.
+1. **API runtime** (`apps/api/src/env.ts`): strict Zod validation, exits on any missing **required** var. Requires `DATABASE_URL`, `BETTER_AUTH_SECRET` (≥32 chars), `BETTER_AUTH_URL`, `WEB_ORIGIN`. Feature credentials (`RESEND_API_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`) are **optional** and exported as the `features` flags — a missing one disables password-reset email or web push and logs a startup warning, it must never take the API down and lock everyone out of sign-in. When you add a new var, wire it into `docker-compose.yml` too: the api container only sees what compose passes it.
 2. **Migrations** (`apps/api/src/db/migrate.ts`): intentionally **decoupled** from `env.ts`. Reads `DATABASE_URL` directly from `process.env` so migrations can run with only a DB URL (no auth secret needed in CI/local migration scripts). Don't re-import `env.ts` here.
 
 Template lives at `infra/env.example.md` — `.env` goes at the repo root.

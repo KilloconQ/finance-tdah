@@ -38,6 +38,7 @@ const { state, fakeDb, sendNotification } = vi.hoisted(() => {
 
 vi.mock('../env', () => ({
   env: { VAPID_SUBJECT: 'mailto:test@test.local', VAPID_PUBLIC_KEY: 'pub', VAPID_PRIVATE_KEY: 'priv' },
+  features: { passwordResetEmail: true, webPush: true },
 }))
 
 vi.mock('../db/client', () => ({

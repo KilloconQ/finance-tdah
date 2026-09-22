@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
+import { authErrorMessage, thrownErrorMessage } from '@/lib/auth-errors'
 
 export const Route = createFileRoute('/auth/sign-up')({
   component: SignUp,
@@ -22,12 +23,12 @@ function SignUp() {
     try {
       const result = await authClient.signUp.email({ email, password, name })
       if (result.error) {
-        setError(result.error.message ?? 'No pudimos crear tu cuenta')
+        setError(authErrorMessage(result.error, 'No pudimos crear tu cuenta'))
         return
       }
       navigate({ to: '/onboarding', replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado')
+      setError(thrownErrorMessage(err))
     } finally {
       setLoading(false)
     }

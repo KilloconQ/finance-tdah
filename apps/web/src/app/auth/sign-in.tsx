@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
+import { authErrorMessage, thrownErrorMessage } from '@/lib/auth-errors'
 
 export const Route = createFileRoute('/auth/sign-in')({
   component: SignIn,
@@ -21,12 +22,12 @@ function SignIn() {
     try {
       const result = await authClient.signIn.email({ email, password })
       if (result.error) {
-        setError(result.error.message ?? 'No pudimos entrar')
+        setError(authErrorMessage(result.error, 'No pudimos entrar'))
         return
       }
       navigate({ to: '/', replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado')
+      setError(thrownErrorMessage(err))
     } finally {
       setLoading(false)
     }

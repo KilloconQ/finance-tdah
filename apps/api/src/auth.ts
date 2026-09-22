@@ -4,8 +4,11 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { Resend } from 'resend'
 import { db } from './db/client'
 import { env } from './env'
+import { logger } from './lib/logger'
 
-const resend = new Resend(env.RESEND_API_KEY)
+// Password-reset email is an optional feature: without a Resend key the reset
+// endpoint fails loudly, but sign-in/sign-up keep working.
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -20,6 +23,14 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     sendResetPassword: async ({ user, url }) => {
+      if (!resend) {
+        logger.error('password_reset_unavailable', {
+          message: 'RESEND_API_KEY no está configurada — no se pudo enviar el email de reset',
+        })
+        throw new APIError('SERVICE_UNAVAILABLE', {
+          message: 'El envío de emails no está configurado. Contactá al admin.',
+        })
+      }
       await resend.emails.send({
         from: env.RESEND_FROM_EMAIL,
         to: user.email,
