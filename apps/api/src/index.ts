@@ -13,6 +13,7 @@ import { dashboardRoute } from './routes/dashboard'
 import { expensesRoute } from './routes/expenses'
 import { goalsRoute } from './routes/goals'
 import { profileRoute } from './routes/profile'
+import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
 
 const app = new Hono<{ Variables: { requestId: string } }>()
@@ -51,6 +52,7 @@ const api = app
   .route('/accounts', accountsRoute)
   .route('/goals', goalsRoute)
   .route('/expenses', expensesRoute)
+  .route('/push', pushRoute)
   .route('/subscriptions', subscriptionsRoute)
   .route('/challenges', challengesRoute)
   .route('/dashboard', dashboardRoute)

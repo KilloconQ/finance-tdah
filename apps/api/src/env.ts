@@ -13,6 +13,9 @@ const envSchema = z.object({
     error: 'RESEND_API_KEY es requerido para enviar emails de reset de contraseña',
   }),
   RESEND_FROM_EMAIL: z.string().default('onboarding@resend.dev'),
+  VAPID_PUBLIC_KEY: z.string().min(1, { error: 'VAPID_PUBLIC_KEY es requerida para push notifications' }),
+  VAPID_PRIVATE_KEY: z.string().min(1, { error: 'VAPID_PRIVATE_KEY es requerida para push notifications' }),
+  VAPID_SUBJECT: z.string().default('mailto:soporte@finance-tdah.local'),
   // Comma-separated allowlist of emails permitted to register. When empty, sign-up
   // is open to anyone (a warning is logged at startup). Set it to lock registration
   // down to the known users.

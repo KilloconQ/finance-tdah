@@ -33,6 +33,12 @@ PORT=3001
 # --- Resend (password reset) ---
 RESEND_API_KEY=
 RESEND_FROM_EMAIL=onboarding@resend.dev
+
+# --- Web Push (notificaciones) ---
+# Generá un par con: bun -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:soporte@finance-tdah.local
 ```
 
 ## Notas

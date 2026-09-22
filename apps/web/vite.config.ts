@@ -20,6 +20,17 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
+        injectManifest: {},
+        // vite-plugin-pwa doesn't serve the SW in dev by default — without this,
+        // navigator.serviceWorker.ready never resolves and push notifications
+        // silently never activate outside a production build.
+        devOptions: {
+          enabled: true,
+          type: 'module',
+        },
         includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png'],
         manifest: {
           name: 'Cada Quien',
@@ -45,22 +56,6 @@ export default defineConfig(({ mode }) => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
-            },
-          ],
-        },
-        workbox: {
-          skipWaiting: true,
-          clientsClaim: true,
-          navigateFallbackDenylist: [/^\/api\//],
-          runtimeCaching: [
-            {
-              urlPattern: /\/api\/.*/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'api-cache',
-                networkTimeoutSeconds: 5,
-                cacheableResponse: { statuses: [0, 200] },
-              },
             },
           ],
         },

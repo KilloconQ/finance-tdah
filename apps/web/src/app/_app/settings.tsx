@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 import { AppBar, PhoneShell, TabBar, Btn } from '@/components'
 import { cn } from '@/lib/cn'
 import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
+import { usePushSubscription } from '@/lib/use-push-subscription'
 import { authClient } from '@/lib/auth-client'
 import { fetchValidated } from '@/lib/api'
 import { z } from 'zod'
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_app/settings')({
 function Settings() {
   const { showBalances, density, weeklyBudgetCents } = useTweaks()
   const setTweak = useSetTweak()
+  const push = usePushSubscription()
   const navigate = useNavigate()
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
@@ -76,6 +78,19 @@ function Settings() {
             onChange={(v) => setTweak.mutate({ showBalances: v })}
           />
         </Section>
+
+        {push.supported ? (
+          <Section
+            label="Notificaciones"
+            hint="Avisos cuando llegás al presupuesto semanal o completás una meta."
+          >
+            <Toggle
+              label="Activar notificaciones"
+              value={push.subscribed}
+              onChange={(v) => (v ? push.subscribe() : push.unsubscribe())}
+            />
+          </Section>
+        ) : null}
 
         <div className="border-t border-line pt-8 mt-8">
           <div className="flex gap-2">

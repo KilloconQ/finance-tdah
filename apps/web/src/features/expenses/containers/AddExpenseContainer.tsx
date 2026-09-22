@@ -11,20 +11,36 @@ import { useCreateExpense, useParseVoice } from '../api'
 import { ExpenseForm, type ExpenseFormFields } from '../components/ExpenseForm'
 import { VoiceCapture } from '../components/VoiceCapture'
 
-// Voice is a deferred MVP feature: until real speech-to-text lands, the mic
-// replays one of these canned transcripts so the flow stays demoable.
-const STUB_TRANSCRIPTS = ['180 en taxi', 'café 65', 'super 1200 con la débito', 'cena 320 con Lu']
-
 type Mode = 'voice' | 'manual'
+
+function getSpeechRecognitionCtor(): (new () => SpeechRecognition) | undefined {
+  return window.SpeechRecognition ?? window.webkitSpeechRecognition
+}
+
+function speechErrorMessage(code: string): string {
+  switch (code) {
+    case 'not-allowed':
+    case 'service-not-allowed':
+      return 'Necesito permiso para usar el micrófono'
+    case 'no-speech':
+      return 'No escuché nada, probá de nuevo'
+    case 'network':
+      return 'Sin conexión para reconocer voz'
+    default:
+      return 'No te entendí, probá de nuevo'
+  }
+}
 
 export function AddExpenseContainer() {
   const navigate = useNavigate()
-  const detailed = useTweaks().density === 'detailed'
+  const { density, inputPreference } = useTweaks()
+  const detailed = density === 'detailed'
 
-  const [mode, setMode] = useState<Mode>('manual')
+  const [mode, setMode] = useState<Mode>(() => (inputPreference === 'manual' ? 'manual' : 'voice'))
   const [recording, setRecording] = useState(false)
   const [parsed, setParsed] = useState<ParsedVoiceExpense | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
 
   // Synchronous guard against a double-submit racing the isPending re-render —
   // logging a gasto twice would deduct the account balance twice.
@@ -75,14 +91,48 @@ export function AddExpenseContainer() {
     })
   }
 
+  const startRecording = () => {
+    setError(null)
+    const Ctor = getSpeechRecognitionCtor()
+    if (!Ctor) {
+      setError('Tu navegador no soporta reconocimiento de voz')
+      return
+    }
+
+    const recognition = new Ctor()
+    recognition.lang = navigator.language.toLowerCase().startsWith('es') ? navigator.language : 'es-ES'
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript
+      if (!transcript) {
+        setError('No te entendí, probá de nuevo')
+        return
+      }
+      parseVoice.mutate(transcript, {
+        onSuccess: setParsed,
+        onError: (err) => setError(err instanceof Error ? err.message : 'No te entendí'),
+      })
+    }
+    recognition.onerror = (event) => {
+      setRecording(false)
+      setError(speechErrorMessage(event.error))
+    }
+    recognition.onend = () => setRecording(false)
+
+    recognitionRef.current = recognition
+    try {
+      recognition.start()
+      setRecording(true)
+    } catch {
+      // start() throws synchronously if a recognizer is already active for this tab
+      setError('No pude activar el micrófono, probá de nuevo')
+    }
+  }
+
   const handleRelease = () => {
     if (!recording) return
-    setRecording(false)
-    const transcript = STUB_TRANSCRIPTS[Math.floor(Math.random() * STUB_TRANSCRIPTS.length)]
-    parseVoice.mutate(transcript, {
-      onSuccess: setParsed,
-      onError: (err) => setError(err instanceof Error ? err.message : 'No te entendí'),
-    })
+    recognitionRef.current?.stop()
   }
 
   return (
@@ -103,6 +153,10 @@ export function AddExpenseContainer() {
           error={error}
           onSubmit={handleManualSubmit}
           onUseVoice={() => {
+            if (!getSpeechRecognitionCtor()) {
+              setError('Tu navegador no soporta reconocimiento de voz')
+              return
+            }
             setError(null)
             setMode('voice')
           }}
@@ -115,14 +169,12 @@ export function AddExpenseContainer() {
           error={error}
           detailed={detailed}
           saving={createExpense.isPending}
-          onPress={() => {
-            setError(null)
-            setRecording(true)
-          }}
+          onPress={startRecording}
           onRelease={handleRelease}
           onRetry={() => setParsed(null)}
           onSave={handleVoiceSave}
           onUseManual={() => {
+            recognitionRef.current?.stop()
             setError(null)
             setParsed(null)
             setRecording(false)
