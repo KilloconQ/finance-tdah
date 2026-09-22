@@ -46,13 +46,29 @@ export function usePushSubscription() {
       const registration = await navigator.serviceWorker.ready
       // subscribe() throws if a subscription already exists (e.g. left over from
       // a previous session) — reuse it instead of failing the toggle
+      const existing = await registration.pushManager.getSubscription()
       const subscription =
-        (await registration.pushManager.getSubscription()) ??
+        existing ??
         (await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         }))
-      await api.post('push/subscribe', { json: subscription.toJSON() })
+
+      try {
+        await api.post('push/subscribe', { json: subscription.toJSON() })
+      } catch (err) {
+        // Roll back a subscription this call created. Left in place, the browser
+        // holds one the server never recorded — and the effect above reads it
+        // back on the next mount and shows the toggle as on, silently.
+        // An `existing` one is left alone: it is not ours to revoke.
+        if (!existing) {
+          await subscription.unsubscribe().catch(() => {
+            // best effort — the request failure is the one worth reporting
+          })
+        }
+        throw err
+      }
+
       return subscription
     },
     onSuccess: () => setSubscribed(true),

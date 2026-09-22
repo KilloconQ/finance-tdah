@@ -2,21 +2,37 @@ import { authClient } from './auth-client'
 import { queryClient } from './query-client'
 
 /**
- * Wipes every cached server response.
+ * Keeps the query cache from outliving the session that filled it.
  *
  * `queryClient` is a module-level singleton and the finance queries use
  * unscoped keys (`['accounts']`, `['dashboard', 'home']`, `['profile']`, …)
- * with a 30s `staleTime`. Without this, signing out and signing in as someone
- * else in the same tab lets route loaders read the previous user's financial
- * data straight from cache and render it before the first refetch lands.
+ * with a 30s `staleTime`, so anything left in it is readable by whoever holds
+ * the tab next.
  *
- * Called on both ends of a session change: signing out drops the data promptly,
- * and signing in covers the paths that never reach a sign-out at all — an
- * expired session bounced to /auth/sign-in by the `_app` guard, or a tab left
- * open from a previous session.
+ * The rule is enforced in one place — `syncSessionCache()` in the `_app`
+ * guard — rather than at each auth screen. Every path into the authenticated
+ * app goes through that guard, so sign-in, sign-up (via onboarding), an
+ * expired session and any auth flow added later are all covered without having
+ * to remember to call anything.
  */
+
+/** The user the cache currently belongs to. Null means "nobody / unknown". */
+let cachedUserId: string | null = null
+
+/**
+ * Called by the `_app` guard once the session is known. Drops the cache when
+ * the tab changes hands, before any route loader gets to read it.
+ */
+export function syncSessionCache(userId: string): void {
+  if (cachedUserId === userId) return
+  queryClient.clear()
+  cachedUserId = userId
+}
+
+/** Drops the cache and forgets whose it was. */
 export function clearSessionCache(): void {
   queryClient.clear()
+  cachedUserId = null
 }
 
 /** Signs out and clears the cache even if the sign-out request itself fails. */

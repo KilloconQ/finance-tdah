@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { Btn, Card, Hello, PhoneShell } from '@/components'
 import { authClient } from '@/lib/auth-client'
 import { authErrorMessage, thrownErrorMessage } from '@/lib/auth-errors'
-import { clearSessionCache } from '@/lib/session-reset'
 
 export const Route = createFileRoute('/auth/sign-in')({
   component: SignIn,
@@ -26,9 +25,6 @@ function SignIn() {
         setError(authErrorMessage(result.error, 'No pudimos entrar'))
         return
       }
-      // Covers every path that skips sign-out: an expired session bounced here
-      // by the _app guard, or a tab still holding a previous user's cache.
-      clearSessionCache()
       navigate({ to: '/', replace: true })
     } catch (err) {
       setError(thrownErrorMessage(err))
