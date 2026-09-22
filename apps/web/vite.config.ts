@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        strategies: 'injectManifest',
+        srcDir: 'src',
+        filename: 'sw.ts',
+        injectManifest: {},
         includeAssets: ['favicon-32x32.png', 'apple-touch-icon.png'],
         manifest: {
           name: 'Cada Quien',
@@ -45,22 +49,6 @@ export default defineConfig(({ mode }) => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable',
-            },
-          ],
-        },
-        workbox: {
-          skipWaiting: true,
-          clientsClaim: true,
-          navigateFallbackDenylist: [/^\/api\//],
-          runtimeCaching: [
-            {
-              urlPattern: /\/api\/.*/,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'api-cache',
-                networkTimeoutSeconds: 5,
-                cacheableResponse: { statuses: [0, 200] },
-              },
             },
           ],
         },

@@ -1,0 +1,48 @@
+/// <reference lib="webworker" />
+export type {}
+
+declare const self: ServiceWorkerGlobalScope
+
+import { precacheAndRoute } from 'workbox-precaching'
+import { clientsClaim } from 'workbox-core'
+import { registerRoute } from 'workbox-routing'
+import { NetworkFirst } from 'workbox-strategies'
+
+precacheAndRoute(self.__WB_MANIFEST)
+
+self.skipWaiting()
+clientsClaim()
+
+// mirrors the old generateSW runtimeCaching entry: API calls stay off the app-shell precache
+registerRoute(
+  ({ url }) => url.pathname.startsWith('/api/'),
+  new NetworkFirst({
+    cacheName: 'api-cache',
+    networkTimeoutSeconds: 5,
+  }),
+)
+
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {}
+  const title = data.title ?? 'Cada Quien'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body,
+      data: { url: data.url ?? '/' },
+      icon: '/pwa-192x192.png',
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url ?? '/'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus()
+      }
+      return self.clients.openWindow(url)
+    }),
+  )
+})
