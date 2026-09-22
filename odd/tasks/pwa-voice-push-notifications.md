@@ -101,3 +101,7 @@ Onboarding copy promises "Registra con la voz" and implies the app will nudge th
 ## Feature status: all 5 tasks done (2026-09-21)
 
 Commits on `feature/pwa-voice-push-notifications`: `de8fda5` (pnpm hash pin, unrelated infra), `2b4d57f` (T1), `d1f6cfc` (T2), `62e7c5f` (T3), `7364c39` (T5), plus a pending T4 commit. Push/PR are the user's call, not done automatically. Two things need the user's hands before this is real: (1) paste VAPID keys into root `.env` and `apps/web/.env` (values already given in chat), (2) manually test voice entry and the notifications toggle in an actual browser — nothing here was clicked through live.
+
+### Post-verification fix (2026-09-22)
+
+User tested the notifications toggle live (Firefox and Chrome) — it never activated in either. Root cause: `vite-plugin-pwa` doesn't serve a service worker under `vite dev` by default (`devOptions.enabled` defaults to false), so `navigator.serviceWorker.ready` in `usePushSubscription()` never resolved outside a production build — this was invisible during T4's own verification because that only ran `vite build`, never `vite dev`. Fixed by adding `devOptions: { enabled: true, type: 'module' }` to `apps/web/vite.config.ts`'s `VitePWA` config (commit 7811650). Confirmed the dev-mode SW registration script now gets injected into the served HTML (`vite-plugin-pwa:register-dev-sw`), and re-verified the production build is unaffected (that dev-only plugin path only applies with Vite's `apply: 'serve'`).
