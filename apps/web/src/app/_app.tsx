@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 import { Sidebar } from '@/components'
 import { authClient } from '@/lib/auth-client'
+import { syncSessionCache } from '@/lib/session-reset'
 
 export const Route = createFileRoute('/_app')({
   beforeLoad: async () => {
@@ -15,6 +16,9 @@ export const Route = createFileRoute('/_app')({
     if (session.error || !session.data) {
       throw redirect({ to: '/auth/sign-in' })
     }
+    // Before any loader below reads the cache: if this tab last held someone
+    // else's session, drop what they left behind.
+    syncSessionCache(session.data.user.id)
     return { user: session.data.user }
   },
   component: AppLayout,
