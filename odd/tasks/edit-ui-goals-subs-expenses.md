@@ -46,12 +46,25 @@ Fuente: `Strict TDD Mode: enabled` (CLAUDE.md global) + verificación en repo.
   - Verificación: typecheck ✅, build ✅, lint sin regresiones, `routeTree.gen.ts` confirma ruta hermana (no anidada)
   - **Prueba manual en navegador: NO realizada** (mismo motivo que T1 — DB local persistente, seed bloqueado por allowlist)
 
-- [ ] **T3 — Gastos: endpoint + schema (TDD) + UI de edición**
-  - `updateExpenseSchema` en `packages/shared/src/schemas/expense.ts` (partial de `createExpenseSchema`)
-  - `PATCH /expenses/:id` en `apps/api/src/routes/expenses.ts` — RED (test primero) → GREEN → REFACTOR
-  - `useUpdateExpense` en `apps/web/src/features/expenses/api/expenses.mutations.ts`
-  - Ruta edición + entrypoint desde `transactions.tsx`
-  - Verificación: `pnpm --filter api test` (nuevo test pasa), typecheck web, prueba manual
+- [x] **T3 — Gastos: endpoint + schema (TDD) + UI de edición**
+  - `updateExpenseSchema`: `createExpenseSchema.partial()` no compilaba (Zod 4 no permite `.partial()` sobre
+    un schema con `.superRefine()`). Se extrajo `expenseBaseSchema` sin default ni refinement,
+    compartido por create/update; el invariante de transfer para update se valida en la ruta contra
+    el estado *mergeado* (patch + fila actual), no en el schema.
+  - `PATCH /expenses/:id`: TDD real (RED confirmado antes de implementar). Reversión de saldo neta
+    por cuenta (revierte el efecto viejo + aplica el nuevo en una sola escritura, no dos), reusando
+    `sourceBalanceDeltaCents` (el mismo helper que ya usan create y delete). Verificación de
+    ownership de cuenta solo para cuentas que realmente cambian.
+  - Tests nuevos (7): delta neto por cambio de monto, cambio de `kind` (signo invertido, no solo
+    relabel), cambio de cuenta (dos escrituras, +N/-N), update parcial sin tocar balance, 404 not-found,
+    404 ownership. `pnpm --filter api test`: 52/52 ✅. `pnpm --filter shared test`: 37/37 ✅.
+  - Frontend: `useUpdateExpense` (invalida vía `expensesQueryOptions().queryKey`, no key hardcodeada),
+    `EditExpenseContainer`, ruta `transactions_.$id_.edit.tsx` (bug de nesting detectado y corregido
+    por el propio writer antes de reportar — `transactions.tsx` es un archivo de ruta, no una carpeta,
+    así que necesitaba el `_` después de `transactions` también, no solo después de `$id`).
+  - Verificación: typecheck ✅, build ✅, lint sin regresiones (35, mismo patrón baseline +1 por la
+    ruta nueva), `routeTree.gen.ts` confirma ruta hermana de `/transactions`.
+  - **Prueba manual en navegador: NO realizada** (mismo motivo que T1/T2).
 
 ## Estrategia de entrega
 - Rama: `feature/edit-ui-goals-subs-expenses` (creada, base: main)
