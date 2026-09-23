@@ -85,4 +85,29 @@ Hallazgos no bloqueantes (deuda para más adelante, no reabrir esta revisión po
   inalcanzable — el loader (`ensureQueryData`) rechazaría antes y el error iría al error boundary
   del router, no a ese branch. Mismo patrón que ya tiene `EditAccountContainer`, revisar ambos.
 
+### T2 + T3 — Gentle AI review acumulado (lente reliability, riesgo medio) — APROBADO
+Commits `baed9ed` (T2) + `07da47f` (T3), lineage `review-4861260cee9681d3`, acknowledged.
+Un hallazgo se verificó manualmente y **es falso positivo** (confirmado leyendo el código,
+no se aceptó sin chequear):
+- **WARNING (falso positivo)** decía que `ExpenseForm` podría emitir `accountId: ''` en vez de
+  `undefined`, rompiendo `z.uuid().optional()` con 400 en ediciones sin cuenta. Verificado:
+  `ExpenseForm.tsx:119,121` ya hace `effectiveAccountId || undefined` / `... || undefined` antes
+  de llamar `onSubmit` — nunca llega string vacío al mutation. No requiere fix.
+
+Hallazgos reales, no bloqueantes (deuda para más adelante):
+- **WARNING** las ramas 422 (`INVALID_TRANSFER`) y 404 (`ACCOUNT_NOT_FOUND`) del nuevo PATCH no
+  tienen test — nada prueba el invariante de transfer mergeado contra estado actual+patch.
+- **WARNING** el test de ownership (`expenses.test.ts:419-429`) es idéntico al de not-found (ambos
+  ponen `expenseRow = null`); no prueba que el filtro `userId` esté realmente en el `where`. El
+  fake de `financialAccount.findFirst` sí lo verifica (el "account-id walker"), el de ownership no.
+- **WARNING** PATCH lee la fila actual con `findFirst` sin lock; dos PATCH concurrentes sobre el
+  mismo gasto bajo read-committed podrían revertir el mismo monto viejo dos veces y desviar el
+  balance. Aceptable para el volumen de esta app, pero documentado.
+
+## Cierre de la feature
+Las tres tareas del roadmap "UI de edición" están implementadas, testeadas donde corresponde
+(TDD real en el backend de gastos), y revisadas/aprobadas por Gentle AI. Rama
+`feature/edit-ui-goals-subs-expenses`, 3 commits de trabajo + 1 de docs. Push/PR queda a criterio
+del usuario.
+
 (se actualiza tras cada tarea con evidencia de verificación y commit)
