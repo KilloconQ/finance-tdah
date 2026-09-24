@@ -104,6 +104,17 @@ Hallazgos reales, no bloqueantes (deuda para más adelante):
   mismo gasto bajo read-committed podrían revertir el mismo monto viejo dos veces y desviar el
   balance. Aceptable para el volumen de esta app, pero documentado.
 
+### Review del commit de docs (lineage `review-058791733546db71`) — APROBADO
+Dos hallazgos nuevos, no bloqueantes:
+- **SUGGESTION** no hay forma de desvincular la cuenta de un gasto vía edición: `nextAccountId =
+  patch.accountId ?? current.accountId` nunca puede pasar a `null` porque el form manda `undefined`
+  cuando no hay cuenta seleccionada. Consistente con el comportamiento de creación (mismo límite
+  ya existente), no es una regresión, pero si se quiere permitir "sin cuenta" vía edición, el schema
+  necesitaría `nullable()` además de `optional()`.
+- **SUGGESTION** repetición del hallazgo de T1: `useUpdateGoal` sigue invalidando `['goals', id]`
+  a mano en vez de `goalQueryOptions(id).queryKey` (T2/T3 sí aplicaron esa corrección en
+  suscripciones/gastos, pero nunca se volvió a tocar el código de metas).
+
 ## Cierre de la feature
 Las tres tareas del roadmap "UI de edición" están implementadas, testeadas donde corresponde
 (TDD real en el backend de gastos), y revisadas/aprobadas por Gentle AI. Rama
