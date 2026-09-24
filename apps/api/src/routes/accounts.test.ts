@@ -151,4 +151,18 @@ describe('PATCH /accounts/:id enforces the credit-debt sign invariant', () => {
     expect(state.updateCalls[0].setArg.balanceCents).toBe(3_000)
   })
 
+  it('preserves a negative balanceCents for a non-credito account (overdraft round-trip)', async () => {
+    // Regression for the bug introduced by 3f42e6a: EditAccountContainer
+    // deliberately re-sends a preserved negative balance (an overdrawn
+    // debito account) unchanged. The route must not force it positive.
+    state.existingAccount = { id: ACCOUNT_ID, userId: 'user-1', type: 'debito' }
+    state.updateResult = [{ id: ACCOUNT_ID, balanceCents: -3_000 }]
+
+    const res = await patchAccount(ACCOUNT_ID, { balanceCents: -3_000 })
+
+    expect(res.status).toBe(200)
+    expect(state.updateCalls).toHaveLength(1)
+    expect(state.updateCalls[0].setArg.balanceCents).toBe(-3_000)
+  })
+
 })

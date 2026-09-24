@@ -65,6 +65,34 @@ RED (failing test proving the bug) → GREEN (server-side fix) → REFACTOR.
       `apps/web` all "Done" with no errors. Committed as
       `fix(api): enforce credit-account balance sign server-side`.
 
+## Post-review regression (Copilot PR review)
+- [x] T4 — A GitHub Copilot review on the open PR caught a real regression
+      introduced by T2's fix, at `apps/api/src/routes/accounts.ts:62`.
+      `signedBalanceForType()` does `Math.abs(magnitudeCents)`
+      unconditionally, then negates only for `type === 'credito'`. Calling
+      it for the resolved `effectiveType` on every PATCH meant ANY
+      non-credito type (e.g. `debito`) had its `balanceCents` forced
+      positive — even when the client intentionally sent a negative value.
+      This silently corrupted `EditAccountContainer.tsx`'s deliberate
+      preserved-overdraft case (a `debito` account edited while unchanged
+      re-sends its existing negative balance).
+      RED: added
+      `'preserves a negative balanceCents for a non-credito account
+      (overdraft round-trip)'` to `accounts.test.ts` — PATCH a `debito`
+      account with `balanceCents: -3_000`, assert it stays `-3_000`.
+      Confirmed failing against the unmodified route:
+      `AssertionError: expected 3000 to be -3000`.
+      Fix: in the PATCH handler, only call
+      `signedBalanceForType('credito', patch.balanceCents)` when
+      `effectiveType === 'credito'`; every other type leaves
+      `patch.balanceCents` untouched (no `Math.abs`, no sign change) —
+      restoring pre-3f42e6a behavior for non-credito accounts while
+      keeping credito enforcement intact.
+      GREEN: new test passes; full `apps/api` suite — 13 files / 58 tests
+      passed, 0 failed (including the original credito sign-enforcement
+      tests from T1/T2, confirming no reintroduction of the transfer
+      bug). `pnpm typecheck` (repo root, all 3 workspaces): clean.
+
 ## Branch / worktree
 `fix/transfers-not-reducing-debt` at
 `~/Dev/projects/finance-tdah-worktrees/fix-transfers`

@@ -59,7 +59,9 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
         return c.json({ error: 'Cuenta no encontrada' }, 404)
       }
 
-      patch.balanceCents = signedBalanceForType(effectiveType, patch.balanceCents)
+      if (effectiveType === 'credito') {
+        patch.balanceCents = signedBalanceForType('credito', patch.balanceCents)
+      }
     }
 
     const [updated] = await db
