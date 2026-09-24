@@ -111,9 +111,8 @@ Dos hallazgos nuevos, no bloqueantes:
   cuando no hay cuenta seleccionada. Consistente con el comportamiento de creación (mismo límite
   ya existente), no es una regresión, pero si se quiere permitir "sin cuenta" vía edición, el schema
   necesitaría `nullable()` además de `optional()`.
-- **SUGGESTION** repetición del hallazgo de T1: `useUpdateGoal` sigue invalidando `['goals', id]`
-  a mano en vez de `goalQueryOptions(id).queryKey` (T2/T3 sí aplicaron esa corrección en
-  suscripciones/gastos, pero nunca se volvió a tocar el código de metas).
+- ~~**SUGGESTION** `useUpdateGoal` invalidaba `['goals', id]` a mano~~ — **corregido**: ahora usa
+  `goalsQueryOptions().queryKey` / `goalQueryOptions(id).queryKey`, igual que suscripciones/gastos.
 
 ## Cierre de la feature
 Las tres tareas del roadmap "UI de edición" están implementadas, testeadas donde corresponde
