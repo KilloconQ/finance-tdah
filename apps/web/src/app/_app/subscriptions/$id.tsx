@@ -1,8 +1,13 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AppBar, Btn, Card, EmptyState, Money, PhoneShell, TabBar } from '@/components'
+import { useQuery } from '@tanstack/react-query'
+import { Pencil } from 'lucide-react'
+import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
 import { daysAgo, formatMoney } from '@/lib/format'
-import { mutations, subscriptionsQuery } from '@/lib/queries'
+import {
+  subscriptionQueryOptions,
+  useCancelSubscription,
+  usePauseSubscription,
+} from '@/features/subscriptions'
 import { queryClient } from '@/lib/query-client'
 import { useTweaks } from '@/lib/use-tweaks'
 
@@ -20,34 +25,20 @@ function initialAvatarStyle(name: string): { backgroundColor: string; color: str
 }
 
 export const Route = createFileRoute('/_app/subscriptions/$id')({
-  loader: () => queryClient.ensureQueryData(subscriptionsQuery()),
+  loader: ({ params }) => queryClient.ensureQueryData(subscriptionQueryOptions(params.id)),
   component: SubscriptionDetail,
 })
 
 function SubscriptionDetail() {
   const { id } = Route.useParams()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
   const { showBalances } = useTweaks()
-  const { data: subs = [] } = useQuery(subscriptionsQuery())
-  const sub = subs.find((x) => x.id === id)
+  const { data: sub } = useQuery(subscriptionQueryOptions(id))
 
   const goBack = () => navigate({ to: '/subscriptions' })
 
-  const cancelMutation = useMutation({
-    mutationFn: () => mutations.cancelSubscription(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      navigate({ to: '/subscriptions', replace: true })
-    },
-  })
-
-  const pauseMutation = useMutation({
-    mutationFn: () => mutations.pauseSubscription(id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-    },
-  })
+  const cancelMutation = useCancelSubscription(id)
+  const pauseMutation = usePauseSubscription(id)
 
   if (!sub) {
     return (
@@ -73,7 +64,19 @@ function SubscriptionDetail() {
 
   return (
     <PhoneShell>
-      <AppBar title={sub.name} back onBack={goBack} />
+      <AppBar
+        title={sub.name}
+        back
+        onBack={goBack}
+        right={
+          <IconButton
+            onClick={() => navigate({ to: '/subscriptions/$id/edit', params: { id } })}
+            label="Editar"
+          >
+            <Pencil size={20} strokeWidth={2} />
+          </IconButton>
+        }
+      />
 
       <div className="flex-1 pb-4">
         <div className="max-w-lg space-y-4">
@@ -129,7 +132,11 @@ function SubscriptionDetail() {
           <div className="flex flex-col gap-2">
             <Btn
               kind="danger"
-              onClick={() => cancelMutation.mutate()}
+              onClick={() =>
+                cancelMutation.mutate(undefined, {
+                  onSuccess: () => navigate({ to: '/subscriptions', replace: true }),
+                })
+              }
               disabled={cancelMutation.isPending}
             >
               {cancelMutation.isPending ? 'Cancelando…' : 'Cancelar suscripción'}

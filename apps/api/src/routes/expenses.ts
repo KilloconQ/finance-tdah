@@ -4,6 +4,7 @@ import { and, eq, gte, sql, sum } from 'drizzle-orm'
 import {
   createExpenseSchema,
   idParamSchema,
+  updateExpenseSchema,
   voiceTranscriptSchema,
   type ParsedVoiceExpense,
 } from '@finance-tdah/shared/schemas'
@@ -131,6 +132,129 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
 
     return c.json({ parsed })
   })
+
+  .patch(
+    '/:id',
+    zValidator('param', idParamSchema),
+    zValidator('json', updateExpenseSchema),
+    async (c) => {
+      const user = c.get('user')
+      const { id } = c.req.valid('param')
+      const patch = c.req.valid('json')
+
+      try {
+        const updated = await db.transaction(async (tx) => {
+          const current = await tx.query.expense.findFirst({
+            where: (e, { and, eq }) => and(eq(e.id, id), eq(e.userId, user.id)),
+          })
+          if (!current) return null
+
+          const nextKind = patch.kind ?? current.kind
+          const nextAmountCents = patch.amountCents ?? current.amountCents
+          const nextAccountId = patch.accountId ?? current.accountId
+          const nextToAccountId =
+            nextKind === 'transfer' ? (patch.toAccountId ?? current.toAccountId) : null
+
+          if (nextKind === 'transfer') {
+            if (!nextAccountId || !nextToAccountId || nextAccountId === nextToAccountId) {
+              throw new Error('INVALID_TRANSFER')
+            }
+          }
+
+          // Only verify ownership of accounts that are actually changing —
+          // the previous ones were already verified when the expense (or its
+          // last update) was created.
+          const accountIdsToVerify = new Set<string>()
+          if (nextAccountId && nextAccountId !== current.accountId) {
+            accountIdsToVerify.add(nextAccountId)
+          }
+          if (nextToAccountId && nextToAccountId !== current.toAccountId) {
+            accountIdsToVerify.add(nextToAccountId)
+          }
+
+          if (accountIdsToVerify.size > 0) {
+            const found = await Promise.all(
+              Array.from(accountIdsToVerify).map((accId) =>
+                tx.query.financialAccount.findFirst({
+                  where: (a, { and, eq }) => and(eq(a.id, accId), eq(a.userId, user.id)),
+                  columns: { id: true },
+                }),
+              ),
+            )
+            if (found.some((a) => !a)) {
+              throw new Error('ACCOUNT_NOT_FOUND')
+            }
+          }
+
+          // Net balance delta per account: reverse whatever effect the
+          // previous version of the row had, then apply the new one — a
+          // single combined write per account, not "undo" followed by
+          // "redo" as two separate updates that could double-count.
+          const deltas = new Map<string, number>()
+          const addDelta = (accountId: string | null, amount: number) => {
+            if (!accountId) return
+            deltas.set(accountId, (deltas.get(accountId) ?? 0) + amount)
+          }
+
+          if (current.accountId) {
+            addDelta(current.accountId, -sourceBalanceDeltaCents(current.kind, current.amountCents))
+          }
+          if (current.kind === 'transfer' && current.toAccountId) {
+            addDelta(current.toAccountId, -current.amountCents)
+          }
+          if (nextAccountId) {
+            addDelta(nextAccountId, sourceBalanceDeltaCents(nextKind, nextAmountCents))
+          }
+          if (nextKind === 'transfer' && nextToAccountId) {
+            addDelta(nextToAccountId, nextAmountCents)
+          }
+
+          for (const [accountId, delta] of deltas) {
+            if (delta === 0) continue
+            await tx
+              .update(schema.financialAccount)
+              .set({
+                balanceCents: sql`${schema.financialAccount.balanceCents} + ${delta}`,
+                updatedAt: new Date(),
+              })
+              .where(
+                and(
+                  eq(schema.financialAccount.id, accountId),
+                  eq(schema.financialAccount.userId, user.id),
+                ),
+              )
+          }
+
+          const [row] = await tx
+            .update(schema.expense)
+            .set({
+              ...(patch.amountCents !== undefined && { amountCents: patch.amountCents }),
+              ...(patch.category !== undefined && { category: patch.category }),
+              ...(patch.description !== undefined && { description: patch.description }),
+              ...(patch.kind !== undefined && { kind: patch.kind }),
+              accountId: nextAccountId ?? null,
+              toAccountId: nextToAccountId,
+              ...(patch.occurredAt !== undefined && { occurredAt: new Date(patch.occurredAt) }),
+            })
+            .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, user.id)))
+            .returning()
+
+          return row
+        })
+
+        if (!updated) return c.json({ error: 'Gasto no encontrado' }, 404)
+        return c.json({ expense: updated })
+      } catch (err) {
+        if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
+          return c.json({ error: 'Cuenta no encontrada' }, 404)
+        }
+        if (err instanceof Error && err.message === 'INVALID_TRANSFER') {
+          return c.json({ error: 'Elegí dos cuentas distintas para transferir' }, 422)
+        }
+        throw err
+      }
+    },
+  )
 
   .delete('/:id', zValidator('param', idParamSchema), async (c) => {
     const user = c.get('user')

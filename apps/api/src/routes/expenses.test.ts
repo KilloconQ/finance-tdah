@@ -23,11 +23,15 @@ const { financialAccount, expense, state, fakeDb, sendPushToUser } = vi.hoisted(
   const state: {
     expenseRow: Record<string, unknown> | null
     updateCalls: Array<{ whereArg: unknown; setArg: { balanceCents: unknown } }>
+    expenseUpdateCalls: Array<{ whereArg: unknown; setArg: Record<string, unknown> }>
+    knownAccountIds: Set<string>
     profile: Record<string, unknown> | null
     weekSumCents: number | null
   } = {
     expenseRow: null,
     updateCalls: [],
+    expenseUpdateCalls: [],
+    knownAccountIds: new Set(),
     profile: null,
     weekSumCents: null,
   }
@@ -43,14 +47,46 @@ const { financialAccount, expense, state, fakeDb, sendPushToUser } = vi.hoisted(
         returning: async () => (state.expenseRow ? [state.expenseRow] : []),
       }),
     }),
+    // `.set()` is shared by two different targets: the account balance update
+    // (tracked in `updateCalls`, no `.returning()`, matches the existing
+    // convention above) and the expense row update in PATCH (tracked
+    // separately in `expenseUpdateCalls`, `.returning()` the merged row).
     update: () => ({
-      set: (setArg: { balanceCents: unknown }) => ({
+      set: (setArg: Record<string, unknown>) => ({
         where: (whereArg: unknown) => {
-          state.updateCalls.push({ whereArg, setArg })
-          return Promise.resolve([])
+          if ('balanceCents' in setArg) {
+            state.updateCalls.push({ whereArg, setArg: setArg as { balanceCents: unknown } })
+            return Promise.resolve([])
+          }
+          state.expenseUpdateCalls.push({ whereArg, setArg })
+          return {
+            returning: async () =>
+              state.expenseRow ? [{ ...state.expenseRow, ...setArg }] : [],
+          }
         },
       }),
     }),
+    query: {
+      expense: {
+        findFirst: async () => state.expenseRow,
+      },
+      financialAccount: {
+        findFirst: async (opts: { where: (a: unknown, helpers: unknown) => unknown }) => {
+          // Only the id needs to resolve for these tests — reuse the same
+          // marker-leaf walker the assertions below use to read the id back
+          // out of the drizzle `and(eq(...), eq(...))` fragment.
+          const flat = leaves(
+            opts.where(financialAccount, {
+              and: (...args: unknown[]) => ({ constructor: { name: 'SQL' }, queryChunks: args }),
+              eq: (...args: unknown[]) => ({ constructor: { name: 'SQL' }, queryChunks: args }),
+            }),
+          )
+          const idx = flat.indexOf(financialAccount.id)
+          const accId = idx === -1 ? undefined : (flat[idx + 1] as string)
+          return accId && state.knownAccountIds.has(accId) ? { id: accId } : undefined
+        },
+      },
+    },
   }
 
   const fakeDb = {
@@ -103,6 +139,8 @@ const app = new Hono().route('/', expensesRoute)
 // like one even though the fake tx never actually looks them up.
 const EXPENSE_ID = '11111111-1111-4111-8111-111111111111'
 const OTHER_ID = '22222222-2222-4222-8222-222222222222'
+const ACCOUNT_1_ID = '33333333-3333-4333-8333-333333333333'
+const ACCOUNT_2_ID = '44444444-4444-4444-8444-444444444444'
 
 function deleteExpense(id: string) {
   return app.request(`/${id}`, { method: 'DELETE' })
@@ -111,6 +149,14 @@ function deleteExpense(id: string) {
 function createExpense(body: Record<string, unknown>) {
   return app.request('/', {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+function patchExpense(id: string, body: Record<string, unknown>) {
+  return app.request(`/${id}`, {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
@@ -256,5 +302,129 @@ describe('POST /expenses sends a weekly-budget push only on the crossing moment'
 
     expect(res.status).toBe(201)
     expect(sendPushToUser).not.toHaveBeenCalled()
+  })
+})
+
+describe('PATCH /expenses/:id reverses the old balance movement and applies the new one', () => {
+  beforeEach(() => {
+    state.expenseRow = null
+    state.updateCalls = []
+    state.expenseUpdateCalls = []
+    state.knownAccountIds = new Set([ACCOUNT_1_ID, ACCOUNT_2_ID])
+  })
+
+  it('adjusts the balance by only the delta when the amount changes', async () => {
+    state.expenseRow = {
+      id: EXPENSE_ID,
+      userId: 'user-1',
+      kind: 'expense',
+      amountCents: 5_000,
+      category: 'food',
+      description: 'lunch',
+      accountId: ACCOUNT_1_ID,
+      toAccountId: null,
+    }
+
+    const res = await patchExpense(EXPENSE_ID, { amountCents: 8_000 })
+
+    expect(res.status).toBe(200)
+    // Reverse -5000 (undo the old expense) then apply -8000 (the new one):
+    // net delta on the account is -3000, in a single update — not two
+    // separate writes that would double-count.
+    expect(state.updateCalls).toHaveLength(1)
+    expect(targetAccountId(state.updateCalls[0].whereArg)).toBe(ACCOUNT_1_ID)
+    expect(balanceDelta(state.updateCalls[0].setArg)).toBe(-3_000)
+  })
+
+  it('adjusts the balance correctly when kind changes from expense to income', async () => {
+    state.expenseRow = {
+      id: EXPENSE_ID,
+      userId: 'user-1',
+      kind: 'expense',
+      amountCents: 5_000,
+      category: 'food',
+      description: 'lunch',
+      accountId: ACCOUNT_1_ID,
+      toAccountId: null,
+    }
+
+    const res = await patchExpense(EXPENSE_ID, { kind: 'income' })
+
+    expect(res.status).toBe(200)
+    // Reverse the expense (+5000) then apply the income (+5000): net +10000
+    // on the same account — the sign flips, it doesn't just relabel the row.
+    expect(state.updateCalls).toHaveLength(1)
+    expect(targetAccountId(state.updateCalls[0].whereArg)).toBe(ACCOUNT_1_ID)
+    expect(balanceDelta(state.updateCalls[0].setArg)).toBe(10_000)
+  })
+
+  it('moves the balance effect when the account changes', async () => {
+    state.expenseRow = {
+      id: EXPENSE_ID,
+      userId: 'user-1',
+      kind: 'expense',
+      amountCents: 5_000,
+      category: 'food',
+      description: 'lunch',
+      accountId: ACCOUNT_1_ID,
+      toAccountId: null,
+    }
+
+    const res = await patchExpense(EXPENSE_ID, { accountId: ACCOUNT_2_ID })
+
+    expect(res.status).toBe(200)
+    expect(state.updateCalls).toHaveLength(2)
+    const byAccount = new Map(
+      state.updateCalls.map((c) => [targetAccountId(c.whereArg), balanceDelta(c.setArg)]),
+    )
+    // Old account gets the expense given back (+5000), new account gets it
+    // taken out (-5000).
+    expect(byAccount.get(ACCOUNT_1_ID)).toBe(5_000)
+    expect(byAccount.get(ACCOUNT_2_ID)).toBe(-5_000)
+  })
+
+  it('supports a partial update touching only one field', async () => {
+    state.expenseRow = {
+      id: EXPENSE_ID,
+      userId: 'user-1',
+      kind: 'expense',
+      amountCents: 5_000,
+      category: 'food',
+      description: 'lunch',
+      accountId: ACCOUNT_1_ID,
+      toAccountId: null,
+    }
+
+    const res = await patchExpense(EXPENSE_ID, { description: 'dinner' })
+
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { expense: { description: string } }
+    expect(body.expense.description).toBe('dinner')
+    // Nothing about the amount/kind/account moved, so no net balance change.
+    expect(state.updateCalls).toHaveLength(0)
+    expect(state.expenseUpdateCalls).toHaveLength(1)
+    expect(state.expenseUpdateCalls[0].setArg.description).toBe('dinner')
+  })
+
+  it('returns 404 for an id that does not exist', async () => {
+    state.expenseRow = null
+
+    const res = await patchExpense(OTHER_ID, { amountCents: 1_000 })
+
+    expect(res.status).toBe(404)
+    expect(state.updateCalls).toHaveLength(0)
+    expect(state.expenseUpdateCalls).toHaveLength(0)
+  })
+
+  it('rejects updating another user\'s expense (ownership check, same as 404)', async () => {
+    // The fake query.expense.findFirst always applies the userId filter the
+    // real drizzle query would, so a row owned by someone else simply isn't
+    // found — modeled here the same way DELETE's ownership test is: as a 404.
+    state.expenseRow = null
+
+    const res = await patchExpense(EXPENSE_ID, { amountCents: 1_000 })
+
+    expect(res.status).toBe(404)
+    expect(state.updateCalls).toHaveLength(0)
   })
 })

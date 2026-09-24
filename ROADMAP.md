@@ -14,10 +14,15 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 - Password reset self-service vía Resend (PR #4).
 - Fix de sign-in bloqueado por credenciales opcionales faltantes (PR #5).
 - Dots del daily-check desbordando la card + input de días del reto reseteándose al borrar (`4d8256e`).
+- UI de edición para cuentas (ya existía) / gastos / metas / suscripciones (rama
+  `feature/edit-ui-goals-subs-expenses`, 3 commits + docs, revisado y aprobado por Gentle AI).
+  Gastos necesitó además el endpoint `PATCH /expenses/:id` con reversión de saldo neta por cuenta,
+  hecho con TDD real. Deuda documentada en `odd/tasks/edit-ui-goals-subs-expenses.md`: falta test
+  de las ramas de error del PATCH de gastos, el test de ownership no prueba de verdad el filtro
+  `userId`, y no hay lock contra ediciones concurrentes del mismo gasto.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- UI de edición para cuentas / gastos / metas / suscripciones — los endpoints ya existen, falta la pantalla.
 - Arreglar el `AbortError` benigno en consola del guard de auth (`_app.tsx` `beforeLoad`) al navegar rápido después de guardar. No bloquea nada, pero ensucia el log.
 - Suite de tests en `apps/web` — hoy no hay test script ahí; API y `packages/shared` sí corren Vitest.
 

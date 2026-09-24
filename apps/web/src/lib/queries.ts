@@ -5,10 +5,8 @@ import {
   expenseSchema,
   financialAccountSchema,
   homeSummarySchema,
-  subscriptionSchema,
   userProfileSchema,
   type CreateExpenseInput,
-  type CreateSubscriptionInput,
   type CreateChallengeInput,
   type CompleteOnboardingInput,
   type UpdateProfileInput,
@@ -53,16 +51,6 @@ export const expensesQuery = () =>
       ),
   })
 
-export const subscriptionsQuery = () =>
-  queryOptions({
-    queryKey: ['subscriptions'],
-    queryFn: () =>
-      fetchValidated(
-        '/subscriptions',
-        z.object({ subscriptions: z.array(subscriptionSchema) }),
-      ).then((r) => r.subscriptions),
-  })
-
 export const activeChallengeQuery = () =>
   queryOptions({
     queryKey: ['challenges', 'active'],
@@ -87,13 +75,6 @@ export const mutations = {
 
   parseVoice: (transcript: string) =>
     api.post('expenses/voice', { json: { transcript } }).json(),
-
-  cancelSubscription: (id: string) => api.post(`subscriptions/${id}/cancel`).json(),
-
-  pauseSubscription: (id: string) => api.post(`subscriptions/${id}/pause`).json(),
-
-  createSubscription: (input: CreateSubscriptionInput) =>
-    api.post('subscriptions', { json: input }).json(),
 
   createChallenge: (input: CreateChallengeInput) =>
     api.post('challenges', { json: input }).json(),

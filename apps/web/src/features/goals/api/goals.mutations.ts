@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { CreateGoalInput } from '@finance-tdah/shared/schemas'
+import type { CreateGoalInput, UpdateGoalInput } from '@finance-tdah/shared/schemas'
 import { api } from '@/lib/api'
+import { goalQueryOptions, goalsQueryOptions } from './goals.queries'
 
 export function useCreateGoal() {
   const queryClient = useQueryClient()
@@ -8,6 +9,17 @@ export function useCreateGoal() {
     mutationFn: (input: CreateGoalInput) => api.post('goals', { json: input }).json(),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['goals'] })
+    },
+  })
+}
+
+export function useUpdateGoal(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: UpdateGoalInput) => api.patch(`goals/${id}`, { json: input }).json(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: goalsQueryOptions().queryKey })
+      void queryClient.invalidateQueries({ queryKey: goalQueryOptions(id).queryKey })
     },
   })
 }

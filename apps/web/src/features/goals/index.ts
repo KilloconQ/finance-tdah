@@ -1,3 +1,3 @@
-export { GoalListContainer, GoalDetailContainer } from './containers'
-export { Jar, JarWithStats } from './components'
-export { goalQueryOptions, goalsQueryOptions, useAddToGoal, useCreateGoal } from './api'
+export { GoalListContainer, GoalDetailContainer, NewGoalContainer, EditGoalContainer } from './containers'
+export { Jar, JarWithStats, GoalForm, type GoalFormFields } from './components'
+export { goalQueryOptions, goalsQueryOptions, useAddToGoal, useCreateGoal, useUpdateGoal } from './api'

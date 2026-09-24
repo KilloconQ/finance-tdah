@@ -57,15 +57,25 @@ interface ExpenseFormProps {
   error: string | null
   onSubmit: (fields: ExpenseFormFields) => void
   onUseVoice?: () => void
+  initial?: Partial<ExpenseFormFields>
+  submitLabel?: string
 }
 
-export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice }: ExpenseFormProps) {
-  const [kind, setKind] = useState<MovementKind>('expense')
-  const [amount, setAmount] = useState('')
-  const [category, setCategory] = useState('')
-  const [description, setDescription] = useState('')
-  const [accountId, setAccountId] = useState<string>('')
-  const [toAccountId, setToAccountId] = useState<string>('')
+export function ExpenseForm({
+  accounts,
+  submitting,
+  error,
+  onSubmit,
+  onUseVoice,
+  initial,
+  submitLabel,
+}: ExpenseFormProps) {
+  const [kind, setKind] = useState<MovementKind>(initial?.kind ?? 'expense')
+  const [amount, setAmount] = useState(initial?.amount ?? '')
+  const [category, setCategory] = useState(initial?.category ?? '')
+  const [description, setDescription] = useState(initial?.description ?? '')
+  const [accountId, setAccountId] = useState<string>(initial?.accountId ?? '')
+  const [toAccountId, setToAccountId] = useState<string>(initial?.toAccountId ?? '')
 
   const hasAmount = amount.trim() !== ''
   const isTransfer = kind === 'transfer'
@@ -228,7 +238,7 @@ export function ExpenseForm({ accounts, submitting, error, onSubmit, onUseVoice 
 
       <div className="mt-2">
         <Btn kind="primary" type="submit" className="w-full sm:w-auto sm:min-w-48" disabled={!canSubmit}>
-          {submitting ? 'Guardando…' : SUBMIT_LABEL[kind]}
+          {submitting ? 'Guardando…' : (submitLabel ?? SUBMIT_LABEL[kind])}
         </Btn>
         {onUseVoice ? (
           <button

@@ -34,6 +34,9 @@ import { Route as AppGoalsNewRouteImport } from './app/_app/goals/new'
 import { Route as AppGoalsIdRouteImport } from './app/_app/goals/$id'
 import { Route as AppAccountsNewRouteImport } from './app/_app/accounts/new'
 import { Route as AppAccountsIdRouteImport } from './app/_app/accounts/$id'
+import { Route as AppTransactionsIdEditRouteImport } from './app/_app/transactions_.$id_.edit'
+import { Route as AppSubscriptionsIdEditRouteImport } from './app/_app/subscriptions/$id_.edit'
+import { Route as AppGoalsIdEditRouteImport } from './app/_app/goals/$id_.edit'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -159,6 +162,21 @@ const AppAccountsIdRoute = AppAccountsIdRouteImport.update({
   path: '/accounts/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTransactionsIdEditRoute = AppTransactionsIdEditRouteImport.update({
+  id: '/transactions_/$id_/edit',
+  path: '/transactions/$id/edit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSubscriptionsIdEditRoute = AppSubscriptionsIdEditRouteImport.update({
+  id: '/subscriptions/$id_/edit',
+  path: '/subscriptions/$id/edit',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGoalsIdEditRoute = AppGoalsIdEditRouteImport.update({
+  id: '/goals/$id_/edit',
+  path: '/goals/$id/edit',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -185,6 +203,9 @@ export interface FileRoutesByFullPath {
   '/accounts/': typeof AppAccountsIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
   '/subscriptions/': typeof AppSubscriptionsIndexRoute
+  '/goals/$id/edit': typeof AppGoalsIdEditRoute
+  '/subscriptions/$id/edit': typeof AppSubscriptionsIdEditRoute
+  '/transactions/$id/edit': typeof AppTransactionsIdEditRoute
 }
 export interface FileRoutesByTo {
   '/add-expense': typeof AppAddExpenseRoute
@@ -211,6 +232,9 @@ export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsIndexRoute
   '/goals': typeof AppGoalsIndexRoute
   '/subscriptions': typeof AppSubscriptionsIndexRoute
+  '/goals/$id/edit': typeof AppGoalsIdEditRoute
+  '/subscriptions/$id/edit': typeof AppSubscriptionsIdEditRoute
+  '/transactions/$id/edit': typeof AppTransactionsIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -239,6 +263,9 @@ export interface FileRoutesById {
   '/_app/accounts/': typeof AppAccountsIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
   '/_app/subscriptions/': typeof AppSubscriptionsIndexRoute
+  '/_app/goals/$id_/edit': typeof AppGoalsIdEditRoute
+  '/_app/subscriptions/$id_/edit': typeof AppSubscriptionsIdEditRoute
+  '/_app/transactions_/$id_/edit': typeof AppTransactionsIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -267,6 +294,9 @@ export interface FileRouteTypes {
     | '/accounts/'
     | '/goals/'
     | '/subscriptions/'
+    | '/goals/$id/edit'
+    | '/subscriptions/$id/edit'
+    | '/transactions/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/add-expense'
@@ -293,6 +323,9 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/goals'
     | '/subscriptions'
+    | '/goals/$id/edit'
+    | '/subscriptions/$id/edit'
+    | '/transactions/$id/edit'
   id:
     | '__root__'
     | '/_app'
@@ -320,6 +353,9 @@ export interface FileRouteTypes {
     | '/_app/accounts/'
     | '/_app/goals/'
     | '/_app/subscriptions/'
+    | '/_app/goals/$id_/edit'
+    | '/_app/subscriptions/$id_/edit'
+    | '/_app/transactions_/$id_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -512,6 +548,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountsIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/transactions_/$id_/edit': {
+      id: '/_app/transactions_/$id_/edit'
+      path: '/transactions/$id/edit'
+      fullPath: '/transactions/$id/edit'
+      preLoaderRoute: typeof AppTransactionsIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/subscriptions/$id_/edit': {
+      id: '/_app/subscriptions/$id_/edit'
+      path: '/subscriptions/$id/edit'
+      fullPath: '/subscriptions/$id/edit'
+      preLoaderRoute: typeof AppSubscriptionsIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/goals/$id_/edit': {
+      id: '/_app/goals/$id_/edit'
+      path: '/goals/$id/edit'
+      fullPath: '/goals/$id/edit'
+      preLoaderRoute: typeof AppGoalsIdEditRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -531,6 +588,9 @@ interface AppRouteChildren {
   AppAccountsIndexRoute: typeof AppAccountsIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
   AppSubscriptionsIndexRoute: typeof AppSubscriptionsIndexRoute
+  AppGoalsIdEditRoute: typeof AppGoalsIdEditRoute
+  AppSubscriptionsIdEditRoute: typeof AppSubscriptionsIdEditRoute
+  AppTransactionsIdEditRoute: typeof AppTransactionsIdEditRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -549,6 +609,9 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountsIndexRoute: AppAccountsIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
   AppSubscriptionsIndexRoute: AppSubscriptionsIndexRoute,
+  AppGoalsIdEditRoute: AppGoalsIdEditRoute,
+  AppSubscriptionsIdEditRoute: AppSubscriptionsIdEditRoute,
+  AppTransactionsIdEditRoute: AppTransactionsIdEditRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

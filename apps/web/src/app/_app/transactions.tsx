@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Receipt, Trash2 } from 'lucide-react'
+import { Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
 import {
   AppBar,
   Btn,
@@ -148,6 +148,15 @@ function Transactions() {
                             >
                               {showBalances ? amountLabel(e.kind, e.amountCents) : '••••'}
                             </span>
+                            <IconButton
+                              className="h-8 w-8"
+                              onClick={() =>
+                                navigate({ to: '/transactions/$id/edit', params: { id: e.id } })
+                              }
+                              label="Editar gasto"
+                            >
+                              <Pencil size={16} strokeWidth={2} />
+                            </IconButton>
                             <IconButton
                               className="h-8 w-8"
                               onClick={() => setConfirmingId(e.id)}
