@@ -6,6 +6,7 @@ import {
   idParamSchema,
   updateFinancialAccountSchema,
 } from '@finance-tdah/shared/schemas'
+import { signedBalanceForType } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 
@@ -33,7 +34,7 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
         type: input.type,
         institution: input.institution ?? null,
         last4: input.last4 ?? null,
-        balanceCents: input.balanceCents,
+        balanceCents: signedBalanceForType(input.type, input.balanceCents),
       })
       .returning()
 
@@ -44,6 +45,22 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
     const { id } = c.req.valid('param')
     const patch = c.req.valid('json')
+
+    if (patch.balanceCents !== undefined) {
+      const effectiveType =
+        patch.type ??
+        (
+          await db.query.financialAccount.findFirst({
+            where: (a, { and, eq }) => and(eq(a.id, id), eq(a.userId, user.id)),
+          })
+        )?.type
+
+      if (!effectiveType) {
+        return c.json({ error: 'Cuenta no encontrada' }, 404)
+      }
+
+      patch.balanceCents = signedBalanceForType(effectiveType, patch.balanceCents)
+    }
 
     const [updated] = await db
       .update(schema.financialAccount)
