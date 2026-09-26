@@ -88,6 +88,13 @@ export const auth = betterAuth({
   },
   advanced: {
     cookiePrefix: 'finance-tdah',
+    // The rate limiter keys on this IP. In production every request arrives via
+    // Cloudflare Tunnel → Caddy, and Cloudflare sets `cf-connecting-ip` to the real
+    // client (clients can't spoof it, unlike the first `x-forwarded-for` entry).
+    // Local docker without the tunnel falls back to `x-forwarded-for` from Caddy.
+    ipAddress: {
+      ipAddressHeaders: ['cf-connecting-ip', 'x-forwarded-for'],
+    },
     // Make the cookie hardening explicit instead of relying on better-auth defaults.
     // sameSite 'lax' already blocks the cookie on cross-site state-changing requests
     // (POST/PATCH/DELETE), which is every mutating endpoint here; 'strict' would only
@@ -123,7 +130,15 @@ export const auth = betterAuth({
     window: 60,
     max: 60,
     customRules: {
-      '/sign-in/email': { window: 60, max: 5 },
+      // The limiter counts per IP, and a household shares one public IP: every
+      // device at home drew from the same bucket. `_app`'s beforeLoad calls
+      // get-session on each navigation, so two people browsing blew through the
+      // global 60/min, got 429s, and the guard read that as "logged out" and sent
+      // everyone to sign-in. Reading your own session is not an abuse vector.
+      '/get-session': false,
+      // Also shared per IP, so sized for a couple mistyping at once rather than a
+      // single user; still far too low to brute-force a password.
+      '/sign-in/email': { window: 60, max: 10 },
       '/sign-up/email': { window: 60, max: 5 },
       // The endpoint is '/request-password-reset' since better-auth 1.6; the old
       // name stays so the rule still applies if the alias is ever routed again.
