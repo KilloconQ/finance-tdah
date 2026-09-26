@@ -24,7 +24,8 @@ const CHECK_FAILED = 'No pudimos comprobar tu sesión.'
  * navigation and link hover. 5 min matches the server's own `cookieCache`.
  *
  * A stale copy is corrected by:
- * - any auth call that changes the session (`auth-client` drops the cache),
+ * - any auth call that changes the session (`auth-client` drops the cache, and
+ *   `auth-broadcast` tells the other tabs to drop theirs),
  * - the first 401 from the API (`api.ts` → `handleSessionExpired`),
  * - coming back to the tab (`main.tsx` marks it stale).
  */

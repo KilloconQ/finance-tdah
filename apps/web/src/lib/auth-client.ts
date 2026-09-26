@@ -1,4 +1,5 @@
 import { createAuthClient } from 'better-auth/react'
+import { notifyAuthChange } from './auth-broadcast'
 import { queryClient, SESSION_QUERY_KEY } from './query-client'
 
 const apiUrl = import.meta.env.VITE_API_URL ?? '/api'
@@ -14,6 +15,7 @@ export const authClient = createAuthClient({
     onSuccess: ({ request }) => {
       if (String(request.url).includes('/get-session')) return
       queryClient.removeQueries({ queryKey: SESSION_QUERY_KEY })
+      notifyAuthChange()
     },
   },
 })
