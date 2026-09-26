@@ -1,5 +1,6 @@
 import ky, { HTTPError } from 'ky'
 import type { z } from 'zod'
+import { handleSessionExpired } from './session-reset'
 
 export class ApiError extends HTTPError {
   body: unknown
@@ -18,6 +19,13 @@ export const api = ky.create({
   credentials: 'include',
   retry: { limit: 1 },
   hooks: {
+    afterResponse: [
+      (_request, _options, response) => {
+        // Only `sessionMiddleware` answers 401, so this always means the
+        // session is gone — caught here once instead of at every screen.
+        if (response.status === 401) handleSessionExpired()
+      },
+    ],
     beforeError: [
       async (err) => {
         const body = await safeBody(err.response)
