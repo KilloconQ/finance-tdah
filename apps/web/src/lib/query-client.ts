@@ -9,3 +9,9 @@ export const queryClient = new QueryClient({
     },
   },
 })
+
+/**
+ * Lives here rather than next to `sessionQuery` so `auth-client` can drop the
+ * cached session without importing the module that imports it.
+ */
+export const SESSION_QUERY_KEY = ['session'] as const
