@@ -29,6 +29,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 
 ## Más adelante (diferido a propósito, no por olvido)
 
+- **Sub-cuentas / Cajitas (envelope budgeting)**: permitir al usuario asignar/allocate dinero de cuentas específicas a propósitos o categorías específicas. La idea es poder decir "tengo tanto dinero de tal cuenta asignado a tal cosa". Esto es un nivel de organización por encima del CRUD de gastos actual — agrupa dinero hacia fines sin crear nuevas transacciones. Requiere nuevo schema (`allocated_funds` o similar), API para crear/editar/borrar asignaciones, y UI para visualizar y gestionar las cajitas. Descartado temprano: fusionar con cuentas (son conceptos distintos).
 - **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
 - **Wrapper nativo (Capacitor)**: para widget de pantalla de inicio y voz/push más confiables que en navegador. El usuario mostró interés, pero es una fase separada.
 - **Dark mode**: fuera de alcance del rediseño actual (`DESIGN.md` es light-only por decisión de diseño).
