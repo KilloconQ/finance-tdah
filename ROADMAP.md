@@ -30,10 +30,13 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   navegación ni usa la señal de abort del router). Verificado con Playwright: guardar gasto +
   navegación rápida con sesión forzada a stale, y recarga a mitad del check — cero errores en
   consola.
+- Suite de tests en `apps/web` (Vitest + jsdom + Testing Library): errores de auth, `fetchValidated`
+  y el 401, caché de sesión, reset de caché entre usuarios, `auth-client`, el guard `_app` y las
+  reglas de `ExpenseForm`. Verificada rompiendo a propósito 11 comportamientos clave: todos hacen fallar algún test.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Suite de tests en `apps/web` — hoy no hay test script ahí; API y `packages/shared` sí corren Vitest.
+- Ampliar los tests de `apps/web` a las pantallas y hooks de mutación (`features/*/containers`, `queries.ts`); hoy cubren la capa de sesión/API, el guard y `ExpenseForm`.
 
 ## Más adelante (diferido a propósito, no por olvido)
 

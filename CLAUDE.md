@@ -38,7 +38,7 @@ pnpm docker:down
 pnpm docker:logs
 ```
 
-Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test`, which today reaches `apps/api` and `packages/shared` (both declare `vitest run`). `apps/web` has no test script, so nothing in the SPA is covered. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
+Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test` to `apps/api`, `packages/shared` and `apps/web`. The web suite (`apps/web/vitest.config.ts`, jsdom + Testing Library, `*.test.ts(x)` next to the code) covers the `lib/` session/API layer, the `_app` auth guard and `ExpenseForm` — most screens and hooks are still untested. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
 
 The api has no lint script; `pnpm lint` only hits `apps/web`.
 
