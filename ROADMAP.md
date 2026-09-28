@@ -21,10 +21,18 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   el test de ownership no prueba de verdad el filtro `userId`, y no hay lock contra ediciones
   concurrentes del mismo gasto. Descartado a propósito: "sin cuenta" en un gasto — decisión de
   producto, todo gasto trackea una cuenta (efectivo = cuenta de efectivo dedicada), no bug.
+- Sesión robusta (PR #9 y #10): el rate limit por IP compartida ya no desloguea a todo el hogar;
+  un fallo al comprobar la sesión (429, 5xx, offline) muestra una pantalla de error con
+  "Reintentar" en vez de mandar a sign-in; la sesión se cachea (5 min) en vez de pedirse en cada
+  navegación, y se sincroniza entre pestañas vía `BroadcastChannel`.
+- `AbortError` / `Failed to fetch` en consola del guard de auth al navegar rápido después de
+  guardar: resuelto por la caché de sesión de PR #10 (el guard ya no hace fetch en cada
+  navegación ni usa la señal de abort del router). Verificado con Playwright: guardar gasto +
+  navegación rápida con sesión forzada a stale, y recarga a mitad del check — cero errores en
+  consola.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Arreglar el `AbortError` benigno en consola del guard de auth (`_app.tsx` `beforeLoad`) al navegar rápido después de guardar. No bloquea nada, pero ensucia el log.
 - Suite de tests en `apps/web` — hoy no hay test script ahí; API y `packages/shared` sí corren Vitest.
 
 ## Más adelante (diferido a propósito, no por olvido)
