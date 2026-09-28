@@ -21,14 +21,26 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   el test de ownership no prueba de verdad el filtro `userId`, y no hay lock contra ediciones
   concurrentes del mismo gasto. Descartado a propósito: "sin cuenta" en un gasto — decisión de
   producto, todo gasto trackea una cuenta (efectivo = cuenta de efectivo dedicada), no bug.
+- Sesión robusta (PR #9 y #10): el rate limit por IP compartida ya no desloguea a todo el hogar;
+  un fallo al comprobar la sesión (429, 5xx, offline) muestra una pantalla de error con
+  "Reintentar" en vez de mandar a sign-in; la sesión se cachea (5 min) en vez de pedirse en cada
+  navegación, y se sincroniza entre pestañas vía `BroadcastChannel`.
+- `AbortError` / `Failed to fetch` en consola del guard de auth al navegar rápido después de
+  guardar: resuelto por la caché de sesión de PR #10 (el guard ya no hace fetch en cada
+  navegación ni usa la señal de abort del router). Verificado con Playwright: guardar gasto +
+  navegación rápida con sesión forzada a stale, y recarga a mitad del check — cero errores en
+  consola.
+- Suite de tests en `apps/web` (Vitest + jsdom + Testing Library): errores de auth, `fetchValidated`
+  y el 401, caché de sesión, reset de caché entre usuarios, `auth-client`, el guard `_app` y las
+  reglas de `ExpenseForm`. Verificada rompiendo a propósito 11 comportamientos clave: todos hacen fallar algún test.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Arreglar el `AbortError` benigno en consola del guard de auth (`_app.tsx` `beforeLoad`) al navegar rápido después de guardar. No bloquea nada, pero ensucia el log.
-- Suite de tests en `apps/web` — hoy no hay test script ahí; API y `packages/shared` sí corren Vitest.
+- Ampliar los tests de `apps/web` a las pantallas y hooks de mutación (`features/*/containers`, `queries.ts`); hoy cubren la capa de sesión/API, el guard y `ExpenseForm`.
 
 ## Más adelante (diferido a propósito, no por olvido)
 
+- **Sub-cuentas / Cajitas (envelope budgeting)**: permitir al usuario asignar/allocate dinero de cuentas específicas a propósitos o categorías específicas. La idea es poder decir "tengo tanto dinero de tal cuenta asignado a tal cosa". Esto es un nivel de organización por encima del CRUD de gastos actual — agrupa dinero hacia fines sin crear nuevas transacciones. Requiere nuevo schema (`allocated_funds` o similar), API para crear/editar/borrar asignaciones, y UI para visualizar y gestionar las cajitas. Descartado temprano: fusionar con cuentas (son conceptos distintos).
 - **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
 - **Wrapper nativo (Capacitor)**: para widget de pantalla de inicio y voz/push más confiables que en navegador. El usuario mostró interés, pero es una fase separada.
 - **Dark mode**: fuera de alcance del rediseño actual (`DESIGN.md` es light-only por decisión de diseño).
