@@ -23,7 +23,7 @@ pnpm dev:api            # api only (Bun --hot, :3001)
 pnpm build              # builds both apps
 pnpm typecheck          # tsc --noEmit across all workspaces
 pnpm lint               # eslint (web only — api has no lint script)
-pnpm test               # vitest run across workspaces (apps/api + packages/shared)
+pnpm test               # vitest run across workspaces (apps/api + packages/shared + apps/web)
 
 # Database (proxies to apps/api)
 pnpm db:generate        # drizzle-kit generate from packages/shared/src/db/schema
