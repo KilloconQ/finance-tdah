@@ -1,0 +1,96 @@
+import { describe, expect, it } from 'vitest'
+import {
+  accountSupportsEnvelopes,
+  allocatedCents,
+  envelopeAdjustmentError,
+  envelopeDeltaCents,
+  unassignedCents,
+  type EnvelopeAdjustment,
+} from './envelope'
+
+const base: EnvelopeAdjustment = {
+  accountType: 'debito',
+  accountBalanceCents: 10_000,
+  otherEnvelopeBalancesCents: [3_000],
+  envelopeBalanceCents: 2_000,
+  deltaCents: 0,
+}
+const adjust = (patch: Partial<EnvelopeAdjustment>) => envelopeAdjustmentError({ ...base, ...patch })
+
+describe('allocatedCents / unassignedCents', () => {
+  it('sums only positive envelope balances', () => {
+    expect(allocatedCents([])).toBe(0)
+    expect(allocatedCents([3_000, 2_000])).toBe(5_000)
+    expect(allocatedCents([3_000, -1_500])).toBe(3_000)
+  })
+
+  it('is what the account holds minus what is set aside', () => {
+    expect(unassignedCents(10_000, [3_000, 2_000])).toBe(5_000)
+    expect(unassignedCents(10_000, [])).toBe(10_000)
+  })
+
+  it('goes negative when the account dropped below what is set aside', () => {
+    expect(unassignedCents(4_000, [3_000, 2_000])).toBe(-1_000)
+  })
+})
+
+describe('accountSupportsEnvelopes', () => {
+  it('rejects credit cards only', () => {
+    expect(accountSupportsEnvelopes('credito')).toBe(false)
+    for (const t of ['debito', 'efectivo', 'wallet', 'ahorro'] as const) {
+      expect(accountSupportsEnvelopes(t)).toBe(true)
+    }
+  })
+})
+
+describe('envelopeAdjustmentError', () => {
+  it('allows setting aside up to exactly what is unassigned', () => {
+    // 10_000 - (3_000 + 2_000) = 5_000 unassigned
+    expect(adjust({ deltaCents: 5_000 })).toBeNull()
+    expect(adjust({ deltaCents: 5_001 })).toBe('EXCEEDS_UNASSIGNED')
+  })
+
+  it('allows releasing down to zero but not below', () => {
+    expect(adjust({ deltaCents: -2_000 })).toBeNull()
+    expect(adjust({ deltaCents: -2_001 })).toBe('EXCEEDS_ENVELOPE')
+  })
+
+  it('checks a new envelope (balance 0) against the unassigned money', () => {
+    expect(adjust({ envelopeBalanceCents: 0, otherEnvelopeBalancesCents: [3_000, 2_000], deltaCents: 5_000 })).toBeNull()
+    expect(adjust({ envelopeBalanceCents: 0, otherEnvelopeBalancesCents: [3_000, 2_000], deltaCents: 5_001 })).toBe(
+      'EXCEEDS_UNASSIGNED',
+    )
+  })
+
+  it('refuses envelopes on credit cards', () => {
+    expect(adjust({ accountType: 'credito', accountBalanceCents: -5_000, deltaCents: 100 })).toBe('CREDIT_ACCOUNT')
+  })
+
+  it('lets an overspent envelope be covered back to zero even with nothing unassigned', () => {
+    // Account holds exactly what the other envelope has set aside.
+    expect(
+      adjust({ accountBalanceCents: 3_000, otherEnvelopeBalancesCents: [3_000], envelopeBalanceCents: -1_000, deltaCents: 1_000 }),
+    ).toBeNull()
+    // …but going above zero needs unassigned money.
+    expect(
+      adjust({ accountBalanceCents: 3_000, otherEnvelopeBalancesCents: [3_000], envelopeBalanceCents: -1_000, deltaCents: 1_001 }),
+    ).toBe('EXCEEDS_UNASSIGNED')
+  })
+
+  it('refuses releasing from an overspent envelope', () => {
+    expect(adjust({ envelopeBalanceCents: -500, deltaCents: -1 })).toBe('EXCEEDS_ENVELOPE')
+  })
+
+  it('still allows releasing when the account is already over-allocated', () => {
+    expect(adjust({ accountBalanceCents: 1_000, deltaCents: -500 })).toBeNull()
+    expect(adjust({ accountBalanceCents: 1_000, deltaCents: 1 })).toBe('EXCEEDS_UNASSIGNED')
+  })
+})
+
+describe('envelopeDeltaCents', () => {
+  it('only expenses come out of an envelope', () => {
+    expect(envelopeDeltaCents('expense', 1_200)).toBe(-1_200)
+    expect(envelopeDeltaCents('income', 1_200)).toBe(0)
+    expect(envelopeDeltaCents('transfer', 1_200)).toBe(0)
+  })
+})

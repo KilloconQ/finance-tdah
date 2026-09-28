@@ -10,6 +10,7 @@ import { DomainError } from './shared/errors/domain-error'
 import { accountsRoute } from './routes/accounts'
 import { challengesRoute } from './routes/challenges'
 import { dashboardRoute } from './routes/dashboard'
+import { envelopesRoute } from './routes/envelopes'
 import { expensesRoute } from './routes/expenses'
 import { goalsRoute } from './routes/goals'
 import { profileRoute } from './routes/profile'
@@ -50,6 +51,7 @@ const api = app
   .basePath('/api')
   .route('/profile', profileRoute)
   .route('/accounts', accountsRoute)
+  .route('/envelopes', envelopesRoute)
   .route('/goals', goalsRoute)
   .route('/expenses', expensesRoute)
   .route('/push', pushRoute)

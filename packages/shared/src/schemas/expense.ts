@@ -6,6 +6,7 @@ export const expenseSchema = z.object({
   userId: z.string(),
   accountId: z.uuid().nullable(),
   toAccountId: z.uuid().nullable(),
+  envelopeId: z.uuid().nullable(),
   kind: z.enum(['expense', 'income', 'transfer']).default('expense'),
   amountCents: cents.min(1),
   category: z.string().min(1).max(40),
@@ -25,6 +26,9 @@ const expenseBaseSchema = z.object({
   description: z.string().min(1).max(120),
   accountId: z.uuid().optional(),
   toAccountId: z.uuid().optional(),
+  // Only an expense can come out of an envelope ("cajita"), and only one of
+  // its own account's. null clears it on update.
+  envelopeId: z.uuid().nullable().optional(),
   kind: z.enum(['expense', 'income', 'transfer']),
   occurredAt: z.iso.datetime({ offset: true }).optional(),
 })
@@ -34,6 +38,13 @@ export const createExpenseSchema = expenseBaseSchema
     kind: z.enum(['expense', 'income', 'transfer']).default('expense'),
   })
   .superRefine((data, ctx) => {
+    if (data.envelopeId && (data.kind !== 'expense' || !data.accountId)) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Solo un gasto con cuenta puede salir de una cajita',
+        path: ['envelopeId'],
+      })
+    }
     if (data.kind !== 'transfer') return
 
     if (!data.accountId || !data.toAccountId || data.accountId === data.toAccountId) {

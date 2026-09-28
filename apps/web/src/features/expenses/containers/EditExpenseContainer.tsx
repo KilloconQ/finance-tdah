@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
+import { envelopesQueryOptions } from '@/features/envelopes'
 import { accountsQuery } from '@/lib/queries'
 import { expenseQueryOptions, useUpdateExpense } from '../api'
 import { ExpenseForm, type ExpenseFormFields } from '../components/ExpenseForm'
@@ -19,6 +20,7 @@ export function EditExpenseContainer({ expenseId }: EditExpenseContainerProps) {
 
   const { data: expense } = useQuery(expenseQueryOptions(expenseId))
   const { data: accounts = [] } = useQuery(accountsQuery())
+  const { data: envelopes = [] } = useQuery(envelopesQueryOptions())
   const updateExpense = useUpdateExpense(expenseId)
 
   const goBack = () => navigate({ to: '/transactions' })
@@ -55,6 +57,7 @@ export function EditExpenseContainer({ expenseId }: EditExpenseContainerProps) {
         accountId: fields.accountId,
         kind: fields.kind,
         toAccountId: fields.toAccountId,
+        envelopeId: fields.envelopeId ?? null,
       },
       {
         onSuccess: () => navigate({ to: '/transactions', replace: true }),
@@ -78,6 +81,7 @@ export function EditExpenseContainer({ expenseId }: EditExpenseContainerProps) {
       />
       <ExpenseForm
         accounts={accounts.map((a) => ({ id: a.id, name: a.name, type: a.type }))}
+        envelopes={envelopes}
         submitting={updateExpense.isPending}
         error={error}
         onSubmit={handleSubmit}
@@ -88,6 +92,7 @@ export function EditExpenseContainer({ expenseId }: EditExpenseContainerProps) {
           accountId: expense.accountId ?? undefined,
           kind: expense.kind,
           toAccountId: expense.toAccountId ?? undefined,
+          envelopeId: expense.envelopeId ?? undefined,
         }}
         submitLabel="Guardar cambios"
       />

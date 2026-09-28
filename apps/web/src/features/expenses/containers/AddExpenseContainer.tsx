@@ -5,6 +5,7 @@ import type { CreateExpenseInput, ParsedVoiceExpense } from '@finance-tdah/share
 import { parseAmountToCents } from '@finance-tdah/shared/domain'
 import { X } from 'lucide-react'
 import { AppBar, IconButton, PhoneShell } from '@/components'
+import { envelopesQueryOptions } from '@/features/envelopes'
 import { accountsQuery } from '@/lib/queries'
 import { useTweaks } from '@/lib/use-tweaks'
 import { useCreateExpense, useParseVoice } from '../api'
@@ -47,6 +48,7 @@ export function AddExpenseContainer() {
   const inFlight = useRef(false)
 
   const { data: accounts = [] } = useQuery(accountsQuery())
+  const { data: envelopes = [] } = useQuery(envelopesQueryOptions())
   const createExpense = useCreateExpense()
   const parseVoice = useParseVoice()
 
@@ -78,6 +80,7 @@ export function AddExpenseContainer() {
       accountId: fields.accountId,
       kind: fields.kind,
       toAccountId: fields.toAccountId,
+      envelopeId: fields.envelopeId,
     })
   }
 
@@ -149,6 +152,7 @@ export function AddExpenseContainer() {
       {mode === 'manual' ? (
         <ExpenseForm
           accounts={accounts.map((a) => ({ id: a.id, name: a.name, type: a.type }))}
+          envelopes={envelopes}
           submitting={createExpense.isPending}
           error={error}
           onSubmit={handleManualSubmit}

@@ -16,6 +16,7 @@ export function useCreateExpense() {
       void queryClient.invalidateQueries({ queryKey: expensesQueryOptions().queryKey })
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['envelopes'] })
     },
   })
 }
@@ -30,6 +31,7 @@ export function useUpdateExpense(id: string) {
       void queryClient.invalidateQueries({ queryKey: expensesQueryOptions().queryKey })
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['envelopes'] })
     },
   })
 }
@@ -42,6 +44,7 @@ export function useDeleteExpense() {
       void queryClient.invalidateQueries({ queryKey: ['expenses'] })
       void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       void queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['envelopes'] })
     },
   })
 }
