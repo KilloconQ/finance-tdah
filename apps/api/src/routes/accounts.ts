@@ -46,6 +46,18 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
     const { id } = c.req.valid('param')
     const patch = c.req.valid('json')
 
+    // A credit card's balance is debt, so it can't hold envelopes; turning an
+    // account with envelopes into one would leave them stranded.
+    if (patch.type === 'credito') {
+      const envelope = await db.query.envelope.findFirst({
+        where: (e, { and, eq }) => and(eq(e.accountId, id), eq(e.userId, user.id)),
+        columns: { id: true },
+      })
+      if (envelope) {
+        return c.json({ error: 'Esta cuenta tiene cajitas: bórralas antes de cambiarla a crédito.' }, 422)
+      }
+    }
+
     if (patch.balanceCents !== undefined) {
       const effectiveType =
         patch.type ??

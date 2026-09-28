@@ -179,6 +179,32 @@ describe.skipIf(!TEST_DATABASE_URL)('envelopes (Postgres)', async () => {
       expect(kept?.envelopeId).toBeNull()
     })
 
+    it("won't turn an account with envelopes into a credit card", async () => {
+      const acc = await account(ANA, 10_000)
+      await envelope(ANA, acc.id, 1_000)
+      const { accountsRoute } = await import('./accounts')
+      const res = await new Hono()
+        .route('/accounts', accountsRoute)
+        .request(`/accounts/${acc.id}`, {
+          method: 'PATCH',
+          headers: { 'x-test-user': ANA, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'credito' }),
+        })
+      expect(res.status).toBe(422)
+      expect((await db.query.financialAccount.findFirst({ where: (a, { eq }) => eq(a.id, acc.id) }))!.type).toBe('debito')
+
+      // Without envelopes the change goes through as before.
+      const plain = await account(ANA, 10_000)
+      const ok = await new Hono()
+        .route('/accounts', accountsRoute)
+        .request(`/accounts/${plain.id}`, {
+          method: 'PATCH',
+          headers: { 'x-test-user': ANA, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'credito' }),
+        })
+      expect(ok.status).toBe(200)
+    })
+
     it('deleting the account takes its envelopes with it', async () => {
       const acc = await account(ANA, 10_000)
       const env = await envelope(ANA, acc.id, 3_000)

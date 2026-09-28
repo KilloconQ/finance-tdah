@@ -6,7 +6,9 @@ export const expenseSchema = z.object({
   userId: z.string(),
   accountId: z.uuid().nullable(),
   toAccountId: z.uuid().nullable(),
-  envelopeId: z.uuid().nullable(),
+  // Defaulted so a web build still reads an API that predates envelopes
+  // (e.g. mid-deploy or after rolling the API back).
+  envelopeId: z.uuid().nullable().default(null),
   kind: z.enum(['expense', 'income', 'transfer']).default('expense'),
   amountCents: cents.min(1),
   category: z.string().min(1).max(40),
