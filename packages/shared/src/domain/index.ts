@@ -1,4 +1,5 @@
 export * from './account'
+export * from './envelope'
 export * from './jar'
 export * from './money'
 export * from './movement'

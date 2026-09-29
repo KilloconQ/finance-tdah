@@ -33,14 +33,21 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 - Suite de tests en `apps/web` (Vitest + jsdom + Testing Library): errores de auth, `fetchValidated`
   y el 401, caché de sesión, reset de caché entre usuarios, `auth-client`, el guard `_app` y las
   reglas de `ExpenseForm`. Verificada rompiendo a propósito 11 comportamientos clave: todos hacen fallar algún test.
+- Cajitas (envelope budgeting): dinero apartado dentro de una cuenta para algo (tabla `envelope`, ruta
+  `/api/envelopes`, pantalla `/accounts/$id/envelopes`). Decisiones de producto: entidad aparte de los
+  frascos; una cajita vive en una sola cuenta; un gasto puede salir opcionalmente de una cajita y la
+  descuenta (si se pasa queda en negativo, no se bloquea); lo apartado nunca supera el saldo de la
+  cuenta (bloqueado con `SELECT … FOR UPDATE` sobre la cuenta); las tarjetas de crédito no llevan cajitas.
+  Si el saldo baja por gastos sin cajita o por editar la cuenta, la UI avisa "apartaste más de lo que
+  tiene la cuenta" en vez de bloquear el registro.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Ampliar los tests de `apps/web` a las pantallas y hooks de mutación (`features/*/containers`, `queries.ts`); hoy cubren la capa de sesión/API, el guard y `ExpenseForm`.
+- Ampliar los tests de `apps/web` a las pantallas y hooks de mutación (`features/*/containers`, `queries.ts`); hoy cubren la capa de sesión/API, el guard, `ExpenseForm` y `EnvelopesView`.
+- CI para PRs (typecheck + test + lint, con un Postgres para los tests de integración de cajitas). Hoy el único workflow es el deploy.
 
 ## Más adelante (diferido a propósito, no por olvido)
 
-- **Sub-cuentas / Cajitas (envelope budgeting)**: permitir al usuario asignar/allocate dinero de cuentas específicas a propósitos o categorías específicas. La idea es poder decir "tengo tanto dinero de tal cuenta asignado a tal cosa". Esto es un nivel de organización por encima del CRUD de gastos actual — agrupa dinero hacia fines sin crear nuevas transacciones. Requiere nuevo schema (`allocated_funds` o similar), API para crear/editar/borrar asignaciones, y UI para visualizar y gestionar las cajitas. Descartado temprano: fusionar con cuentas (son conceptos distintos).
 - **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
 - **Wrapper nativo (Capacitor)**: para widget de pantalla de inicio y voz/push más confiables que en navegador. El usuario mostró interés, pero es una fase separada.
 - **Dark mode**: fuera de alcance del rediseño actual (`DESIGN.md` es light-only por decisión de diseño).

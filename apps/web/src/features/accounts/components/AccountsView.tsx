@@ -1,5 +1,6 @@
-import type { FinancialAccountDTO } from '@finance-tdah/shared/schemas'
-import { Plus, Wallet } from 'lucide-react'
+import type { EnvelopeDTO, FinancialAccountDTO } from '@finance-tdah/shared/schemas'
+import { accountSupportsEnvelopes, allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
+import { ChevronRight, Plus, Wallet } from 'lucide-react'
 import {
   AppBar,
   BigNumber,
@@ -32,6 +33,7 @@ const ACCOUNT_LABEL: Record<string, string> = {
 
 interface AccountsViewProps {
   accounts: FinancialAccountDTO[]
+  envelopes: EnvelopeDTO[]
   goalsTotalCents: number
   liquidCents: number
   debtCents: number
@@ -40,10 +42,12 @@ interface AccountsViewProps {
   loading: boolean
   onAddAccount: () => void
   onEditAccount: (id: string) => void
+  onOpenEnvelopes: (id: string) => void
 }
 
 export function AccountsView({
   accounts,
+  envelopes,
   goalsTotalCents,
   liquidCents,
   debtCents,
@@ -52,6 +56,7 @@ export function AccountsView({
   loading,
   onAddAccount,
   onEditAccount,
+  onOpenEnvelopes,
 }: AccountsViewProps) {
   // The bar splits total assets into the free slice and the jar-earmarked slice
   // (both already part of liquid), then debt — so nothing is counted twice.
@@ -126,7 +131,14 @@ export function AccountsView({
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {accounts.map((a) => (
-                <AccountCard key={a.id} account={a} showBalances={showBalances} onEditAccount={onEditAccount} />
+                <AccountCard
+                  key={a.id}
+                  account={a}
+                  envelopeBalances={envelopes.filter((e) => e.accountId === a.id).map((e) => e.balanceCents)}
+                  showBalances={showBalances}
+                  onEditAccount={onEditAccount}
+                  onOpenEnvelopes={onOpenEnvelopes}
+                />
               ))}
             </div>
           )}
@@ -140,44 +152,73 @@ export function AccountsView({
 
 interface AccountCardProps {
   account: FinancialAccountDTO
+  envelopeBalances: number[]
   showBalances: boolean
   onEditAccount: (id: string) => void
+  onOpenEnvelopes: (id: string) => void
 }
 
-function AccountCard({ account, showBalances, onEditAccount }: AccountCardProps) {
+function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, onOpenEnvelopes }: AccountCardProps) {
   const isNegative = account.balanceCents < 0
   const meta = [ACCOUNT_LABEL[account.type] ?? account.type, account.institution]
     .filter(Boolean)
     .join(' · ')
+  const allocated = allocatedCents(envelopeBalances)
+  const unassigned = unassignedCents(account.balanceCents, envelopeBalances)
 
   return (
-    <Card
-      role="button"
-      tabIndex={0}
-      onClick={() => onEditAccount(account.id)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onEditAccount(account.id)
-      }}
-      className="flex cursor-pointer flex-col gap-3 transition-colors hover:bg-bg-alt"
-    >
-      <div className="flex items-start gap-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-bg text-lg">
-          {ACCOUNT_EMOJI[account.type] ?? '·'}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium text-ink">{account.name}</div>
-          <div className="truncate text-xs text-ink-mid">
-            {meta}
-            {account.last4 ? <span> ·· {account.last4}</span> : null}
+    <Card padded={false} className="flex flex-col overflow-hidden">
+      <button
+        type="button"
+        onClick={() => onEditAccount(account.id)}
+        aria-label={`Editar ${account.name}`}
+        className="flex flex-1 cursor-pointer flex-col gap-3 p-4 text-left transition-colors hover:bg-bg-alt sm:p-5"
+      >
+        <div className="flex w-full items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-bg text-lg">
+            {ACCOUNT_EMOJI[account.type] ?? '·'}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-medium text-ink">{account.name}</div>
+            <div className="truncate text-xs text-ink-mid">
+              {meta}
+              {account.last4 ? <span> ·· {account.last4}</span> : null}
+            </div>
           </div>
         </div>
-      </div>
-      <Money
-        value={account.balanceCents / 100}
-        hidden={!showBalances}
-        weight="semibold"
-        className={isNegative ? 'text-lg text-danger' : 'text-lg text-ink'}
-      />
+        <Money
+          value={account.balanceCents / 100}
+          hidden={!showBalances}
+          weight="semibold"
+          className={isNegative ? 'text-lg text-danger' : 'text-lg text-ink'}
+        />
+      </button>
+      {accountSupportsEnvelopes(account.type) ? (
+        <button
+          type="button"
+          onClick={() => onOpenEnvelopes(account.id)}
+          aria-label={`Cajitas de ${account.name}`}
+          className="flex items-center gap-2 border-t border-line-soft px-4 py-2.5 text-left text-xs text-ink-mid transition-colors hover:bg-bg-alt sm:px-5"
+        >
+          <span aria-hidden>📦</span>
+          <span className="min-w-0 flex-1 truncate">
+            {envelopeBalances.length === 0 ? (
+              'Cajitas: aparta dinero para algo'
+            ) : (
+              <>
+                <Money value={allocated / 100} hidden={!showBalances} className="text-ink" /> en cajitas ·{' '}
+                <Money
+                  value={unassigned / 100}
+                  hidden={!showBalances}
+                  className={unassigned < 0 ? 'text-danger' : 'text-ink'}
+                />{' '}
+                libre
+              </>
+            )}
+          </span>
+          <ChevronRight size={14} strokeWidth={2} aria-hidden />
+        </button>
+      ) : null}
     </Card>
   )
 }

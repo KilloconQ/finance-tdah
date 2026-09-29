@@ -48,6 +48,9 @@ const { financialAccount, state, fakeDb } = vi.hoisted(() => {
         findFirst: async () => state.existingAccount,
         findMany: async () => [],
       },
+      envelope: {
+        findFirst: async () => null,
+      },
     },
   }
 

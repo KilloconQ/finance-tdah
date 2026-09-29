@@ -2,6 +2,7 @@ import { relations } from 'drizzle-orm'
 import {
   boolean,
   date,
+  index,
   integer,
   jsonb,
   numeric,
@@ -78,6 +79,30 @@ export const goal = pgTable('goal', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
+// A "cajita": money set aside inside one account for a purpose. It moves no
+// money — the account balance stays the source of truth — it only earmarks
+// part of it. The API keeps the positive envelope balances of an account
+// within that account's balance; spending from an envelope can push it
+// negative (overspent), which is shown rather than blocked.
+export const envelope = pgTable(
+  'envelope',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => financialAccount.id, { onDelete: 'cascade' }),
+    name: text('name').notNull(),
+    emoji: text('emoji').notNull(),
+    balanceCents: integer('balance_cents').default(0).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('envelope_account_idx').on(t.accountId)],
+)
+
 export const expense = pgTable('expense', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: text('user_id')
@@ -89,6 +114,7 @@ export const expense = pgTable('expense', {
   toAccountId: uuid('to_account_id').references(() => financialAccount.id, {
     onDelete: 'set null',
   }),
+  envelopeId: uuid('envelope_id').references(() => envelope.id, { onDelete: 'set null' }),
   kind: expenseKindEnum('kind').default('expense').notNull(),
   amountCents: integer('amount_cents').notNull(),
   category: text('category').notNull(),
@@ -164,6 +190,7 @@ export const userRelations = relations(user, ({ one, many }) => ({
   }),
   accounts: many(financialAccount),
   goals: many(goal),
+  envelopes: many(envelope),
   expenses: many(expense),
   subscriptions: many(subscription),
   challenges: many(challenge),
@@ -177,6 +204,13 @@ export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) =
 
 export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({
   user: one(user, { fields: [financialAccount.userId], references: [user.id] }),
+  expenses: many(expense),
+  envelopes: many(envelope),
+}))
+
+export const envelopeRelations = relations(envelope, ({ one, many }) => ({
+  user: one(user, { fields: [envelope.userId], references: [user.id] }),
+  account: one(financialAccount, { fields: [envelope.accountId], references: [financialAccount.id] }),
   expenses: many(expense),
 }))
 
@@ -196,6 +230,7 @@ export const expenseRelations = relations(expense, ({ one }) => ({
     references: [financialAccount.id],
     relationName: 'expense_to_account',
   }),
+  envelope: one(envelope, { fields: [expense.envelopeId], references: [envelope.id] }),
 }))
 
 export const subscriptionRelations = relations(subscription, ({ one }) => ({

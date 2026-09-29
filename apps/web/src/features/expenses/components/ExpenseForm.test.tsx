@@ -1,12 +1,18 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ExpenseForm, type ExpenseFormAccount } from './ExpenseForm'
+import { ExpenseForm, type ExpenseFormAccount, type ExpenseFormEnvelope } from './ExpenseForm'
 
 const ACCOUNTS: ExpenseFormAccount[] = [
   { id: 'card', name: 'Tarjeta', type: 'credito' },
   { id: 'cash', name: 'Efectivo', type: 'efectivo' },
   { id: 'bank', name: 'Débito', type: 'debito' },
+]
+
+const ENVELOPES: ExpenseFormEnvelope[] = [
+  { id: 'rent', accountId: 'bank', name: 'Renta', emoji: '🏠', balanceCents: 800_000 },
+  { id: 'food', accountId: 'bank', name: 'Súper', emoji: '🛒', balanceCents: 150_000 },
+  { id: 'trip', accountId: 'cash', name: 'Viaje', emoji: '✈️', balanceCents: 20_000 },
 ]
 
 afterEach(cleanup)
@@ -99,5 +105,59 @@ describe('ExpenseForm', () => {
     setup({ submitting: true, error: 'Saldo insuficiente', initial: { amount: '1', description: 'x', category: 'otro' } })
     expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Guardando…' }).disabled).toBe(true)
     expect(screen.getByText('Saldo insuficiente')).toBeTruthy()
+  })
+
+  describe('envelopes', () => {
+    const fill = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.type(screen.getByLabelText('Cuánto'), '250')
+      await user.type(screen.getByLabelText('Nota'), 'Despensa')
+      await user.click(screen.getByRole('button', { name: /Súper/ }))
+    }
+
+    it("only offers the selected account's envelopes, and none by default", async () => {
+      const { user, onSubmit, submit, options } = setup({ envelopes: ENVELOPES })
+      // Default account (card) has no envelopes: no picker at all.
+      expect(screen.queryByLabelText('De qué cajita (opcional)')).toBeNull()
+
+      await user.selectOptions(screen.getByLabelText('De qué cuenta'), 'bank')
+      expect(options('De qué cajita (opcional)')).toEqual(['', 'rent', 'food'])
+
+      await fill(user)
+      await user.click(submit())
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ accountId: 'bank', envelopeId: undefined }))
+    })
+
+    it('sends the chosen envelope', async () => {
+      const { user, onSubmit, submit } = setup({ envelopes: ENVELOPES })
+      await user.selectOptions(screen.getByLabelText('De qué cuenta'), 'bank')
+      await user.selectOptions(screen.getByLabelText('De qué cajita (opcional)'), 'food')
+      await fill(user)
+      await user.click(submit())
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ accountId: 'bank', envelopeId: 'food' }))
+    })
+
+    it("drops the envelope when the account changes to one it doesn't belong to", async () => {
+      const { user, onSubmit, submit } = setup({ envelopes: ENVELOPES })
+      await user.selectOptions(screen.getByLabelText('De qué cuenta'), 'bank')
+      await user.selectOptions(screen.getByLabelText('De qué cajita (opcional)'), 'food')
+      await user.selectOptions(screen.getByLabelText('De qué cuenta'), 'cash')
+      expect(screen.getByLabelText<HTMLSelectElement>('De qué cajita (opcional)').value).toBe('')
+
+      await fill(user)
+      await user.click(submit())
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ accountId: 'cash', envelopeId: undefined }))
+    })
+
+    it('hides envelopes for income and drops a chosen one', async () => {
+      const { user, onSubmit, submit } = setup({ envelopes: ENVELOPES, initial: { accountId: 'bank', envelopeId: 'rent' } })
+      expect(screen.getByLabelText<HTMLSelectElement>('De qué cajita (opcional)').value).toBe('rent')
+
+      await user.click(screen.getByRole('button', { name: 'Ingreso' }))
+      expect(screen.queryByLabelText('De qué cajita (opcional)')).toBeNull()
+      await user.type(screen.getByLabelText('Cuánto'), '100')
+      await user.type(screen.getByLabelText('Nota'), 'Reembolso')
+      await user.click(submit())
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ kind: 'income', envelopeId: undefined }))
+    })
   })
 })

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Btn, Chip } from '@/components'
+import { formatMoney } from '@/lib/format'
 
 export type MovementKind = 'expense' | 'income' | 'transfer'
 
@@ -10,12 +11,22 @@ export interface ExpenseFormFields {
   accountId?: string
   kind: MovementKind
   toAccountId?: string
+  /** The envelope ("cajita") the expense comes out of; undefined = none. */
+  envelopeId?: string
 }
 
 export interface ExpenseFormAccount {
   id: string
   name: string
   type: string
+}
+
+export interface ExpenseFormEnvelope {
+  id: string
+  accountId: string
+  name: string
+  emoji: string
+  balanceCents: number
 }
 
 interface ExpenseCategory {
@@ -53,6 +64,7 @@ const SUBMIT_LABEL: Record<MovementKind, string> = {
 
 interface ExpenseFormProps {
   accounts: ExpenseFormAccount[]
+  envelopes?: ExpenseFormEnvelope[]
   submitting: boolean
   error: string | null
   onSubmit: (fields: ExpenseFormFields) => void
@@ -63,6 +75,7 @@ interface ExpenseFormProps {
 
 export function ExpenseForm({
   accounts,
+  envelopes = [],
   submitting,
   error,
   onSubmit,
@@ -76,6 +89,7 @@ export function ExpenseForm({
   const [description, setDescription] = useState(initial?.description ?? '')
   const [accountId, setAccountId] = useState<string>(initial?.accountId ?? '')
   const [toAccountId, setToAccountId] = useState<string>(initial?.toAccountId ?? '')
+  const [envelopeId, setEnvelopeId] = useState<string>(initial?.envelopeId ?? '')
 
   const hasAmount = amount.trim() !== ''
   const isTransfer = kind === 'transfer'
@@ -101,6 +115,13 @@ export function ExpenseForm({
       ? toAccountId
       : (accounts.find((a) => a.id !== effectiveAccountId)?.id ?? '')
 
+  // Only an expense comes out of an envelope, and only one of its own account's:
+  // switching kind or account drops a selection that no longer fits — derived,
+  // not stored, same as the account fallbacks above.
+  const accountEnvelopes =
+    kind === 'expense' ? envelopes.filter((e) => e.accountId === effectiveAccountId) : []
+  const effectiveEnvelopeId = accountEnvelopes.some((e) => e.id === envelopeId) ? envelopeId : ''
+
   const canSubmit =
     hasAmount &&
     description.trim() !== '' &&
@@ -119,6 +140,7 @@ export function ExpenseForm({
       accountId: effectiveAccountId || undefined,
       kind,
       toAccountId: isTransfer ? effectiveToAccountId || undefined : undefined,
+      envelopeId: effectiveEnvelopeId || undefined,
     })
   }
 
@@ -204,6 +226,27 @@ export function ExpenseForm({
             {availableAccounts.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
+      {accountEnvelopes.length > 0 ? (
+        <div>
+          <label htmlFor="envelope" className="text-sm font-medium text-ink-mid">
+            De qué cajita (opcional)
+          </label>
+          <select
+            id="envelope"
+            value={effectiveEnvelopeId}
+            onChange={(e) => setEnvelopeId(e.target.value)}
+            className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-accent"
+          >
+            <option value="">Ninguna</option>
+            {accountEnvelopes.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.emoji} {e.name} · {formatMoney(e.balanceCents / 100)}
               </option>
             ))}
           </select>

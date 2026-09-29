@@ -1,6 +1,7 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { netWorth } from '@finance-tdah/shared/domain'
+import { envelopesQueryOptions } from '@/features/envelopes'
 import { goalsQueryOptions } from '@/features/goals'
 import { useTweaks } from '@/lib/use-tweaks'
 import { accountsQueryOptions } from '../api'
@@ -12,6 +13,7 @@ export function AccountsContainer() {
 
   const { data: accounts = [], isLoading } = useQuery(accountsQueryOptions())
   const { data: goals = [] } = useQuery(goalsQueryOptions())
+  const { data: envelopes = [] } = useQuery(envelopesQueryOptions())
 
   // Jars live inside accounts, so net worth is liquid - debt and jar totals are
   // a separate view. See packages/shared/src/domain/net-worth.ts.
@@ -21,6 +23,7 @@ export function AccountsContainer() {
   return (
     <AccountsView
       accounts={accounts}
+      envelopes={envelopes}
       goalsTotalCents={goalsTotalCents}
       liquidCents={liquidCents}
       debtCents={debtCents}
@@ -29,6 +32,7 @@ export function AccountsContainer() {
       loading={isLoading}
       onAddAccount={() => navigate({ to: '/accounts/new' })}
       onEditAccount={(id) => navigate({ to: '/accounts/$id', params: { id } })}
+      onOpenEnvelopes={(id) => navigate({ to: '/accounts/$id/envelopes', params: { id } })}
     />
   )
 }

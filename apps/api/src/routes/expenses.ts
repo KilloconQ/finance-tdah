@@ -8,8 +8,8 @@ import {
   voiceTranscriptSchema,
   type ParsedVoiceExpense,
 } from '@finance-tdah/shared/schemas'
-import { sourceBalanceDeltaCents } from '@finance-tdah/shared/domain'
-import { db, schema } from '../db/client'
+import { envelopeDeltaCents, sourceBalanceDeltaCents } from '@finance-tdah/shared/domain'
+import { db, schema, type Tx } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 import { parseVoiceTranscript } from '../services/voice-parser'
 import { sendPushToUser } from '../services/push-sender'
@@ -61,12 +61,17 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           }
         }
 
+        if (input.envelopeId) {
+          await assertEnvelopeOnAccount(tx, input.envelopeId, user.id, input.accountId!)
+        }
+
         const [expense] = await tx
           .insert(schema.expense)
           .values({
             userId: user.id,
             accountId: input.accountId ?? null,
             toAccountId: input.kind === 'transfer' ? (input.toAccountId ?? null) : null,
+            envelopeId: input.envelopeId ?? null,
             kind: input.kind,
             amountCents: input.amountCents,
             category: input.category,
@@ -106,6 +111,12 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
             )
         }
 
+        // After the account write, which locks its row: same lock order as
+        // envelope moves in `envelopes.ts`.
+        if (input.envelopeId) {
+          await addToEnvelope(tx, input.envelopeId, user.id, envelopeDeltaCents(input.kind, input.amountCents))
+        }
+
         return expense
       })
 
@@ -115,6 +126,8 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
 
       return c.json({ expense: created }, 201)
     } catch (err) {
+      const envelopeError = envelopeErrorResponse(err)
+      if (envelopeError) return c.json({ error: envelopeError.error }, envelopeError.status)
       if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
         return c.json({ error: 'Cuenta no encontrada' }, 404)
       }
@@ -172,6 +185,24 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
             accountIdsToVerify.add(nextToAccountId)
           }
 
+          // The envelope follows the expense unless the patch says otherwise;
+          // it only survives if the expense stays an expense on its account.
+          const envelopeInPatch = patch.envelopeId !== undefined
+          let nextEnvelopeId = envelopeInPatch ? (patch.envelopeId ?? null) : (current.envelopeId ?? null)
+          if (nextKind !== 'expense') {
+            if (envelopeInPatch && patch.envelopeId) throw new Error('ENVELOPE_KIND')
+            nextEnvelopeId = null
+          }
+          if (nextEnvelopeId && (nextEnvelopeId !== current.envelopeId || nextAccountId !== current.accountId)) {
+            if (envelopeInPatch) {
+              await assertEnvelopeOnAccount(tx, nextEnvelopeId, user.id, nextAccountId)
+            } else {
+              // Moved to another account without naming an envelope: it no
+              // longer comes out of the old account's envelope.
+              nextEnvelopeId = null
+            }
+          }
+
           if (accountIdsToVerify.size > 0) {
             const found = await Promise.all(
               Array.from(accountIdsToVerify).map((accId) =>
@@ -225,6 +256,20 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
               )
           }
 
+          const envelopeDeltas = new Map<string, number>()
+          if (current.envelopeId) {
+            envelopeDeltas.set(current.envelopeId, -envelopeDeltaCents(current.kind, current.amountCents))
+          }
+          if (nextEnvelopeId) {
+            envelopeDeltas.set(
+              nextEnvelopeId,
+              (envelopeDeltas.get(nextEnvelopeId) ?? 0) + envelopeDeltaCents(nextKind, nextAmountCents),
+            )
+          }
+          for (const [envelopeId, delta] of envelopeDeltas) {
+            if (delta !== 0) await addToEnvelope(tx, envelopeId, user.id, delta)
+          }
+
           const [row] = await tx
             .update(schema.expense)
             .set({
@@ -234,6 +279,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
               ...(patch.kind !== undefined && { kind: patch.kind }),
               accountId: nextAccountId ?? null,
               toAccountId: nextToAccountId,
+              envelopeId: nextEnvelopeId,
               ...(patch.occurredAt !== undefined && { occurredAt: new Date(patch.occurredAt) }),
             })
             .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, user.id)))
@@ -245,6 +291,8 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
         if (!updated) return c.json({ error: 'Gasto no encontrado' }, 404)
         return c.json({ expense: updated })
       } catch (err) {
+        const envelopeError = envelopeErrorResponse(err)
+        if (envelopeError) return c.json({ error: envelopeError.error }, envelopeError.status)
         if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
           return c.json({ error: 'Cuenta no encontrada' }, 404)
         }
@@ -299,6 +347,10 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           )
       }
 
+      if (row.envelopeId) {
+        await addToEnvelope(tx, row.envelopeId, user.id, -envelopeDeltaCents(row.kind, row.amountCents))
+      }
+
       return row
     })
 
@@ -306,6 +358,41 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
 
     return c.json({ ok: true })
   })
+
+async function assertEnvelopeOnAccount(
+  tx: Tx,
+  envelopeId: string,
+  userId: string,
+  accountId: string | null,
+): Promise<void> {
+  const found = await tx.query.envelope.findFirst({
+    where: (e, { and, eq }) => and(eq(e.id, envelopeId), eq(e.userId, userId)),
+    columns: { accountId: true },
+  })
+  if (!found) throw new Error('ENVELOPE_NOT_FOUND')
+  if (found.accountId !== accountId) throw new Error('ENVELOPE_ACCOUNT_MISMATCH')
+}
+
+async function addToEnvelope(tx: Tx, envelopeId: string, userId: string, deltaCents: number): Promise<void> {
+  await tx
+    .update(schema.envelope)
+    .set({ balanceCents: sql`${schema.envelope.balanceCents} + ${deltaCents}`, updatedAt: new Date() })
+    .where(and(eq(schema.envelope.id, envelopeId), eq(schema.envelope.userId, userId)))
+}
+
+function envelopeErrorResponse(err: unknown): { error: string; status: 404 | 422 } | null {
+  if (!(err instanceof Error)) return null
+  switch (err.message) {
+    case 'ENVELOPE_NOT_FOUND':
+      return { error: 'Cajita no encontrada', status: 404 }
+    case 'ENVELOPE_ACCOUNT_MISMATCH':
+      return { error: 'Esa cajita es de otra cuenta', status: 422 }
+    case 'ENVELOPE_KIND':
+      return { error: 'Solo un gasto puede salir de una cajita', status: 422 }
+    default:
+      return null
+  }
+}
 
 // Notify only on the crossing moment (before < target <= after), not on
 // every expense once the user is already over budget — otherwise they'd

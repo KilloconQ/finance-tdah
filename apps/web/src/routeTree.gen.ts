@@ -37,6 +37,7 @@ import { Route as AppAccountsIdRouteImport } from './app/_app/accounts/$id'
 import { Route as AppTransactionsIdEditRouteImport } from './app/_app/transactions_.$id_.edit'
 import { Route as AppSubscriptionsIdEditRouteImport } from './app/_app/subscriptions/$id_.edit'
 import { Route as AppGoalsIdEditRouteImport } from './app/_app/goals/$id_.edit'
+import { Route as AppAccountsIdEnvelopesRouteImport } from './app/_app/accounts/$id_.envelopes'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -177,6 +178,11 @@ const AppGoalsIdEditRoute = AppGoalsIdEditRouteImport.update({
   path: '/goals/$id/edit',
   getParentRoute: () => AppRoute,
 } as any)
+const AppAccountsIdEnvelopesRoute = AppAccountsIdEnvelopesRouteImport.update({
+  id: '/accounts/$id_/envelopes',
+  path: '/accounts/$id/envelopes',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -203,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/accounts/': typeof AppAccountsIndexRoute
   '/goals/': typeof AppGoalsIndexRoute
   '/subscriptions/': typeof AppSubscriptionsIndexRoute
+  '/accounts/$id/envelopes': typeof AppAccountsIdEnvelopesRoute
   '/goals/$id/edit': typeof AppGoalsIdEditRoute
   '/subscriptions/$id/edit': typeof AppSubscriptionsIdEditRoute
   '/transactions/$id/edit': typeof AppTransactionsIdEditRoute
@@ -232,6 +239,7 @@ export interface FileRoutesByTo {
   '/accounts': typeof AppAccountsIndexRoute
   '/goals': typeof AppGoalsIndexRoute
   '/subscriptions': typeof AppSubscriptionsIndexRoute
+  '/accounts/$id/envelopes': typeof AppAccountsIdEnvelopesRoute
   '/goals/$id/edit': typeof AppGoalsIdEditRoute
   '/subscriptions/$id/edit': typeof AppSubscriptionsIdEditRoute
   '/transactions/$id/edit': typeof AppTransactionsIdEditRoute
@@ -263,6 +271,7 @@ export interface FileRoutesById {
   '/_app/accounts/': typeof AppAccountsIndexRoute
   '/_app/goals/': typeof AppGoalsIndexRoute
   '/_app/subscriptions/': typeof AppSubscriptionsIndexRoute
+  '/_app/accounts/$id_/envelopes': typeof AppAccountsIdEnvelopesRoute
   '/_app/goals/$id_/edit': typeof AppGoalsIdEditRoute
   '/_app/subscriptions/$id_/edit': typeof AppSubscriptionsIdEditRoute
   '/_app/transactions_/$id_/edit': typeof AppTransactionsIdEditRoute
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/accounts/'
     | '/goals/'
     | '/subscriptions/'
+    | '/accounts/$id/envelopes'
     | '/goals/$id/edit'
     | '/subscriptions/$id/edit'
     | '/transactions/$id/edit'
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | '/accounts'
     | '/goals'
     | '/subscriptions'
+    | '/accounts/$id/envelopes'
     | '/goals/$id/edit'
     | '/subscriptions/$id/edit'
     | '/transactions/$id/edit'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/_app/accounts/'
     | '/_app/goals/'
     | '/_app/subscriptions/'
+    | '/_app/accounts/$id_/envelopes'
     | '/_app/goals/$id_/edit'
     | '/_app/subscriptions/$id_/edit'
     | '/_app/transactions_/$id_/edit'
@@ -569,6 +581,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGoalsIdEditRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/accounts/$id_/envelopes': {
+      id: '/_app/accounts/$id_/envelopes'
+      path: '/accounts/$id/envelopes'
+      fullPath: '/accounts/$id/envelopes'
+      preLoaderRoute: typeof AppAccountsIdEnvelopesRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -588,6 +607,7 @@ interface AppRouteChildren {
   AppAccountsIndexRoute: typeof AppAccountsIndexRoute
   AppGoalsIndexRoute: typeof AppGoalsIndexRoute
   AppSubscriptionsIndexRoute: typeof AppSubscriptionsIndexRoute
+  AppAccountsIdEnvelopesRoute: typeof AppAccountsIdEnvelopesRoute
   AppGoalsIdEditRoute: typeof AppGoalsIdEditRoute
   AppSubscriptionsIdEditRoute: typeof AppSubscriptionsIdEditRoute
   AppTransactionsIdEditRoute: typeof AppTransactionsIdEditRoute
@@ -609,6 +629,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppAccountsIndexRoute: AppAccountsIndexRoute,
   AppGoalsIndexRoute: AppGoalsIndexRoute,
   AppSubscriptionsIndexRoute: AppSubscriptionsIndexRoute,
+  AppAccountsIdEnvelopesRoute: AppAccountsIdEnvelopesRoute,
   AppGoalsIdEditRoute: AppGoalsIdEditRoute,
   AppSubscriptionsIdEditRoute: AppSubscriptionsIdEditRoute,
   AppTransactionsIdEditRoute: AppTransactionsIdEditRoute,

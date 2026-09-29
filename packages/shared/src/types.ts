@@ -1,6 +1,7 @@
 import type {
   challenge,
   dailyBudget,
+  envelope,
   expense,
   financialAccount,
   goal,
@@ -18,6 +19,9 @@ export type NewFinancialAccount = typeof financialAccount.$inferInsert
 
 export type Goal = typeof goal.$inferSelect
 export type NewGoal = typeof goal.$inferInsert
+
+export type Envelope = typeof envelope.$inferSelect
+export type NewEnvelope = typeof envelope.$inferInsert
 
 export type Expense = typeof expense.$inferSelect
 export type NewExpense = typeof expense.$inferInsert
