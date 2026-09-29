@@ -83,9 +83,9 @@ export function EnvelopesView({
           <div className="text-sm font-medium text-ink">{account.name}</div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <Stat label="En la cuenta" cents={account.balanceCents} hidden={!showBalances} />
-            <Stat label="Apartado" cents={allocated} hidden={!showBalances} />
+            <Stat label="Bloqueado" cents={allocated} hidden={!showBalances} />
             <Stat
-              label="Sin apartar"
+              label="Disponible"
               cents={unassigned}
               hidden={!showBalances}
               className={unassigned < 0 ? 'text-danger' : 'text-good'}

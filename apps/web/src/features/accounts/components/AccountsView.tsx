@@ -35,6 +35,8 @@ interface AccountsViewProps {
   accounts: FinancialAccountDTO[]
   envelopes: EnvelopeDTO[]
   goalsTotalCents: number
+  /** Money set aside in envelopes: not available, see `lockedInEnvelopesCents`. */
+  lockedCents: number
   liquidCents: number
   debtCents: number
   netWorthCents: number
@@ -49,6 +51,7 @@ export function AccountsView({
   accounts,
   envelopes,
   goalsTotalCents,
+  lockedCents,
   liquidCents,
   debtCents,
   netWorthCents,
@@ -58,10 +61,13 @@ export function AccountsView({
   onEditAccount,
   onOpenEnvelopes,
 }: AccountsViewProps) {
-  // The bar splits total assets into the free slice and the jar-earmarked slice
-  // (both already part of liquid), then debt — so nothing is counted twice.
-  const freeWeight = Math.max(0, liquidCents - goalsTotalCents)
-  const totalWeight = Math.max(1, freeWeight + goalsTotalCents + debtCents)
+  // What's left after debt and after what's locked in envelopes.
+  const availableCents = netWorthCents - lockedCents
+  // The bar splits total assets into the free slice, the envelope-locked slice
+  // and the jar-earmarked slice (all already part of liquid), then debt — so
+  // nothing is counted twice.
+  const freeWeight = Math.max(0, liquidCents - lockedCents - goalsTotalCents)
+  const totalWeight = Math.max(1, freeWeight + lockedCents + goalsTotalCents + debtCents)
 
   return (
     <PhoneShell>
@@ -79,13 +85,19 @@ export function AccountsView({
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
           <div className="text-center lg:text-left">
             <div className="text-sm font-medium text-ink-mid">Tu dinero realmente disponible</div>
-            <BigNumber value={netWorthCents / 100} hidden={!showBalances} size="md" />
+            <BigNumber value={availableCents / 100} hidden={!showBalances} size="md" />
             <div className="-mt-2 text-sm text-ink-mid">
               {showBalances ? (
                 <>
                   tienes{' '}
                   <Money value={liquidCents / 100} className="text-ink" /> · debes{' '}
                   <Money value={debtCents / 100} className="text-danger" />
+                  {lockedCents > 0 ? (
+                    <>
+                      {' '}
+                      · 🔒 <Money value={lockedCents / 100} className="text-ink" /> bloqueado en cajitas
+                    </>
+                  ) : null}
                 </>
               ) : (
                 '•••• · ••••'
@@ -96,11 +108,13 @@ export function AccountsView({
           <Card>
             <div className="flex h-3.5 overflow-hidden rounded-full bg-line-soft">
               <div className="bg-accent" style={{ flex: freeWeight / totalWeight }} />
+              <div className="bg-ink-mid" style={{ flex: lockedCents / totalWeight, opacity: 0.45 }} />
               <div className="bg-accent-bg" style={{ flex: goalsTotalCents / totalWeight }} />
               <div className="bg-danger" style={{ flex: debtCents / totalWeight, opacity: 0.75 }} />
             </div>
             <div className="mt-3 flex flex-wrap gap-4 text-xs text-ink-mid">
               <LegendDot color="accent" label="libre" />
+              {lockedCents > 0 ? <LegendDot color="locked" label="cajitas (bloqueado)" /> : null}
               <LegendDot color="accent-bg" label="frascos" />
               <LegendDot color="danger" label="deuda" />
             </div>
@@ -200,19 +214,19 @@ function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, o
           aria-label={`Cajitas de ${account.name}`}
           className="flex items-center gap-2 border-t border-line-soft px-4 py-2.5 text-left text-xs text-ink-mid transition-colors hover:bg-bg-alt sm:px-5"
         >
-          <span aria-hidden>📦</span>
+          <span aria-hidden>{envelopeBalances.length === 0 ? '📦' : '🔒'}</span>
           <span className="min-w-0 flex-1 truncate">
             {envelopeBalances.length === 0 ? (
               'Cajitas: aparta dinero para algo'
             ) : (
               <>
-                <Money value={allocated / 100} hidden={!showBalances} className="text-ink" /> en cajitas ·{' '}
+                <Money value={allocated / 100} hidden={!showBalances} className="text-ink" /> bloqueado ·{' '}
                 <Money
                   value={unassigned / 100}
                   hidden={!showBalances}
                   className={unassigned < 0 ? 'text-danger' : 'text-ink'}
                 />{' '}
-                libre
+                disponible
               </>
             )}
           </span>
@@ -224,13 +238,14 @@ function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, o
 }
 
 interface LegendDotProps {
-  color: 'accent' | 'accent-bg' | 'danger'
+  color: 'accent' | 'locked' | 'accent-bg' | 'danger'
   label: string
 }
 
 function LegendDot({ color, label }: LegendDotProps) {
   const cls = {
     accent: 'bg-accent',
+    locked: 'bg-ink-mid opacity-45',
     'accent-bg': 'bg-accent-bg',
     danger: 'bg-danger opacity-75',
   }[color]

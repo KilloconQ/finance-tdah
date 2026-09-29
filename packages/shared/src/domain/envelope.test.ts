@@ -4,6 +4,7 @@ import {
   allocatedCents,
   envelopeAdjustmentError,
   envelopeDeltaCents,
+  lockedInEnvelopesCents,
   unassignedCents,
   type EnvelopeAdjustment,
 } from './envelope'
@@ -92,5 +93,37 @@ describe('envelopeDeltaCents', () => {
     expect(envelopeDeltaCents('expense', 1_200)).toBe(-1_200)
     expect(envelopeDeltaCents('income', 1_200)).toBe(0)
     expect(envelopeDeltaCents('transfer', 1_200)).toBe(0)
+  })
+})
+
+describe('lockedInEnvelopesCents', () => {
+  const accounts = [
+    { id: 'a', balanceCents: 10_000 },
+    { id: 'b', balanceCents: 4_000 },
+    { id: 'c', balanceCents: -2_000 },
+  ]
+
+  it('adds what each account has set aside', () => {
+    expect(
+      lockedInEnvelopesCents(accounts, [
+        { accountId: 'a', balanceCents: 3_000 },
+        { accountId: 'a', balanceCents: 2_000 },
+        { accountId: 'b', balanceCents: 1_000 },
+      ]),
+    ).toBe(6_000)
+  })
+
+  it('ignores overspent envelopes and caps at what the account holds', () => {
+    expect(
+      lockedInEnvelopesCents(accounts, [
+        { accountId: 'a', balanceCents: -1_500 },
+        { accountId: 'b', balanceCents: 6_000 },
+        { accountId: 'c', balanceCents: 1_000 },
+      ]),
+    ).toBe(4_000)
+  })
+
+  it('is zero without envelopes', () => {
+    expect(lockedInEnvelopesCents(accounts, [])).toBe(0)
   })
 })

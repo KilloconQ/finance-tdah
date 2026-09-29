@@ -66,3 +66,19 @@ export function envelopeAdjustmentError(a: EnvelopeAdjustment): EnvelopeAdjustme
 export function envelopeDeltaCents(kind: MovementKind, amountCents: number): number {
   return kind === 'expense' ? -amountCents : 0
 }
+
+/**
+ * Money locked in envelopes across all accounts: it's still in the account
+ * but no longer available to spend on anything else. Per account it can't
+ * exceed what the account actually holds — an over-allocated account only
+ * locks its real balance.
+ */
+export function lockedInEnvelopesCents(
+  accounts: ReadonlyArray<{ id: string; balanceCents: number }>,
+  envelopes: ReadonlyArray<{ accountId: string; balanceCents: number }>,
+): number {
+  return accounts.reduce((sum, account) => {
+    const allocated = allocatedCents(envelopes.filter((e) => e.accountId === account.id).map((e) => e.balanceCents))
+    return sum + Math.min(allocated, Math.max(0, account.balanceCents))
+  }, 0)
+}

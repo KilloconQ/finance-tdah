@@ -40,6 +40,8 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   cuenta (bloqueado con `SELECT … FOR UPDATE` sobre la cuenta); las tarjetas de crédito no llevan cajitas.
   Si el saldo baja por gastos sin cajita o por editar la cuenta, la UI avisa "apartaste más de lo que
   tiene la cuenta" en vez de bloquear el registro.
+  Lo que está en cajitas cuenta como **bloqueado**: se resta de "Tu dinero realmente disponible" y la
+  barra/tarjetas lo muestran aparte (`lockedInEnvelopesCents`); el patrimonio neto no cambia.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
