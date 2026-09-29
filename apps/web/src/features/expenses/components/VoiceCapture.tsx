@@ -6,7 +6,6 @@ interface VoiceCaptureProps {
   pending: boolean
   parsed: ParsedVoiceExpense | null
   error: string | null
-  detailed: boolean
   saving: boolean
   onPress: () => void
   onRelease: () => void
@@ -20,7 +19,6 @@ export function VoiceCapture({
   pending,
   parsed,
   error,
-  detailed,
   saving,
   onPress,
   onRelease,
@@ -71,12 +69,6 @@ export function VoiceCapture({
       {error ? (
         <div className="mt-4 max-w-[240px] rounded-[10px] bg-danger-bg px-3 py-2 text-center text-[12px] text-danger">
           {error}
-        </div>
-      ) : null}
-      {detailed ? (
-        <div className="mt-8 max-w-[240px] text-center text-[12px] leading-relaxed text-ink-soft">
-          Ej: <span className="wf-mono">"180 en taxi"</span> ·{' '}
-          <span className="wf-mono">"café 65"</span>
         </div>
       ) : null}
       <button

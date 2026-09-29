@@ -4,7 +4,6 @@ import { mutations, profileQuery } from './queries'
 
 const DEFAULTS = {
   showBalances: true,
-  density: 'simple' as const,
   weeklyBudgetCents: 220000,
   inputPreference: 'voice' as const,
 }
@@ -13,7 +12,6 @@ export function useTweaks() {
   const { data: profile } = useQuery(profileQuery())
   return {
     showBalances: profile?.showBalances ?? DEFAULTS.showBalances,
-    density: profile?.densityMode ?? DEFAULTS.density,
     weeklyBudgetCents: profile?.weeklyBudgetCents ?? DEFAULTS.weeklyBudgetCents,
     inputPreference: profile?.inputPreference ?? DEFAULTS.inputPreference,
   }

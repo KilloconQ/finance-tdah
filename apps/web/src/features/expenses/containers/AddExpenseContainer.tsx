@@ -34,8 +34,7 @@ function speechErrorMessage(code: string): string {
 
 export function AddExpenseContainer() {
   const navigate = useNavigate()
-  const { density, inputPreference } = useTweaks()
-  const detailed = density === 'detailed'
+  const { inputPreference } = useTweaks()
 
   const [mode, setMode] = useState<Mode>(() => (inputPreference === 'manual' ? 'manual' : 'voice'))
   const [recording, setRecording] = useState(false)
@@ -171,7 +170,6 @@ export function AddExpenseContainer() {
           pending={parseVoice.isPending}
           parsed={parsed}
           error={error}
-          detailed={detailed}
           saving={createExpense.isPending}
           onPress={startRecording}
           onRelease={handleRelease}
