@@ -37,6 +37,8 @@ export function MicButton({
           e.currentTarget.setPointerCapture(e.pointerId)
           onPress?.()
         }}
+        // A long press on Android opens the context menu, which cancels the press mid-hold.
+        onContextMenu={(e) => e.preventDefault()}
         onPointerUp={release}
         onPointerCancel={release}
         onLostPointerCapture={release}
