@@ -173,12 +173,15 @@ interface AccountCardProps {
 }
 
 function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, onOpenEnvelopes }: AccountCardProps) {
-  const isNegative = account.balanceCents < 0
   const meta = [ACCOUNT_LABEL[account.type] ?? account.type, account.institution]
     .filter(Boolean)
     .join(' · ')
   const allocated = allocatedCents(envelopeBalances)
   const unassigned = unassignedCents(account.balanceCents, envelopeBalances)
+  // Like Nu: money in envelopes isn't the account's available money, so the
+  // card shows only what's free and the envelopes' total below it.
+  const hasEnvelopes = envelopeBalances.length > 0
+  const shownCents = hasEnvelopes ? unassigned : account.balanceCents
 
   return (
     <Card padded={false} className="flex flex-col overflow-hidden">
@@ -200,12 +203,15 @@ function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, o
             </div>
           </div>
         </div>
-        <Money
-          value={account.balanceCents / 100}
-          hidden={!showBalances}
-          weight="semibold"
-          className={isNegative ? 'text-lg text-danger' : 'text-lg text-ink'}
-        />
+        <div>
+          <Money
+            value={shownCents / 100}
+            hidden={!showBalances}
+            weight="semibold"
+            className={shownCents < 0 ? 'text-lg text-danger' : 'text-lg text-ink'}
+          />
+          {hasEnvelopes ? <div className="text-xs text-ink-mid">disponible</div> : null}
+        </div>
       </button>
       {accountSupportsEnvelopes(account.type) ? (
         <button
@@ -214,20 +220,14 @@ function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, o
           aria-label={`Cajitas de ${account.name}`}
           className="flex items-center gap-2 border-t border-line-soft px-4 py-2.5 text-left text-xs text-ink-mid transition-colors hover:bg-bg-alt sm:px-5"
         >
-          <span aria-hidden>{envelopeBalances.length === 0 ? '📦' : '🔒'}</span>
+          <span aria-hidden>{hasEnvelopes ? '🔒' : '📦'}</span>
           <span className="min-w-0 flex-1 truncate">
-            {envelopeBalances.length === 0 ? (
-              'Cajitas: aparta dinero para algo'
-            ) : (
+            {hasEnvelopes ? (
               <>
-                <Money value={allocated / 100} hidden={!showBalances} className="text-ink" /> bloqueado ·{' '}
-                <Money
-                  value={unassigned / 100}
-                  hidden={!showBalances}
-                  className={unassigned < 0 ? 'text-danger' : 'text-ink'}
-                />{' '}
-                disponible
+                <Money value={allocated / 100} hidden={!showBalances} className="text-ink" /> en cajitas
               </>
+            ) : (
+              'Cajitas: aparta dinero para algo'
             )}
           </span>
           <ChevronRight size={14} strokeWidth={2} aria-hidden />
