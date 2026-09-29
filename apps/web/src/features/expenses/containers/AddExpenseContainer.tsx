@@ -18,7 +18,7 @@ function getSpeechRecognitionCtor(): (new () => SpeechRecognition) | undefined {
   return window.SpeechRecognition ?? window.webkitSpeechRecognition
 }
 
-function speechErrorMessage(code: string): string {
+function speechErrorMessage(code: string, trace: string): string {
   switch (code) {
     case 'not-allowed':
     case 'service-not-allowed':
@@ -29,7 +29,7 @@ function speechErrorMessage(code: string): string {
       return 'Sin conexión para reconocer voz'
     default:
       // Include the browser's code so a failing device can be diagnosed.
-      return `No te entendí (${code}), prueba de nuevo`
+      return `No te entendí (${code} ${trace}), prueba de nuevo`
   }
 }
 
@@ -42,6 +42,10 @@ export function AddExpenseContainer() {
   const [parsed, setParsed] = useState<ParsedVoiceExpense | null>(null)
   const [error, setError] = useState<string | null>(null)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
+  // Timeline of speech/press events, shown with unexpected errors to diagnose devices.
+  const trace = useRef<{ t0: number; events: string[] }>({ t0: 0, events: [] })
+  const mark = (name: string) =>
+    trace.current.events.push(`${name}@${Math.round(performance.now() - trace.current.t0)}`)
 
   // Synchronous guard against a double-submit racing the isPending re-render —
   // logging a gasto twice would deduct the account balance twice.
@@ -102,7 +106,11 @@ export function AddExpenseContainer() {
       return
     }
 
+    trace.current = { t0: performance.now(), events: [] }
     const recognition = new Ctor()
+    recognition.onstart = () => mark('start')
+    recognition.onaudiostart = () => mark('audio')
+    recognition.onspeechstart = () => mark('speech')
     recognition.lang = navigator.language.toLowerCase().startsWith('es') ? navigator.language : 'es-ES'
     recognition.continuous = false
     recognition.interimResults = false
@@ -119,7 +127,7 @@ export function AddExpenseContainer() {
     }
     recognition.onerror = (event) => {
       setRecording(false)
-      setError(speechErrorMessage(event.error))
+      setError(speechErrorMessage(event.error, trace.current.events.join(',')))
     }
     recognition.onend = () => setRecording(false)
 
@@ -135,6 +143,7 @@ export function AddExpenseContainer() {
 
   const handleRelease = () => {
     if (!recording) return
+    mark('release')
     recognitionRef.current?.stop()
   }
 
