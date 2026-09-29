@@ -24,11 +24,12 @@ function speechErrorMessage(code: string): string {
     case 'service-not-allowed':
       return 'Necesito permiso para usar el micrófono'
     case 'no-speech':
-      return 'No escuché nada, probá de nuevo'
+      return 'No escuché nada, prueba de nuevo'
     case 'network':
       return 'Sin conexión para reconocer voz'
     default:
-      return 'No te entendí, probá de nuevo'
+      // Include the browser's code so a failing device can be diagnosed.
+      return `No te entendí (${code}), prueba de nuevo`
   }
 }
 
@@ -108,7 +109,7 @@ export function AddExpenseContainer() {
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript
       if (!transcript) {
-        setError('No te entendí, probá de nuevo')
+        setError('No te entendí, prueba de nuevo')
         return
       }
       parseVoice.mutate(transcript, {
@@ -128,7 +129,7 @@ export function AddExpenseContainer() {
       setRecording(true)
     } catch {
       // start() throws synchronously if a recognizer is already active for this tab
-      setError('No pude activar el micrófono, probá de nuevo')
+      setError('No pude activar el micrófono, prueba de nuevo')
     }
   }
 

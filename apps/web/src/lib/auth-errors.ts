@@ -19,14 +19,14 @@ const CODE_MESSAGES: Record<string, string> = {
   USER_ALREADY_EXISTS: 'Ya existe una cuenta con ese email.',
   PASSWORD_TOO_SHORT: 'La contraseña tiene que tener al menos 8 caracteres.',
   PASSWORD_TOO_LONG: 'La contraseña es demasiado larga.',
-  INVALID_TOKEN: 'El link venció o ya se usó. Pedí uno nuevo.',
-  PASSWORD_RESET_UNAVAILABLE: 'El reset por email no está configurado. Contactá al admin.',
+  INVALID_TOKEN: 'El link venció o ya se usó. Pide uno nuevo.',
+  PASSWORD_RESET_UNAVAILABLE: 'El reset por email no está configurado. Contacta al admin.',
 }
 
-const OFFLINE = 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.'
+const OFFLINE = 'No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo.'
 const SERVER_DOWN =
-  'El servidor no está respondiendo. Si acaba de actualizarse, revisá que la API haya arrancado bien.'
-const RATE_LIMITED = 'Demasiados intentos seguidos. Esperá un minuto y probá de nuevo.'
+  'El servidor no está respondiendo. Si acaba de actualizarse, revisa que la API haya arrancado bien.'
+const RATE_LIMITED = 'Demasiados intentos seguidos. Espera un minuto y prueba de nuevo.'
 
 export function authErrorMessage(error: AuthErrorLike | null | undefined, fallback: string): string {
   if (!error) return fallback

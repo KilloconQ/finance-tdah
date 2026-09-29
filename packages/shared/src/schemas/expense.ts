@@ -52,7 +52,7 @@ export const createExpenseSchema = expenseBaseSchema
     if (!data.accountId || !data.toAccountId || data.accountId === data.toAccountId) {
       ctx.addIssue({
         code: 'custom',
-        message: 'Elegí dos cuentas distintas para transferir',
+        message: 'Elige dos cuentas distintas para transferir',
         path: ['toAccountId'],
       })
     }

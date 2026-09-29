@@ -40,7 +40,7 @@ function ResetPassword() {
         <div className="flex flex-1 flex-col justify-center py-8">
           <Card className="p-6 sm:p-7">
             <h1 className="text-2xl font-semibold tracking-tight text-ink">Link inválido o vencido.</h1>
-            <Hello className="mt-2">Pedí un nuevo link para restablecer tu contraseña.</Hello>
+            <Hello className="mt-2">Pide un nuevo link para restablecer tu contraseña.</Hello>
 
             <div className="mt-5 text-center text-sm text-ink-mid">
               <Link to="/auth/forgot-password" className="font-medium text-accent-strong underline">
@@ -58,7 +58,7 @@ function ResetPassword() {
       <div className="flex flex-1 flex-col justify-center py-8">
         <Card className="p-6 sm:p-7">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Nueva contraseña</h1>
-          <Hello className="mt-2">Elegí una contraseña nueva.</Hello>
+          <Hello className="mt-2">Elige una contraseña nueva.</Hello>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
             <Field
