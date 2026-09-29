@@ -159,5 +159,15 @@ describe('ExpenseForm', () => {
       await user.click(submit())
       expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ kind: 'income', envelopeId: undefined }))
     })
+
+    it("shows what's locked in envelopes and what's free to spend, except for income", async () => {
+      const accounts = ACCOUNTS.map((a) => (a.id === 'bank' ? { ...a, balanceCents: 1_000_000 } : a))
+      const { user } = setup({ accounts, envelopes: ENVELOPES, initial: { accountId: 'bank' } })
+      expect(screen.getByText(/bloqueado en cajitas/).textContent).toBe(
+        '🔒 $9,500.00 bloqueado en cajitas · puedes gastar $500.00',
+      )
+      await user.click(screen.getByRole('button', { name: 'Ingreso' }))
+      expect(screen.queryByText(/bloqueado en cajitas/)).toBeNull()
+    })
   })
 })

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { and, eq, gte, sql, sum } from 'drizzle-orm'
+import { and, asc, eq, gte, inArray, sql, sum } from 'drizzle-orm'
 import {
   createExpenseSchema,
   idParamSchema,
@@ -8,12 +8,19 @@ import {
   voiceTranscriptSchema,
   type ParsedVoiceExpense,
 } from '@finance-tdah/shared/schemas'
-import { envelopeDeltaCents, sourceBalanceDeltaCents } from '@finance-tdah/shared/domain'
+import {
+  envelopeDeltaCents,
+  sourceBalanceDeltaCents,
+  spendsLockedMoney,
+  unassignedCents,
+  type AccountEnvelopeState,
+} from '@finance-tdah/shared/domain'
 import { db, schema, type Tx } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 import { parseVoiceTranscript } from '../services/voice-parser'
 import { sendPushToUser } from '../services/push-sender'
 import { logger } from '../lib/logger'
+import { money } from '../lib/money'
 
 export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
   .use('*', sessionMiddleware)
@@ -64,6 +71,8 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
         if (input.envelopeId) {
           await assertEnvelopeOnAccount(tx, input.envelopeId, user.id, input.accountId!)
         }
+
+        const before = await lockEnvelopeStates(tx, user.id, [input.accountId])
 
         const [expense] = await tx
           .insert(schema.expense)
@@ -117,6 +126,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           await addToEnvelope(tx, input.envelopeId, user.id, envelopeDeltaCents(input.kind, input.amountCents))
         }
 
+        await assertNoLockedMoneySpent(tx, user.id, before)
         return expense
       })
 
@@ -128,6 +138,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
     } catch (err) {
       const envelopeError = envelopeErrorResponse(err)
       if (envelopeError) return c.json({ error: envelopeError.error }, envelopeError.status)
+      if (err instanceof LockedMoneyError) return c.json({ error: err.userMessage }, 422)
       if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
         return c.json({ error: 'Cuenta no encontrada' }, 404)
       }
@@ -217,6 +228,13 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
             }
           }
 
+          const before = await lockEnvelopeStates(tx, user.id, [
+            current.accountId,
+            current.toAccountId,
+            nextAccountId,
+            nextToAccountId,
+          ])
+
           // Net balance delta per account: reverse whatever effect the
           // previous version of the row had, then apply the new one — a
           // single combined write per account, not "undo" followed by
@@ -270,6 +288,8 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
             if (delta !== 0) await addToEnvelope(tx, envelopeId, user.id, delta)
           }
 
+          await assertNoLockedMoneySpent(tx, user.id, before)
+
           const [row] = await tx
             .update(schema.expense)
             .set({
@@ -293,6 +313,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
       } catch (err) {
         const envelopeError = envelopeErrorResponse(err)
         if (envelopeError) return c.json({ error: envelopeError.error }, envelopeError.status)
+        if (err instanceof LockedMoneyError) return c.json({ error: err.userMessage }, 422)
         if (err instanceof Error && err.message === 'ACCOUNT_NOT_FOUND') {
           return c.json({ error: 'Cuenta no encontrada' }, 404)
         }
@@ -308,56 +329,137 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
     const { id } = c.req.valid('param')
 
-    const deleted = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .delete(schema.expense)
-        .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, user.id)))
-        .returning()
+    // Deleting an income (or an incoming transfer) takes money back out of
+    // the account, so it can spend locked money like any expense.
+    try {
+      const deleted = await db.transaction(async (tx) => {
+        const existing = await tx.query.expense.findFirst({
+          where: (e, { and, eq }) => and(eq(e.id, id), eq(e.userId, user.id)),
+          columns: { accountId: true, toAccountId: true },
+        })
+        if (!existing) return null
+        const before = await lockEnvelopeStates(tx, user.id, [existing.accountId, existing.toAccountId])
 
-      if (!row) return null
+        const [row] = await tx
+          .delete(schema.expense)
+          .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, user.id)))
+          .returning()
 
-      if (row.accountId) {
-        const delta = sourceBalanceDeltaCents(row.kind, row.amountCents)
-        await tx
-          .update(schema.financialAccount)
-          .set({
-            balanceCents: sql`${schema.financialAccount.balanceCents} - ${delta}`,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(schema.financialAccount.id, row.accountId),
-              eq(schema.financialAccount.userId, user.id),
-            ),
-          )
-      }
+        if (!row) return null
 
-      if (row.kind === 'transfer' && row.toAccountId) {
-        await tx
-          .update(schema.financialAccount)
-          .set({
-            balanceCents: sql`${schema.financialAccount.balanceCents} - ${row.amountCents}`,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(schema.financialAccount.id, row.toAccountId),
-              eq(schema.financialAccount.userId, user.id),
-            ),
-          )
-      }
+        if (row.accountId) {
+          const delta = sourceBalanceDeltaCents(row.kind, row.amountCents)
+          await tx
+            .update(schema.financialAccount)
+            .set({
+              balanceCents: sql`${schema.financialAccount.balanceCents} - ${delta}`,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(schema.financialAccount.id, row.accountId),
+                eq(schema.financialAccount.userId, user.id),
+              ),
+            )
+        }
 
-      if (row.envelopeId) {
-        await addToEnvelope(tx, row.envelopeId, user.id, -envelopeDeltaCents(row.kind, row.amountCents))
-      }
+        if (row.kind === 'transfer' && row.toAccountId) {
+          await tx
+            .update(schema.financialAccount)
+            .set({
+              balanceCents: sql`${schema.financialAccount.balanceCents} - ${row.amountCents}`,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(schema.financialAccount.id, row.toAccountId),
+                eq(schema.financialAccount.userId, user.id),
+              ),
+            )
+        }
 
-      return row
-    })
+        if (row.envelopeId) {
+          await addToEnvelope(tx, row.envelopeId, user.id, -envelopeDeltaCents(row.kind, row.amountCents))
+        }
 
-    if (!deleted) return c.json({ error: 'Gasto no encontrado' }, 404)
+        await assertNoLockedMoneySpent(tx, user.id, before)
+        return row
+      })
 
-    return c.json({ ok: true })
+      if (!deleted) return c.json({ error: 'Gasto no encontrado' }, 404)
+
+      return c.json({ ok: true })
+    } catch (err) {
+      if (err instanceof LockedMoneyError) return c.json({ error: err.userMessage }, 422)
+      throw err
+    }
   })
+
+class LockedMoneyError extends Error {
+  constructor(readonly freeCents: number) {
+    super('LOCKED_MONEY')
+  }
+
+  get userMessage(): string {
+    return this.freeCents > 0
+      ? `Ese dinero está bloqueado en tus cajitas: en esta cuenta solo tienes ${money(this.freeCents)} disponible. Libera una cajita si lo necesitas.`
+      : 'Ese dinero está bloqueado en tus cajitas: esta cuenta no tiene nada disponible. Libera una cajita si lo necesitas.'
+  }
+}
+
+type EnvelopeStates = Map<string, AccountEnvelopeState>
+
+/**
+ * Locks the accounts a movement touches (in id order, so two movements over
+ * the same accounts can't deadlock) and reads what each holds and has set
+ * aside. Taking the account lock before any envelope write keeps the same
+ * lock order as envelope moves in `envelopes.ts`.
+ */
+async function lockEnvelopeStates(tx: Tx, userId: string, accountIds: Array<string | null | undefined>): Promise<EnvelopeStates> {
+  const ids = Array.from(new Set(accountIds.filter((id): id is string => !!id)))
+  if (ids.length === 0) return new Map()
+  await tx
+    .select({ id: schema.financialAccount.id })
+    .from(schema.financialAccount)
+    .where(and(inArray(schema.financialAccount.id, ids), eq(schema.financialAccount.userId, userId)))
+    .orderBy(asc(schema.financialAccount.id))
+    .for('update')
+  return readEnvelopeStates(tx, userId, ids)
+}
+
+async function readEnvelopeStates(tx: Tx, userId: string, ids: string[]): Promise<EnvelopeStates> {
+  const [accounts, envelopes] = await Promise.all([
+    tx
+      .select({ id: schema.financialAccount.id, balanceCents: schema.financialAccount.balanceCents })
+      .from(schema.financialAccount)
+      .where(and(inArray(schema.financialAccount.id, ids), eq(schema.financialAccount.userId, userId))),
+    tx
+      .select({ accountId: schema.envelope.accountId, balanceCents: schema.envelope.balanceCents })
+      .from(schema.envelope)
+      .where(and(inArray(schema.envelope.accountId, ids), eq(schema.envelope.userId, userId))),
+  ])
+  return new Map(
+    accounts.map((a) => [
+      a.id,
+      {
+        balanceCents: a.balanceCents,
+        envelopeBalancesCents: envelopes.filter((e) => e.accountId === a.id).map((e) => e.balanceCents),
+      },
+    ]),
+  )
+}
+
+/** Money in an envelope can't be spent until the user releases it. */
+async function assertNoLockedMoneySpent(tx: Tx, userId: string, before: EnvelopeStates): Promise<void> {
+  if (before.size === 0) return
+  const after = await readEnvelopeStates(tx, userId, Array.from(before.keys()))
+  for (const [accountId, prev] of before) {
+    const next = after.get(accountId)
+    if (next && spendsLockedMoney(prev, next)) {
+      throw new LockedMoneyError(Math.max(0, unassignedCents(prev.balanceCents, prev.envelopeBalancesCents)))
+    }
+  }
+}
 
 async function assertEnvelopeOnAccount(
   tx: Tx,

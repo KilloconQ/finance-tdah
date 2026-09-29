@@ -13,10 +13,8 @@ import {
   type EnvelopeAdjustmentError,
 } from '@finance-tdah/shared/domain'
 import { db, schema, type Tx } from '../db/client'
+import { money } from '../lib/money'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
-
-const MXN = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
-const money = (cents: number) => MXN.format(cents / 100).replace('MX$', '$')
 
 class EnvelopeRuleError extends Error {
   constructor(

@@ -82,3 +82,24 @@ export function lockedInEnvelopesCents(
     return sum + Math.min(allocated, Math.max(0, account.balanceCents))
   }, 0)
 }
+
+export interface AccountEnvelopeState {
+  balanceCents: number
+  envelopeBalancesCents: readonly number[]
+}
+
+/**
+ * Whether a movement spends money locked in envelopes. Money in an envelope
+ * can't be spent until the user releases it: after the movement, the account
+ * must still hold everything its envelopes have set aside — unless it already
+ * didn't and the movement doesn't make that worse. Paying from an envelope
+ * spends its own money, so it only trips this once it runs past the envelope
+ * and past what's free. An account with nothing set aside can go negative as
+ * before.
+ */
+export function spendsLockedMoney(before: AccountEnvelopeState, after: AccountEnvelopeState): boolean {
+  if (allocatedCents(after.envelopeBalancesCents) === 0) return false
+  const freeBefore = unassignedCents(before.balanceCents, before.envelopeBalancesCents)
+  const freeAfter = unassignedCents(after.balanceCents, after.envelopeBalancesCents)
+  return freeAfter < 0 && freeAfter < freeBefore
+}

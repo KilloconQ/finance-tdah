@@ -5,6 +5,7 @@ import {
   envelopeAdjustmentError,
   envelopeDeltaCents,
   lockedInEnvelopesCents,
+  spendsLockedMoney,
   unassignedCents,
   type EnvelopeAdjustment,
 } from './envelope'
@@ -125,5 +126,43 @@ describe('lockedInEnvelopesCents', () => {
 
   it('is zero without envelopes', () => {
     expect(lockedInEnvelopesCents(accounts, [])).toBe(0)
+  })
+})
+
+describe('spendsLockedMoney', () => {
+  // $100 in the account, $60 locked in one envelope: $40 free.
+  const before = { balanceCents: 10_000, envelopeBalancesCents: [6_000] }
+
+  it('allows spending what is free', () => {
+    expect(spendsLockedMoney(before, { balanceCents: 6_000, envelopeBalancesCents: [6_000] })).toBe(false)
+  })
+
+  it('refuses spending past what is free', () => {
+    expect(spendsLockedMoney(before, { balanceCents: 5_999, envelopeBalancesCents: [6_000] })).toBe(true)
+  })
+
+  it('allows paying from the envelope with its own money', () => {
+    expect(spendsLockedMoney(before, { balanceCents: 4_000, envelopeBalancesCents: [0] })).toBe(false)
+  })
+
+  it('lets an envelope overspend eat free money but not another envelope', () => {
+    const two = { balanceCents: 10_000, envelopeBalancesCents: [5_000, 3_000] } // $20 free
+    // Pays $70 from the $50 envelope: $20 comes from free money.
+    expect(spendsLockedMoney(two, { balanceCents: 3_000, envelopeBalancesCents: [-2_000, 3_000] })).toBe(false)
+    // $71 would dip into the other envelope.
+    expect(spendsLockedMoney(two, { balanceCents: 2_900, envelopeBalancesCents: [-2_100, 3_000] })).toBe(true)
+  })
+
+  it('leaves accounts with nothing set aside alone, even going negative', () => {
+    expect(
+      spendsLockedMoney({ balanceCents: 1_000, envelopeBalancesCents: [] }, { balanceCents: -500, envelopeBalancesCents: [] }),
+    ).toBe(false)
+  })
+
+  it('allows moves that do not make an over-allocated account worse', () => {
+    const over = { balanceCents: 5_000, envelopeBalancesCents: [6_000] }
+    expect(spendsLockedMoney(over, { balanceCents: 5_500, envelopeBalancesCents: [6_000] })).toBe(false)
+    expect(spendsLockedMoney(over, { balanceCents: 4_000, envelopeBalancesCents: [5_000] })).toBe(false)
+    expect(spendsLockedMoney(over, { balanceCents: 4_999, envelopeBalancesCents: [6_000] })).toBe(true)
   })
 })

@@ -36,7 +36,14 @@ const { financialAccount, expense, state, fakeDb, sendPushToUser } = vi.hoisted(
     weekSumCents: null,
   }
 
+  // The envelope-lock reads (`select … for update`) find nothing here, so the
+  // locked-money check is a no-op; envelopes.integration.test.ts covers it.
+  const emptyQuery: Record<string, unknown> = {}
+  for (const step of ['from', 'where', 'orderBy', 'for']) emptyQuery[step] = () => emptyQuery
+  emptyQuery.then = (resolve: (rows: unknown[]) => unknown) => resolve([])
+
   const fakeTx = {
+    select: () => emptyQuery,
     insert: () => ({
       values: (values: Record<string, unknown>) => ({
         returning: async () => [{ id: 'expense-1', ...values }],
@@ -116,7 +123,11 @@ vi.mock('../middleware/session', () => ({
 }))
 
 vi.mock('../db/client', () => ({
-  schema: { expense, financialAccount },
+  schema: {
+    expense,
+    financialAccount,
+    envelope: { accountId: { name: 'envelope.account_id' }, userId: { name: 'envelope.user_id' }, balanceCents: { name: 'envelope.balance_cents' } },
+  },
   db: fakeDb,
 }))
 

@@ -151,7 +151,7 @@ export function AddExpenseContainer() {
 
       {mode === 'manual' ? (
         <ExpenseForm
-          accounts={accounts.map((a) => ({ id: a.id, name: a.name, type: a.type }))}
+          accounts={accounts.map((a) => ({ id: a.id, name: a.name, type: a.type, balanceCents: a.balanceCents }))}
           envelopes={envelopes}
           submitting={createExpense.isPending}
           error={error}

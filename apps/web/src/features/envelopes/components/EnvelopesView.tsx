@@ -127,7 +127,7 @@ export function EnvelopesView({
               <EmptyState
                 icon={<Package size={22} strokeWidth={1.8} />}
                 title="Aún no tienes cajitas"
-                hint="Aparta dinero de esta cuenta para algo: la renta, el súper, un viaje."
+                hint="Aparta dinero de esta cuenta para algo: la renta, el súper, un viaje. Queda bloqueado hasta que lo liberes."
                 action={
                   <Btn kind="primary" onClick={() => setCreating(true)}>
                     <Plus size={16} strokeWidth={2.2} />

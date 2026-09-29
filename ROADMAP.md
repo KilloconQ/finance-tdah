@@ -42,6 +42,10 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   tiene la cuenta" en vez de bloquear el registro.
   Lo que está en cajitas cuenta como **bloqueado**: se resta de "Tu dinero realmente disponible" y la
   barra/tarjetas lo muestran aparte (`lockedInEnvelopesCents`); el patrimonio neto no cambia.
+  Y no se puede gastar (como en Nu): un gasto, transferencia, edición o borrado de ingreso que se coma
+  dinero de cajitas se rechaza con 422 hasta que lo liberes (`spendsLockedMoney`). Pagar desde una cajita
+  gasta su propio dinero; si se pasa, el exceso sale de lo libre, nunca de otra cajita. Las cuentas sin
+  cajitas pueden seguir quedando en negativo.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
