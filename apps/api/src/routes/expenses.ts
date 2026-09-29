@@ -140,7 +140,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
     const parsed: ParsedVoiceExpense | null = parseVoiceTranscript(transcript)
 
     if (!parsed) {
-      return c.json({ error: 'No pude entenderte. ¿Lo decís de nuevo?' }, 422)
+      return c.json({ error: 'No pude entenderte. ¿Lo dices de nuevo?' }, 422)
     }
 
     return c.json({ parsed })
@@ -297,7 +297,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           return c.json({ error: 'Cuenta no encontrada' }, 404)
         }
         if (err instanceof Error && err.message === 'INVALID_TRANSFER') {
-          return c.json({ error: 'Elegí dos cuentas distintas para transferir' }, 422)
+          return c.json({ error: 'Elige dos cuentas distintas para transferir' }, 422)
         }
         throw err
       }

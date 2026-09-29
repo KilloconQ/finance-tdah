@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_app/settings')({
 })
 
 function Settings() {
-  const { showBalances, density, weeklyBudgetCents } = useTweaks()
+  const { showBalances, weeklyBudgetCents } = useTweaks()
   const setTweak = useSetTweak()
   const push = usePushSubscription()
   const navigate = useNavigate()
@@ -51,20 +51,6 @@ function Settings() {
           <BudgetInput
             valueCents={weeklyBudgetCents}
             onCommit={(cents) => setTweak.mutate({ weeklyBudgetCents: cents })}
-          />
-        </Section>
-
-        <Section
-          label="Vista"
-          hint="“Detallado” suma tarjetas con el gasto y la meta de la semana."
-        >
-          <Radio
-            value={density}
-            options={[
-              { value: 'simple', label: 'Simple' },
-              { value: 'detailed', label: 'Detallado' },
-            ]}
-            onChange={(v) => setTweak.mutate({ densityMode: v as 'simple' | 'detailed' })}
           />
         </Section>
 
@@ -159,36 +145,6 @@ function Section({ label, hint, children }: SectionProps) {
       <div className="text-sm font-medium text-ink">{label}</div>
       {hint ? <div className="mt-1 text-xs text-ink-soft">{hint}</div> : null}
       <div className="mt-3">{children}</div>
-    </div>
-  )
-}
-
-interface RadioProps {
-  value: string
-  options: Array<{ value: string; label: string }>
-  onChange: (value: string) => void
-}
-
-function Radio({ value, options, onChange }: RadioProps) {
-  return (
-    <div className="flex gap-2" role="radiogroup">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          role="radio"
-          aria-checked={value === o.value}
-          onClick={() => onChange(o.value)}
-          className={cn(
-            'wf-tap flex-1 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors',
-            value === o.value
-              ? 'border-accent bg-accent text-surface'
-              : 'border-line bg-surface text-ink-mid hover:bg-bg-alt',
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
     </div>
   )
 }

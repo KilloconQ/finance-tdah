@@ -38,7 +38,7 @@ function SignIn() {
       <div className="flex flex-1 flex-col justify-center py-8">
         <Card className="p-6 sm:p-7">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Hola de nuevo 👋</h1>
-          <Hello className="mt-2">Entrá con tu email y contraseña.</Hello>
+          <Hello className="mt-2">Entra con tu email y contraseña.</Hello>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
             <Field

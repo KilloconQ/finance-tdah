@@ -34,7 +34,7 @@ function requirePasswordResetConfigured(path: string): void {
   if (resend || !isPasswordResetPath(path)) return
   throw new APIError('SERVICE_UNAVAILABLE', {
     code: PASSWORD_RESET_UNAVAILABLE,
-    message: 'El reset por email no está configurado. Contactá al admin.',
+    message: 'El reset por email no está configurado. Contacta al admin.',
   })
 }
 
@@ -66,8 +66,8 @@ export const auth = betterAuth({
         await resend.emails.send({
           from: env.RESEND_FROM_EMAIL,
           to: user.email,
-          subject: 'Restablecé tu contraseña',
-          html: `<p>Hacé click para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignorá este email.</p>`,
+          subject: 'Restablece tu contraseña',
+          html: `<p>Haz clic para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignora este email.</p>`,
         })
       } catch (err) {
         // Resend being down would otherwise turn every registered address into a
