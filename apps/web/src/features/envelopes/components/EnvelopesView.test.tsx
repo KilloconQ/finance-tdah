@@ -58,8 +58,8 @@ describe('EnvelopesView', () => {
     setup({ envelopes: [envelope({ id: 'a', balanceCents: 600_000 }), envelope({ id: 'b', name: 'Súper', balanceCents: -50_000 })] })
     expect(stat('En la cuenta')).toBe('$10,000.00')
     // An overspent envelope doesn't free money.
-    expect(stat('Apartado')).toBe('$6,000.00')
-    expect(stat('Sin apartar')).toBe('$4,000.00')
+    expect(stat('Bloqueado')).toBe('$6,000.00')
+    expect(stat('Disponible')).toBe('$4,000.00')
     expect(screen.getByText(/te pasaste por \$500.00/)).toBeTruthy()
   })
 

@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { netWorth } from '@finance-tdah/shared/domain'
+import { lockedInEnvelopesCents, netWorth } from '@finance-tdah/shared/domain'
 import { envelopesQueryOptions } from '@/features/envelopes'
 import { goalsQueryOptions } from '@/features/goals'
 import { useTweaks } from '@/lib/use-tweaks'
@@ -19,12 +19,15 @@ export function AccountsContainer() {
   // a separate view. See packages/shared/src/domain/net-worth.ts.
   const { liquidCents, debtCents, netWorthCents } = netWorth(accounts)
   const goalsTotalCents = goals.reduce((sum, g) => sum + g.currentCents, 0)
+  // Money in envelopes is spoken for: it stays in net worth but not in what's available.
+  const lockedCents = lockedInEnvelopesCents(accounts, envelopes)
 
   return (
     <AccountsView
       accounts={accounts}
       envelopes={envelopes}
       goalsTotalCents={goalsTotalCents}
+      lockedCents={lockedCents}
       liquidCents={liquidCents}
       debtCents={debtCents}
       netWorthCents={netWorthCents}

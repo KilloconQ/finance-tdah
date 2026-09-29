@@ -83,9 +83,9 @@ export function EnvelopesView({
           <div className="text-sm font-medium text-ink">{account.name}</div>
           <div className="mt-3 grid grid-cols-3 gap-2 text-center">
             <Stat label="En la cuenta" cents={account.balanceCents} hidden={!showBalances} />
-            <Stat label="Apartado" cents={allocated} hidden={!showBalances} />
+            <Stat label="Bloqueado" cents={allocated} hidden={!showBalances} />
             <Stat
-              label="Sin apartar"
+              label="Disponible"
               cents={unassigned}
               hidden={!showBalances}
               className={unassigned < 0 ? 'text-danger' : 'text-good'}
@@ -127,7 +127,7 @@ export function EnvelopesView({
               <EmptyState
                 icon={<Package size={22} strokeWidth={1.8} />}
                 title="Aún no tienes cajitas"
-                hint="Aparta dinero de esta cuenta para algo: la renta, el súper, un viaje."
+                hint="Aparta dinero de esta cuenta para algo: la renta, el súper, un viaje. Queda bloqueado hasta que lo liberes."
                 action={
                   <Btn kind="primary" onClick={() => setCreating(true)}>
                     <Plus size={16} strokeWidth={2.2} />

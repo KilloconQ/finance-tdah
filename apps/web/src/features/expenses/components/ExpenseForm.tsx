@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
 import { Btn, Chip } from '@/components'
 import { formatMoney } from '@/lib/format'
 
@@ -19,6 +20,8 @@ export interface ExpenseFormAccount {
   id: string
   name: string
   type: string
+  /** Lets the form say how much is free to spend next to what's locked in envelopes. */
+  balanceCents?: number
 }
 
 export interface ExpenseFormEnvelope {
@@ -121,6 +124,18 @@ export function ExpenseForm({
   const accountEnvelopes =
     kind === 'expense' ? envelopes.filter((e) => e.accountId === effectiveAccountId) : []
   const effectiveEnvelopeId = accountEnvelopes.some((e) => e.id === envelopeId) ? envelopeId : ''
+
+  // Money in envelopes can't be spent until it's released (the API refuses
+  // it), so show what's locked and what's free before the user submits.
+  const selectedAccount = accounts.find((a) => a.id === effectiveAccountId)
+  const selectedEnvelopeBalances = envelopes
+    .filter((e) => e.accountId === effectiveAccountId)
+    .map((e) => e.balanceCents)
+  const lockedCents = isIncome ? 0 : allocatedCents(selectedEnvelopeBalances)
+  const freeCents =
+    selectedAccount?.balanceCents === undefined
+      ? null
+      : Math.max(0, unassignedCents(selectedAccount.balanceCents, selectedEnvelopeBalances))
 
   const canSubmit =
     hasAmount &&
@@ -229,6 +244,12 @@ export function ExpenseForm({
               </option>
             ))}
           </select>
+          {lockedCents > 0 ? (
+            <p className="mt-1.5 text-xs text-ink-mid">
+              🔒 {formatMoney(lockedCents / 100)} bloqueado en cajitas
+              {freeCents === null ? '' : ` · puedes gastar ${formatMoney(freeCents / 100)}`}
+            </p>
+          ) : null}
         </div>
       ) : null}
 

@@ -223,7 +223,7 @@ describe.skipIf(!TEST_DATABASE_URL)('envelopes (Postgres)', async () => {
       expect((await envelopeOf(env.id))!.balanceCents).toBe(1_800)
     })
 
-    it('records an overspend instead of refusing it', async () => {
+    it('records an overspend the free money covers', async () => {
       const acc = await account(ANA, 10_000)
       const env = await envelope(ANA, acc.id, 1_000)
       await spend(ANA, acc.id, env.id, 1_500)
@@ -263,6 +263,94 @@ describe.skipIf(!TEST_DATABASE_URL)('envelopes (Postgres)', async () => {
       expect((await call(ANA, 'DELETE', `/expenses/${exp.id}`)).status).toBe(200)
       expect((await envelopeOf(env.id))!.balanceCents).toBe(3_000)
       expect(await balanceOf(acc.id)).toBe(10_000)
+    })
+  })
+
+  describe('money in an envelope is locked', () => {
+    // $100 in the account, $60 in an envelope: $40 can be spent.
+    async function setup() {
+      const acc = await account(ANA, 10_000)
+      const env = await envelope(ANA, acc.id, 6_000)
+      return { acc, env }
+    }
+    const post = (accountId: string, amountCents: number, extra: Record<string, unknown> = {}) =>
+      call(ANA, 'POST', '/expenses', {
+        kind: 'expense',
+        amountCents,
+        category: 'super',
+        description: 'compra',
+        accountId,
+        ...extra,
+      })
+
+    it('lets you spend up to what is free', async () => {
+      const { acc } = await setup()
+      expect((await post(acc.id, 4_000)).status).toBe(201)
+      expect(await balanceOf(acc.id)).toBe(6_000)
+    })
+
+    it('refuses spending past what is free and writes nothing', async () => {
+      const { acc, env } = await setup()
+      const res = await post(acc.id, 4_001)
+      expect(res.status).toBe(422)
+      expect(res.body.error).toMatch(/bloqueado en tus cajitas.*\$40\.00 disponible/)
+      expect(await balanceOf(acc.id)).toBe(10_000)
+      expect((await envelopeOf(env.id))!.balanceCents).toBe(6_000)
+      expect(await db.query.expense.findMany({ where: (e, { eq }) => eq(e.accountId, acc.id) })).toHaveLength(0)
+    })
+
+    it('can be spent once released', async () => {
+      const { acc, env } = await setup()
+      expect((await call(ANA, 'POST', `/envelopes/${env.id}/adjust`, { deltaCents: -2_000 })).status).toBe(200)
+      expect((await post(acc.id, 6_000)).status).toBe(201)
+    })
+
+    it('refuses a transfer out of locked money too', async () => {
+      const { acc } = await setup()
+      const other = await account(ANA, 0)
+      const res = await post(acc.id, 5_000, { kind: 'transfer', toAccountId: other.id, category: 'transferencia' })
+      expect(res.status).toBe(422)
+      expect(await balanceOf(other.id)).toBe(0)
+    })
+
+    it('an envelope overspend can use free money but not another envelope', async () => {
+      const { acc, env } = await setup()
+      expect((await post(acc.id, 10_000, { envelopeId: env.id })).status).toBe(201)
+      expect((await envelopeOf(env.id))!.balanceCents).toBe(-4_000)
+
+      const acc2 = await account(ANA, 10_000)
+      const a = await envelope(ANA, acc2.id, 5_000)
+      await envelope(ANA, acc2.id, 3_000)
+      expect((await post(acc2.id, 7_001, { envelopeId: a.id })).status).toBe(422)
+    })
+
+    it('refuses editing an expense to eat locked money', async () => {
+      const { acc } = await setup()
+      const exp = (await post(acc.id, 1_000)).body.expense
+      const res = await call(ANA, 'PATCH', `/expenses/${exp.id}`, { amountCents: 5_000 })
+      expect(res.status).toBe(422)
+      expect(res.body.error).toMatch(/\$30\.00 disponible/)
+      expect(await balanceOf(acc.id)).toBe(9_000)
+    })
+
+    it('refuses deleting an income whose money is now locked', async () => {
+      const acc = await account(ANA, 0)
+      const income = await call(ANA, 'POST', '/expenses', {
+        kind: 'income',
+        amountCents: 5_000,
+        category: 'ingreso',
+        description: 'sueldo',
+        accountId: acc.id,
+      })
+      await envelope(ANA, acc.id, 4_000)
+      expect((await call(ANA, 'DELETE', `/expenses/${income.body.expense.id}`)).status).toBe(422)
+      expect(await balanceOf(acc.id)).toBe(5_000)
+    })
+
+    it('leaves accounts without envelopes free to go negative', async () => {
+      const acc = await account(ANA, 1_000)
+      expect((await post(acc.id, 5_000)).status).toBe(201)
+      expect(await balanceOf(acc.id)).toBe(-4_000)
     })
   })
 
