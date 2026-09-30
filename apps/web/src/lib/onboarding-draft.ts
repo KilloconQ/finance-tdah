@@ -10,7 +10,7 @@ const KEY = 'finance-tdah:onboarding-draft'
 
 const DEFAULT: OnboardingDraft = {
   pain: [],
-  inputPreference: 'voice',
+  inputPreference: 'manual',
 }
 
 let cached: OnboardingDraft | null = null

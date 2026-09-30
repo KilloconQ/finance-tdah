@@ -29,7 +29,6 @@ function OnboardingWelcome() {
         </div>
 
         <div className="mt-4 space-y-1.5 text-center text-[13px] text-ink-mid">
-          <p>· Registra con la voz · o un widget</p>
           <p>· Frascos visuales para metas</p>
           <p>· Sin juicios, en segunda persona</p>
         </div>

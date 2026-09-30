@@ -31,7 +31,7 @@ function OnboardingGoal() {
         emoji: chosen.emoji,
       },
     })
-    navigate({ to: '/onboarding/input-method' })
+    navigate({ to: '/onboarding/done' })
   }
 
   return (
@@ -76,7 +76,7 @@ function OnboardingGoal() {
       <Btn kind="primary" className="w-full py-4" onClick={handleNext}>
         Crear meta
       </Btn>
-      <Btn kind="plain" className="mt-1 w-full" onClick={() => navigate({ to: '/onboarding/input-method' })}>
+      <Btn kind="plain" className="mt-1 w-full" onClick={() => navigate({ to: '/onboarding/done' })}>
         Después
       </Btn>
     </OnboardingLayout>

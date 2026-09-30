@@ -7,7 +7,6 @@ import { X } from 'lucide-react'
 import { AppBar, IconButton, PhoneShell } from '@/components'
 import { envelopesQueryOptions } from '@/features/envelopes'
 import { accountsQuery } from '@/lib/queries'
-import { useTweaks } from '@/lib/use-tweaks'
 import { useCreateExpense, useParseVoice } from '../api'
 import { ExpenseForm, type ExpenseFormFields } from '../components/ExpenseForm'
 import { VoiceCapture } from '../components/VoiceCapture'
@@ -35,9 +34,9 @@ function speechErrorMessage(code: string, trace: string): string {
 
 export function AddExpenseContainer() {
   const navigate = useNavigate()
-  const { inputPreference } = useTweaks()
-
-  const [mode, setMode] = useState<Mode>(() => (inputPreference === 'manual' ? 'manual' : 'voice'))
+  // Voice capture is frozen until the native apps: iOS web apps have no working speech recognition.
+  // Nothing reaches the 'voice' mode now (no onUseVoice below); the code is kept for later.
+  const [mode, setMode] = useState<Mode>('manual')
   const [recording, setRecording] = useState(false)
   const [parsed, setParsed] = useState<ParsedVoiceExpense | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -165,14 +164,6 @@ export function AddExpenseContainer() {
           submitting={createExpense.isPending}
           error={error}
           onSubmit={handleManualSubmit}
-          onUseVoice={() => {
-            if (!getSpeechRecognitionCtor()) {
-              setError('Tu navegador no soporta reconocimiento de voz')
-              return
-            }
-            setError(null)
-            setMode('voice')
-          }}
         />
       ) : (
         <VoiceCapture

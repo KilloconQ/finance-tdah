@@ -45,7 +45,7 @@ function OnboardingDone() {
   }
 
   return (
-    <OnboardingLayout step={5}>
+    <OnboardingLayout step={4}>
       <div className="mt-10 text-center">
         <div className="text-[48px]">🌿</div>
         <h1 className="mt-4 text-[24px] font-medium leading-tight text-ink">
@@ -54,7 +54,7 @@ function OnboardingDone() {
           Vamos a ir paso a paso.
         </h1>
         <Hello className="mx-auto mt-3 max-w-[280px]">
-          Cero tableros. Una pregunta por pantalla. Cuando te sientas list@, abrimos detallado.
+          Cero tableros. Una pregunta por pantalla.
         </Hello>
       </div>
 
