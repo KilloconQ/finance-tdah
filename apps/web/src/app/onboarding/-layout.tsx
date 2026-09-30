@@ -8,7 +8,7 @@ interface OnboardingLayoutProps {
   children: ReactNode
 }
 
-export function OnboardingLayout({ step, total = 5, children }: OnboardingLayoutProps) {
+export function OnboardingLayout({ step, total = 4, children }: OnboardingLayoutProps) {
   const navigate = useNavigate()
   return (
     <PhoneShell variant="narrow">

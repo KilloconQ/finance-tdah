@@ -13,7 +13,6 @@ import { Route as AppRouteImport } from './app/_app'
 import { Route as OnboardingIndexRouteImport } from './app/onboarding/index'
 import { Route as AppIndexRouteImport } from './app/_app/index'
 import { Route as OnboardingPainPointsRouteImport } from './app/onboarding/pain-points'
-import { Route as OnboardingInputMethodRouteImport } from './app/onboarding/input-method'
 import { Route as OnboardingGoalRouteImport } from './app/onboarding/goal'
 import { Route as OnboardingDoneRouteImport } from './app/onboarding/done'
 import { Route as AuthSignUpRouteImport } from './app/auth/sign-up'
@@ -56,11 +55,6 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const OnboardingPainPointsRoute = OnboardingPainPointsRouteImport.update({
   id: '/onboarding/pain-points',
   path: '/onboarding/pain-points',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardingInputMethodRoute = OnboardingInputMethodRouteImport.update({
-  id: '/onboarding/input-method',
-  path: '/onboarding/input-method',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingGoalRoute = OnboardingGoalRouteImport.update({
@@ -197,7 +191,6 @@ export interface FileRoutesByFullPath {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
-  '/onboarding/input-method': typeof OnboardingInputMethodRoute
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/accounts/$id': typeof AppAccountsIdRoute
@@ -226,7 +219,6 @@ export interface FileRoutesByTo {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
-  '/onboarding/input-method': typeof OnboardingInputMethodRoute
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/': typeof AppIndexRoute
   '/onboarding': typeof OnboardingIndexRoute
@@ -258,7 +250,6 @@ export interface FileRoutesById {
   '/auth/sign-up': typeof AuthSignUpRoute
   '/onboarding/done': typeof OnboardingDoneRoute
   '/onboarding/goal': typeof OnboardingGoalRoute
-  '/onboarding/input-method': typeof OnboardingInputMethodRoute
   '/onboarding/pain-points': typeof OnboardingPainPointsRoute
   '/_app/': typeof AppIndexRoute
   '/onboarding/': typeof OnboardingIndexRoute
@@ -291,7 +282,6 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/onboarding/done'
     | '/onboarding/goal'
-    | '/onboarding/input-method'
     | '/onboarding/pain-points'
     | '/onboarding/'
     | '/accounts/$id'
@@ -320,7 +310,6 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/onboarding/done'
     | '/onboarding/goal'
-    | '/onboarding/input-method'
     | '/onboarding/pain-points'
     | '/'
     | '/onboarding'
@@ -351,7 +340,6 @@ export interface FileRouteTypes {
     | '/auth/sign-up'
     | '/onboarding/done'
     | '/onboarding/goal'
-    | '/onboarding/input-method'
     | '/onboarding/pain-points'
     | '/_app/'
     | '/onboarding/'
@@ -378,7 +366,6 @@ export interface RootRouteChildren {
   AuthSignUpRoute: typeof AuthSignUpRoute
   OnboardingDoneRoute: typeof OnboardingDoneRoute
   OnboardingGoalRoute: typeof OnboardingGoalRoute
-  OnboardingInputMethodRoute: typeof OnboardingInputMethodRoute
   OnboardingPainPointsRoute: typeof OnboardingPainPointsRoute
   OnboardingIndexRoute: typeof OnboardingIndexRoute
 }
@@ -411,13 +398,6 @@ declare module '@tanstack/react-router' {
       path: '/onboarding/pain-points'
       fullPath: '/onboarding/pain-points'
       preLoaderRoute: typeof OnboardingPainPointsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/onboarding/input-method': {
-      id: '/onboarding/input-method'
-      path: '/onboarding/input-method'
-      fullPath: '/onboarding/input-method'
-      preLoaderRoute: typeof OnboardingInputMethodRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding/goal': {
@@ -645,7 +625,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthSignUpRoute: AuthSignUpRoute,
   OnboardingDoneRoute: OnboardingDoneRoute,
   OnboardingGoalRoute: OnboardingGoalRoute,
-  OnboardingInputMethodRoute: OnboardingInputMethodRoute,
   OnboardingPainPointsRoute: OnboardingPainPointsRoute,
   OnboardingIndexRoute: OnboardingIndexRoute,
 }
