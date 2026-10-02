@@ -41,6 +41,12 @@ export const userProfile = pgTable('user_profile', {
   densityMode: densityModeEnum('density_mode').default('simple').notNull(),
   showBalances: boolean('show_balances').default(true).notNull(),
   weeklyBudgetCents: integer('weekly_budget_cents').default(220000).notNull(),
+  // "¿Gastaste algo hoy?" push, sent at this local hour on days with nothing logged.
+  dailyReminderEnabled: boolean('daily_reminder_enabled').default(true).notNull(),
+  dailyReminderHour: integer('daily_reminder_hour').default(21).notNull(),
+  timeZone: text('time_zone').default('America/Mexico_City').notNull(),
+  // Local date of the last day the reminder was handled, so it goes out once a day.
+  lastDailyReminderOn: date('last_daily_reminder_on'),
   onboardingCompleted: boolean('onboarding_completed').default(false).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

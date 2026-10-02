@@ -14,7 +14,7 @@ export const Route = createFileRoute('/_app/settings')({
 })
 
 function Settings() {
-  const { showBalances, weeklyBudgetCents } = useTweaks()
+  const { showBalances, weeklyBudgetCents, dailyReminderEnabled, dailyReminderHour } = useTweaks()
   const setTweak = useSetTweak()
   const push = usePushSubscription()
   const navigate = useNavigate()
@@ -65,16 +65,58 @@ function Settings() {
           />
         </Section>
 
-        {push.supported && push.configured ? (
+        {push.configured ? (
           <Section
             label="Notificaciones"
-            hint="Avisos cuando llegás al presupuesto semanal o completás una meta."
+            hint="Avisos cuando llegas al presupuesto semanal, completas una meta o no has anotado nada en el día."
           >
-            <Toggle
-              label="Activar notificaciones"
-              value={push.subscribed}
-              onChange={(v) => (v ? push.subscribe() : push.unsubscribe())}
-            />
+            {push.supported ? (
+              <div className="flex flex-col gap-3">
+                <Toggle
+                  label="Activar notificaciones"
+                  value={push.subscribed}
+                  onChange={(v) => {
+                    if (!v) return push.unsubscribe()
+                    push.subscribe()
+                    // The daily reminder goes out in this device's time zone.
+                    setTweak.mutate({ timeZone: browserTimeZone() })
+                  }}
+                />
+                {push.subscribed ? (
+                  <>
+                    <Toggle
+                      label="Recordarme si no anoto nada en el día"
+                      value={dailyReminderEnabled}
+                      onChange={(v) => setTweak.mutate({ dailyReminderEnabled: v, timeZone: browserTimeZone() })}
+                    />
+                    {dailyReminderEnabled ? (
+                      <label className="flex items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink">
+                        A qué hora
+                        <select
+                          value={dailyReminderHour}
+                          onChange={(e) =>
+                            setTweak.mutate({ dailyReminderHour: Number(e.target.value), timeZone: browserTimeZone() })
+                          }
+                          className="bg-transparent text-sm text-ink outline-none"
+                        >
+                          {HOURS.map((h) => (
+                            <option key={h} value={h}>
+                              {hourLabel(h)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                  </>
+                ) : null}
+              </div>
+            ) : (
+              // iOS only exposes web push to apps opened from the home screen.
+              <div className="rounded-xl bg-bg-alt px-3 py-2 text-sm text-ink-mid">
+                En iPhone: abre la app en Safari, toca Compartir → «Agregar a pantalla de inicio» y ábrela desde
+                el ícono. Ahí vas a poder activar las notificaciones.
+              </div>
+            )}
             {push.error ? (
               <div className="mt-2 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
                 {push.error}
@@ -131,6 +173,17 @@ function Settings() {
       <TabBar />
     </PhoneShell>
   )
+}
+
+const HOURS = Array.from({ length: 24 }, (_, h) => h)
+
+function hourLabel(h: number): string {
+  const suffix = h < 12 ? 'am' : 'pm'
+  return `${h % 12 === 0 ? 12 : h % 12}:00 ${suffix}`
+}
+
+function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
 interface SectionProps {

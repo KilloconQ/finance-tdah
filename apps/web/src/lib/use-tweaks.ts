@@ -6,6 +6,8 @@ const DEFAULTS = {
   showBalances: true,
   weeklyBudgetCents: 220000,
   inputPreference: 'voice' as const,
+  dailyReminderEnabled: true,
+  dailyReminderHour: 21,
 }
 
 export function useTweaks() {
@@ -14,6 +16,8 @@ export function useTweaks() {
     showBalances: profile?.showBalances ?? DEFAULTS.showBalances,
     weeklyBudgetCents: profile?.weeklyBudgetCents ?? DEFAULTS.weeklyBudgetCents,
     inputPreference: profile?.inputPreference ?? DEFAULTS.inputPreference,
+    dailyReminderEnabled: profile?.dailyReminderEnabled ?? DEFAULTS.dailyReminderEnabled,
+    dailyReminderHour: profile?.dailyReminderHour ?? DEFAULTS.dailyReminderHour,
   }
 }
 

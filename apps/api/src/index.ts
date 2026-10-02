@@ -16,6 +16,7 @@ import { goalsRoute } from './routes/goals'
 import { profileRoute } from './routes/profile'
 import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
+import { startDailyReminders } from './services/daily-reminder'
 
 const app = new Hono<{ Variables: { requestId: string } }>()
 
@@ -100,6 +101,8 @@ if (!features.webPush) {
     feature: 'web_push',
     message: 'VAPID keys are not set — push notifications are disabled. Sign-in is unaffected.',
   })
+} else if (env.NODE_ENV !== 'test') {
+  startDailyReminders()
 }
 export default {
   port: env.PORT,
