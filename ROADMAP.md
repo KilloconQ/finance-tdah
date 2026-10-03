@@ -46,6 +46,10 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   dinero de cajitas se rechaza con 422 hasta que lo liberes (`spendsLockedMoney`). Pagar desde una cajita
   gasta su propio dinero; si se pasa, el exceso sale de lo libre, nunca de otra cajita. Las cuentas sin
   cajitas pueden seguir quedando en negativo.
+- Recordatorio diario "¿gastaste algo hoy?": push a la hora que elija el usuario (default 9 pm, en su
+  zona horaria) solo si ese día no anotó nada, una vez por día. Lo corre un intervalo dentro de la API
+  cada 5 min (`services/daily-reminder.ts`); el día se reclama con un UPDATE condicional, así que dos
+  procesos no lo mandan doble. Ajustes también explica cómo activar avisos en iPhone (pantalla de inicio).
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
