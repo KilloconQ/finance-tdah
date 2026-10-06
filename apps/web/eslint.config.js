@@ -19,4 +19,11 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // TanStack Router file routes export `Route` next to their component by
+    // design (the router plugin needs both in one file), which Fast Refresh's
+    // components-only rule can't tell apart from a mistake.
+    files: ['src/app/**/*.{ts,tsx}'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])
