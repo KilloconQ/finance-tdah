@@ -53,8 +53,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Ampliar los tests de `apps/web` a las pantallas y hooks de mutación (`features/*/containers`, `queries.ts`); hoy cubren la capa de sesión/API, el guard, `ExpenseForm` y `EnvelopesView`.
-- CI para PRs (typecheck + test + lint, con un Postgres para los tests de integración de cajitas). Hoy el único workflow es el deploy.
+- Ampliar los tests de `apps/web`: ya cubren la capa de sesión/API, el guard, `ExpenseForm`, `EnvelopesView`, `AccountsView`, Ajustes y los containers de crear/editar gasto (con un helper que simula la API, `src/test/fake-api.tsx`). Faltan los containers de cuentas, metas, suscripciones y cajitas, y `queries.ts`.
 
 ## Más adelante (diferido a propósito, no por olvido)
 
