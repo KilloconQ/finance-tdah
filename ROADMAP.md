@@ -16,10 +16,10 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 - Dots del daily-check desbordando la card + input de días del reto reseteándose al borrar (`4d8256e`).
 - UI de edición para cuentas (ya existía) / gastos / metas / suscripciones — PR #7, mergeado a main,
   rama borrada. Gastos necesitó además el endpoint `PATCH /expenses/:id` con reversión de saldo
-  neta por cuenta, hecho con TDD real. Deuda pendiente (documentada en
-  `odd/tasks/edit-ui-goals-subs-expenses.md`): falta test de las ramas de error del PATCH de gastos,
-  el test de ownership no prueba de verdad el filtro `userId`, y no hay lock contra ediciones
-  concurrentes del mismo gasto. Descartado a propósito: "sin cuenta" en un gasto — decisión de
+  neta por cuenta, hecho con TDD real. Deuda que quedó (documentada en
+  `odd/tasks/edit-ui-goals-subs-expenses.md`) ya cerrada: tests de las ramas de error y de ownership
+  contra Postgres real, y el lock contra ediciones concurrentes — que resultó un bug real (dos
+  ediciones simultáneas o editar mientras se borra desviaban el saldo), ya corregido. Descartado a propósito: "sin cuenta" en un gasto — decisión de
   producto, todo gasto trackea una cuenta (efectivo = cuenta de efectivo dedicada), no bug.
 - Sesión robusta (PR #9 y #10): el rate limit por IP compartida ya no desloguea a todo el hogar;
   un fallo al comprobar la sesión (429, 5xx, offline) muestra una pantalla de error con
