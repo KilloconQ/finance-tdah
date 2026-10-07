@@ -12,7 +12,7 @@ const { EditGoalContainer } = await import('./EditGoalContainer')
 beforeEach(() => navigate.mockReset())
 afterEach(cleanup)
 
-const routes = (extra: Record<string, () => Response> = {}) => ({
+const routes = (extra: Record<string, () => Response | Promise<Response>> = {}) => ({
   [`GET /goals/${GOAL}`]: () => json({ goal: goal() }),
   [`PATCH /goals/${GOAL}`]: () => json({ goal: goal() }),
   ...extra,
