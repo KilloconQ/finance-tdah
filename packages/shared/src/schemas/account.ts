@@ -27,7 +27,12 @@ export const createFinancialAccountSchema = financialAccountSchema
       .optional(),
   })
 
-export const updateFinancialAccountSchema = createFinancialAccountSchema.partial()
+// `balanceCents` is redeclared without the create schema's `.default(0)`: Zod 4 applies a
+// default even under `.partial()`, so a patch that only renames an account would have
+// set its balance to $0.
+export const updateFinancialAccountSchema = createFinancialAccountSchema
+  .extend({ balanceCents: signedCents })
+  .partial()
 
 export type FinancialAccountDTO = z.infer<typeof financialAccountSchema>
 export type CreateFinancialAccountInput = z.infer<typeof createFinancialAccountSchema>

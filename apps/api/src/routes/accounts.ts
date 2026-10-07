@@ -6,8 +6,9 @@ import {
   idParamSchema,
   updateFinancialAccountSchema,
 } from '@finance-tdah/shared/schemas'
-import { signedBalanceForType } from '@finance-tdah/shared/domain'
+import { allocatedCents, signedBalanceForType, spendsLockedMoney } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
+import { money } from '../lib/money'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 
 export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
@@ -46,49 +47,64 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
     const { id } = c.req.valid('param')
     const patch = c.req.valid('json')
 
-    // A credit card's balance is debt, so it can't hold envelopes; turning an
-    // account with envelopes into one would leave them stranded.
-    if (patch.type === 'credito') {
-      const envelope = await db.query.envelope.findFirst({
-        where: (e, { and, eq }) => and(eq(e.accountId, id), eq(e.userId, user.id)),
-        columns: { id: true },
-      })
-      if (envelope) {
-        return c.json({ error: 'Esta cuenta tiene cajitas: bórralas antes de cambiarla a crédito.' }, 422)
+    // One transaction holding the account's row lock — the same lock envelope moves
+    // and expenses take first — so nothing can set money aside or spend it while the
+    // balance is being checked against what the envelopes hold.
+    const result = await db.transaction(async (tx) => {
+      const [current] = await tx
+        .select({
+          type: schema.financialAccount.type,
+          balanceCents: schema.financialAccount.balanceCents,
+        })
+        .from(schema.financialAccount)
+        .where(and(eq(schema.financialAccount.id, id), eq(schema.financialAccount.userId, user.id)))
+        .for('update')
+      if (!current) return { error: 'Cuenta no encontrada', status: 404 as const }
+
+      const envelopes = await tx
+        .select({ balanceCents: schema.envelope.balanceCents })
+        .from(schema.envelope)
+        .where(and(eq(schema.envelope.accountId, id), eq(schema.envelope.userId, user.id)))
+
+      // A credit card's balance is debt, so it can't hold envelopes; turning an
+      // account with envelopes into one would leave them stranded.
+      if (patch.type === 'credito' && envelopes.length > 0) {
+        return { error: 'Esta cuenta tiene cajitas: bórralas antes de cambiarla a crédito.', status: 422 as const }
       }
-    }
 
-    if (patch.balanceCents !== undefined) {
-      const effectiveType =
-        patch.type ??
-        (
-          await db.query.financialAccount.findFirst({
-            where: (a, { and, eq }) => and(eq(a.id, id), eq(a.userId, user.id)),
-          })
-        )?.type
+      const set: typeof patch = { ...patch }
+      if (patch.balanceCents !== undefined) {
+        if ((patch.type ?? current.type) === 'credito') {
+          set.balanceCents = signedBalanceForType('credito', patch.balanceCents)
+        }
 
-      if (!effectiveType) {
-        return c.json({ error: 'Cuenta no encontrada' }, 404)
+        // What's set aside in envelopes is money the account holds, so an edit can't
+        // leave it with less (an account already short can still be edited towards
+        // what its envelopes hold).
+        const envelopeBalancesCents = envelopes.map((e) => e.balanceCents)
+        if (
+          spendsLockedMoney(
+            { balanceCents: current.balanceCents, envelopeBalancesCents },
+            { balanceCents: set.balanceCents!, envelopeBalancesCents },
+          )
+        ) {
+          return {
+            error: `No puedes dejar la cuenta con menos de lo que tienen tus cajitas (${money(allocatedCents(envelopeBalancesCents))}). Libera dinero de una cajita primero.`,
+            status: 422 as const,
+          }
+        }
       }
 
-      if (effectiveType === 'credito') {
-        patch.balanceCents = signedBalanceForType('credito', patch.balanceCents)
-      }
-    }
+      const [updated] = await tx
+        .update(schema.financialAccount)
+        .set({ ...set, updatedAt: new Date() })
+        .where(and(eq(schema.financialAccount.id, id), eq(schema.financialAccount.userId, user.id)))
+        .returning()
+      return { account: updated }
+    })
 
-    const [updated] = await db
-      .update(schema.financialAccount)
-      .set({ ...patch, updatedAt: new Date() })
-      .where(
-        and(eq(schema.financialAccount.id, id), eq(schema.financialAccount.userId, user.id)),
-      )
-      .returning()
-
-    if (!updated) {
-      return c.json({ error: 'Cuenta no encontrada' }, 404)
-    }
-
-    return c.json({ account: updated })
+    if ('error' in result) return c.json({ error: result.error }, result.status)
+    return c.json({ account: result.account })
   })
 
   .delete('/:id', zValidator('param', idParamSchema), async (c) => {

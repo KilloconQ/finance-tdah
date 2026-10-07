@@ -39,8 +39,12 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   frascos; una cajita vive en una sola cuenta; un gasto puede salir opcionalmente de una cajita y la
   descuenta (si se pasa queda en negativo, no se bloquea); lo apartado nunca supera el saldo de la
   cuenta (bloqueado con `SELECT … FOR UPDATE` sobre la cuenta); las tarjetas de crédito no llevan cajitas.
-  Si el saldo baja por gastos sin cajita o por editar la cuenta, la UI avisa "apartaste más de lo que
-  tiene la cuenta" en vez de bloquear el registro.
+  Una cuenta nunca puede quedarse con menos dinero que sus cajitas: además de gastos y transferencias,
+  editar el saldo a mano por debajo de lo apartado se rechaza (422, `PATCH /accounts` toma el mismo lock de
+  la cuenta que las cajitas y los gastos). Si una cuenta ya quedó así antes de esa regla, la UI sigue
+  avisando "apartaste más de lo que tiene la cuenta" y se puede editar hacia lo que sus cajitas tienen.
+  Corrige de paso un bug latente: un PATCH solo con el nombre ponía el saldo en $0 (Zod 4 conserva el
+  `default(0)` bajo `.partial()`); la web no lo sufría porque su formulario siempre manda el saldo.
   Lo que está en cajitas cuenta como **bloqueado**: se resta de "Tu dinero realmente disponible" y la
   barra/tarjetas lo muestran aparte (`lockedInEnvelopesCents`); el patrimonio neto no cambia.
   Y no se puede gastar (como en Nu): un gasto, transferencia, edición o borrado de ingreso que se coma
