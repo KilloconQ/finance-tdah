@@ -168,6 +168,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
 
       try {
         const updated = await db.transaction(async (tx) => {
+          await lockExpense(tx, id, user.id)
           const current = await tx.query.expense.findFirst({
             where: (e, { and, eq }) => and(eq(e.id, id), eq(e.userId, user.id)),
           })
@@ -333,6 +334,7 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
     // the account, so it can spend locked money like any expense.
     try {
       const deleted = await db.transaction(async (tx) => {
+        await lockExpense(tx, id, user.id)
         const existing = await tx.query.expense.findFirst({
           where: (e, { and, eq }) => and(eq(e.id, id), eq(e.userId, user.id)),
           columns: { accountId: true, toAccountId: true },
@@ -394,6 +396,23 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
       throw err
     }
   })
+
+/**
+ * Locks the expense row for the rest of the transaction. An edit or delete
+ * reverses what the row held when it was read, so a second writer that read the
+ * same version would reverse it again and the account would drift. Always the
+ * first lock taken: expense row, then accounts (in id order), then envelopes —
+ * the same order in edit and delete, so they can't deadlock each other.
+ * Postgres re-reads the row after waiting, so the read that follows sees the
+ * other writer's result.
+ */
+async function lockExpense(tx: Tx, id: string, userId: string): Promise<void> {
+  await tx
+    .select({ id: schema.expense.id })
+    .from(schema.expense)
+    .where(and(eq(schema.expense.id, id), eq(schema.expense.userId, userId)))
+    .for('update')
+}
 
 class LockedMoneyError extends Error {
   constructor(readonly freeCents: number) {
