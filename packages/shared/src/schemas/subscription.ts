@@ -25,7 +25,12 @@ export const createSubscriptionSchema = z.object({
   lastOpenedAt: isoDate.optional(),
 })
 
-export const updateSubscriptionSchema = createSubscriptionSchema.partial()
+// `cadence` is redeclared without the create schema's `.default('monthly')`: Zod 4 applies
+// a default even under `.partial()`, so a patch that didn't mention it would have turned
+// a yearly subscription monthly.
+export const updateSubscriptionSchema = createSubscriptionSchema
+  .extend({ cadence: subscriptionCadenceSchema })
+  .partial()
 
 export type SubscriptionDTO = z.infer<typeof subscriptionSchema>
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>
