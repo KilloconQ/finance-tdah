@@ -1,4 +1,4 @@
-import type { EnvelopeDTO, FinancialAccountDTO } from '@finance-tdah/shared/schemas'
+import type { EnvelopeDTO, FinancialAccountDTO, GoalDTO } from '@finance-tdah/shared/schemas'
 import { json } from './fake-api'
 
 export const NOW = '2026-10-05T12:00:00.000Z'
@@ -36,3 +36,20 @@ export const envelope = (patch: Partial<EnvelopeDTO> = {}): EnvelopeDTO => ({
 
 /** The GET routes every screen that reads the settings (useTweaks) also needs. */
 export const profileRoute = { 'GET /profile': () => json({ profile: null }) }
+
+export const GOAL = '99999999-9999-4999-8999-999999999999'
+export const GOAL_2 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+
+export const goal = (patch: Partial<GoalDTO> = {}): GoalDTO => ({
+  id: GOAL,
+  userId: 'u',
+  name: 'Vacaciones',
+  emoji: '✈️',
+  targetCents: 1_000_000,
+  currentCents: 400_000,
+  deadline: null,
+  archivedAt: null,
+  createdAt: NOW,
+  updatedAt: NOW,
+  ...patch,
+})
