@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
+import { costOverDaysCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
 import { daysAgo, formatMoney } from '@/lib/format'
 import {
@@ -60,7 +61,7 @@ function SubscriptionDetail() {
   }
 
   const days = sub.lastOpenedAt ? daysAgo(sub.lastOpenedAt) : null
-  const totalPaidCents = days ? Math.round((days / 30) * sub.amountCents) : null
+  const totalPaidCents = days ? costOverDaysCents(sub.amountCents, sub.cadence, days) : null
 
   return (
     <PhoneShell>
