@@ -5,7 +5,12 @@ import { Hono } from 'hono'
 // query fragments, not real Column instances — good enough for these tests,
 // which never need to inspect the where clause, only capture what gets
 // written.
-const { financialAccount, state, fakeDb } = vi.hoisted(() => {
+const { financialAccount, envelope, state, fakeDb } = vi.hoisted(() => {
+  const envelope = {
+    accountId: { name: 'envelope.account_id' },
+    userId: { name: 'envelope.user_id' },
+    balanceCents: { name: 'envelope.balance_cents' },
+  }
   const financialAccount = {
     id: { name: 'financial_account.id' },
     userId: { name: 'financial_account.user_id' },
@@ -17,14 +22,42 @@ const { financialAccount, state, fakeDb } = vi.hoisted(() => {
     updateCalls: Array<{ setArg: Record<string, unknown> }>
     updateResult: Array<Record<string, unknown>>
     existingAccount: Record<string, unknown> | null
+    envelopeRows: Array<{ balanceCents: number }>
   } = {
     insertedValues: null,
     updateCalls: [],
     updateResult: [],
     existingAccount: null,
+    envelopeRows: [],
+  }
+
+  // PATCH runs in a transaction that locks the account row and reads its envelopes;
+  // envelopes.integration-style rules are covered against a real Postgres in
+  // accounts.integration.test.ts, here the fake only has to hand back those rows.
+  const fakeTx = {
+    select: () => ({
+      from: (table: unknown) => {
+        const rows = table === financialAccount ? (state.existingAccount ? [state.existingAccount] : []) : state.envelopeRows
+        const query: Record<string, unknown> = {}
+        for (const step of ['where', 'for']) query[step] = () => query
+        query.then = (resolve: (r: unknown[]) => unknown) => resolve(rows)
+        return query
+      },
+    }),
+    update: () => ({
+      set: (setArg: Record<string, unknown>) => ({
+        where: () => ({
+          returning: async () => {
+            state.updateCalls.push({ setArg })
+            return state.updateResult
+          },
+        }),
+      }),
+    }),
   }
 
   const fakeDb = {
+    transaction: (cb: (tx: unknown) => unknown) => cb(fakeTx),
     insert: () => ({
       values: (values: Record<string, unknown>) => ({
         returning: async () => {
@@ -54,7 +87,7 @@ const { financialAccount, state, fakeDb } = vi.hoisted(() => {
     },
   }
 
-  return { financialAccount, state, fakeDb }
+  return { financialAccount, envelope, state, fakeDb }
 })
 
 vi.mock('../middleware/session', () => ({
@@ -65,7 +98,7 @@ vi.mock('../middleware/session', () => ({
 }))
 
 vi.mock('../db/client', () => ({
-  schema: { financialAccount },
+  schema: { financialAccount, envelope },
   db: fakeDb,
 }))
 
@@ -134,6 +167,7 @@ describe('PATCH /accounts/:id enforces the credit-debt sign invariant', () => {
   })
 
   it('re-signs balanceCents negative when both type and balanceCents are in the payload', async () => {
+    state.existingAccount = { id: ACCOUNT_ID, userId: 'user-1', type: 'debito', balanceCents: 10_000 }
     state.updateResult = [{ id: ACCOUNT_ID, balanceCents: -3_000 }]
 
     const res = await patchAccount(ACCOUNT_ID, { type: 'credito', balanceCents: 3_000 })
