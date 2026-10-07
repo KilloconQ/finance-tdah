@@ -21,7 +21,10 @@ export const createGoalSchema = z.object({
   deadline: isoDate.optional(),
 })
 
-export const updateGoalSchema = createGoalSchema.partial()
+// `emoji` is redeclared without the create schema's `.default('🌿')`: Zod 4 applies a
+// default even under `.partial()`, so a patch that only renamed a goal would have reset
+// its emoji.
+export const updateGoalSchema = createGoalSchema.extend({ emoji: z.string().min(1).max(8) }).partial()
 
 export const addToGoalSchema = z.object({
   amountCents: cents.min(1, { error: 'Mínimo $0.01' }),
