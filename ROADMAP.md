@@ -11,15 +11,16 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 - Rediseño mobile-first + responsive (contrato en `DESIGN.md`), con Cuentas y Pánico ya conectados a datos reales.
 - Docker dual-mode: `docker compose up -d` local, perfil aparte para exponer vía Cloudflare Tunnel.
 - Voz + notificaciones push: `SpeechRecognition` real reemplazó el stub de voz, Web Push con umbral semanal de presupuesto y meta alcanzada (PR #3, mergeado a main).
+  La voz quedó **congelada** (PR #16): `SpeechRecognition` no funciona en web apps de iOS (ni PWA ni Chrome en iPhone), así que no se ofrece hasta tener las apps nativas. Los componentes de voz y `/expenses/voice` siguen en el código.
 - Password reset self-service vía Resend (PR #4).
 - Fix de sign-in bloqueado por credenciales opcionales faltantes (PR #5).
 - Dots del daily-check desbordando la card + input de días del reto reseteándose al borrar (`4d8256e`).
 - UI de edición para cuentas (ya existía) / gastos / metas / suscripciones — PR #7, mergeado a main,
   rama borrada. Gastos necesitó además el endpoint `PATCH /expenses/:id` con reversión de saldo
-  neta por cuenta, hecho con TDD real. Deuda pendiente (documentada en
-  `odd/tasks/edit-ui-goals-subs-expenses.md`): falta test de las ramas de error del PATCH de gastos,
-  el test de ownership no prueba de verdad el filtro `userId`, y no hay lock contra ediciones
-  concurrentes del mismo gasto. Descartado a propósito: "sin cuenta" en un gasto — decisión de
+  neta por cuenta, hecho con TDD real. Deuda que quedó (documentada en
+  `odd/tasks/edit-ui-goals-subs-expenses.md`) ya cerrada: tests de las ramas de error y de ownership
+  contra Postgres real, y el lock contra ediciones concurrentes — que resultó un bug real (dos
+  ediciones simultáneas o editar mientras se borra desviaban el saldo), ya corregido. Descartado a propósito: "sin cuenta" en un gasto — decisión de
   producto, todo gasto trackea una cuenta (efectivo = cuenta de efectivo dedicada), no bug.
 - Sesión robusta (PR #9 y #10): el rate limit por IP compartida ya no desloguea a todo el hogar;
   un fallo al comprobar la sesión (429, 5xx, offline) muestra una pantalla de error con
@@ -50,19 +51,21 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   zona horaria) solo si ese día no anotó nada, una vez por día. Lo corre un intervalo dentro de la API
   cada 5 min (`services/daily-reminder.ts`); el día se reclama con un UPDATE condicional, así que dos
   procesos no lo mandan doble. Ajustes también explica cómo activar avisos en iPhone (pantalla de inicio).
+- CI para PRs (`.github/workflows/ci.yml`): typecheck, lint y tests en cada PR y push a `main`, con un Postgres 17 de servicio para que los tests de integración (cajitas, gastos, recordatorio) corran siempre y no solo si alguien levanta una base. El lint quedó limpio: las reglas de Fast Refresh se desactivan en `src/app/**` (los archivos de ruta de TanStack exportan `Route` junto al componente por diseño) y `TABS` salió de `TabBar.tsx`. Pendiente de activar en GitHub: marcar el check `CI / check` como requerido en la protección de `main`.
+- Claves VAPID a prueba de errores: una clave mal puesta (repetida, privada en la línea de la pública, con comillas, truncada o de otro par) ya no tumba la API — `web-push` lanza un error al cargar y eso dejaba a todos sin poder entrar. Ahora `lib/vapid.ts` la valida, apaga solo las notificaciones y el log dice qué revisar; Ajustes avisa en español si la clave que trae la web es inválida.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Ampliar los tests de `apps/web`: ya cubren la capa de sesión/API, el guard, `ExpenseForm`, `EnvelopesView`, `AccountsView`, Ajustes y los containers de crear/editar gasto (con un helper que simula la API, `src/test/fake-api.tsx`). Faltan los containers de cuentas, metas, suscripciones y cajitas, y `queries.ts`.
+- Ampliar los tests de `apps/web`: ya cubren la capa de sesión/API, el guard, `ExpenseForm`, `EnvelopesView`, `AccountsView`, Ajustes y los containers de crear/editar gasto (con un helper que simula la API, `src/test/fake-api.ts`). Faltan los containers de cuentas, metas, suscripciones y cajitas, y `queries.ts`.
 
 ## Más adelante (diferido a propósito, no por olvido)
 
 - **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
-- **Wrapper nativo (Capacitor)**: para widget de pantalla de inicio y voz/push más confiables que en navegador. El usuario mostró interés, pero es una fase separada.
+- **Apps nativas de verdad** (no un wrapper tipo Capacitor): para aprovechar cada plataforma — voz del sistema, widgets, Siri/Atajos y gastos automáticos con Apple Pay, notificaciones nativas, Face ID. Falta decidir entre Swift + Kotlin puro o React Native/Expo con extensiones nativas; en ambos casos hace falta otro método de login (la API usa cookies de sesión) y una Mac con cuenta de Apple Developer para iOS. Es una fase separada; hasta entonces la voz sigue congelada.
 - **Dark mode**: fuera de alcance del rediseño actual (`DESIGN.md` es light-only por decisión de diseño).
 
 ## Cómo se prioriza
 
-1. Cerrar lo que ya está a medias (voz + push) antes de abrir features nuevas.
+1. Cerrar lo que ya está a medias antes de abrir features nuevas (la voz espera a las apps nativas, no se retoma en la web).
 2. Tapar gaps de UI sobre endpoints que ya existen (edición) antes de features de negocio nuevas.
 3. Decisiones de producto grandes (hogar compartido, nativo) esperan a que el usuario las confirme explícitamente — no se asumen.

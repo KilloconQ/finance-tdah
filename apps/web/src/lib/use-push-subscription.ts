@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
+import { isValidVapidPublicKey } from '@finance-tdah/shared/domain'
 import { api } from '@/lib/api'
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined
@@ -15,6 +16,19 @@ export function isPushSupported(): boolean {
  */
 export function isPushConfigured(): boolean {
   return Boolean(VAPID_PUBLIC_KEY)
+}
+
+const INVALID_KEY_MESSAGE =
+  'La clave de notificaciones de esta versión de la app no es válida, así que el navegador no puede activarlas. ' +
+  'Quien administra el servidor tiene que revisar VAPID_PUBLIC_KEY en el .env (una sola línea, sin comillas, de 87 caracteres) y volver a compilar la web.'
+
+/**
+ * A key the browser would reject, caught up front: `pushManager.subscribe` only
+ * says "applicationServerKey is not valid". null when there's no key (the
+ * toggle is hidden then) or it's fine.
+ */
+export function pushKeyError(key: string | undefined = VAPID_PUBLIC_KEY): string | null {
+  return key && !isValidVapidPublicKey(key) ? INVALID_KEY_MESSAGE : null
 }
 
 export function usePushSubscription() {
@@ -41,6 +55,8 @@ export function usePushSubscription() {
   const subscribeMutation = useMutation({
     mutationFn: async () => {
       if (!VAPID_PUBLIC_KEY) throw new Error('VITE_VAPID_PUBLIC_KEY no está configurada')
+      const keyError = pushKeyError(VAPID_PUBLIC_KEY)
+      if (keyError) throw new Error(keyError)
       const permission = await Notification.requestPermission()
       if (permission !== 'granted') throw new Error('Permiso de notificaciones denegado')
       const registration = await navigator.serviceWorker.ready
@@ -94,6 +110,7 @@ export function usePushSubscription() {
   return {
     supported,
     configured,
+    keyError: pushKeyError(VAPID_PUBLIC_KEY),
     subscribed,
     subscribe,
     unsubscribe,

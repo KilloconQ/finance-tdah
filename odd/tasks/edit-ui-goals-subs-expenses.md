@@ -95,14 +95,20 @@ no se aceptó sin chequear):
   de llamar `onSubmit` — nunca llega string vacío al mutation. No requiere fix.
 
 Hallazgos reales, no bloqueantes (deuda para más adelante):
-- **WARNING** las ramas 422 (`INVALID_TRANSFER`) y 404 (`ACCOUNT_NOT_FOUND`) del nuevo PATCH no
-  tienen test — nada prueba el invariante de transfer mergeado contra estado actual+patch.
-- **WARNING** el test de ownership (`expenses.test.ts:419-429`) es idéntico al de not-found (ambos
+- ~~**WARNING** las ramas 422 (`INVALID_TRANSFER`) y 404 (`ACCOUNT_NOT_FOUND`) del nuevo PATCH no
+  tienen test — nada prueba el invariante de transfer mergeado contra estado actual+patch.~~
+  **Cubierto** en `expenses.integration.test.ts` (transfer a la misma cuenta, sin destino, cuenta ajena).
+- ~~**WARNING** el test de ownership (`expenses.test.ts:419-429`) es idéntico al de not-found (ambos
   ponen `expenseRow = null`); no prueba que el filtro `userId` esté realmente en el `where`. El
-  fake de `financialAccount.findFirst` sí lo verifica (el "account-id walker"), el de ownership no.
-- **WARNING** PATCH lee la fila actual con `findFirst` sin lock; dos PATCH concurrentes sobre el
+  fake de `financialAccount.findFirst` sí lo verifica (el "account-id walker"), el de ownership no.~~
+  **Cubierto** contra Postgres real: otro usuario recibe 404 en PATCH y DELETE y nada cambia.
+- ~~**WARNING** PATCH lee la fila actual con `findFirst` sin lock; dos PATCH concurrentes sobre el
   mismo gasto bajo read-committed podrían revertir el mismo monto viejo dos veces y desviar el
-  balance. Aceptable para el volumen de esta app, pero documentado.
+  balance. Aceptable para el volumen de esta app, pero documentado.~~
+  **Era un bug real, corregido**: tres PATCH simultáneos dejaban la cuenta $2,000 abajo, y un PATCH
+  contra un DELETE del mismo gasto perdía $1,000. Ahora PATCH y DELETE toman primero el lock de la
+  fila del gasto (`lockExpense`), luego las cuentas (por id) y luego las cajitas, en el mismo orden
+  para que no haya deadlock. Probado con escrituras concurrentes en `expenses.integration.test.ts`.
 
 ### Review del commit de docs (lineage `review-058791733546db71`) — APROBADO
 Dos hallazgos nuevos, no bloqueantes:
