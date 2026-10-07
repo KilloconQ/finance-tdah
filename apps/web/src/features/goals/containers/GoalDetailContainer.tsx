@@ -28,6 +28,9 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [deleted, setDeleted] = useState(false)
   const previousPercentRef = useRef<number | null>(null)
+  // Synchronous guard against a double tap racing the isPending re-render: a deposit
+  // sent twice would count twice in the jar.
+  const inFlight = useRef(false)
 
   useEffect(() => {
     if (!goal) return
@@ -77,8 +80,12 @@ export function GoalDetailContainer({ goalId }: GoalDetailContainerProps) {
   const canAdd = amountCents !== null && amountCents > 0
 
   const handleAdd = () => {
-    if (amountCents === null) return
+    if (amountCents === null || inFlight.current) return
+    inFlight.current = true
     addMutation.mutate(amountCents, {
+      onSettled: () => {
+        inFlight.current = false
+      },
       onSuccess: () => {
         setConfirmedCents(amountCents)
         setConfirming(true)
