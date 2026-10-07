@@ -1,7 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Settings } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { TABS } from './TabBar'
+import { TABS } from './tabs'
 
 /**
  * Desktop / tablet navigation. Hidden on phones (the bottom TabBar takes over).
