@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Plus, Repeat } from 'lucide-react'
+import { monthlyCostCents, yearlyCostCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { daysAgo } from '@/lib/format'
 import { subscriptionsQueryOptions } from '@/features/subscriptions'
@@ -36,8 +37,9 @@ function Subscriptions() {
   const unused = subs.filter((s) => s.unused)
   const active = subs.filter((s) => !s.unused)
 
-  const monthlyLossCents = unused.reduce((sum, s) => sum + s.amountCents, 0)
-  const yearlyLossCents = monthlyLossCents * 12
+  // A yearly plan costs a twelfth of its price per month: adding raw amounts would count it 12×.
+  const monthlyLossCents = unused.reduce((sum, s) => sum + monthlyCostCents(s.amountCents, s.cadence), 0)
+  const yearlyLossCents = unused.reduce((sum, s) => sum + yearlyCostCents(s.amountCents, s.cadence), 0)
 
   const goNew = () => navigate({ to: '/subscriptions/new' })
 

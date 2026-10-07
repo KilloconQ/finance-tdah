@@ -1,4 +1,4 @@
-import type { EnvelopeDTO, FinancialAccountDTO, GoalDTO } from '@finance-tdah/shared/schemas'
+import type { EnvelopeDTO, FinancialAccountDTO, GoalDTO, SubscriptionDTO } from '@finance-tdah/shared/schemas'
 import { json } from './fake-api'
 
 export const NOW = '2026-10-05T12:00:00.000Z'
@@ -49,6 +49,25 @@ export const goal = (patch: Partial<GoalDTO> = {}): GoalDTO => ({
   currentCents: 400_000,
   deadline: null,
   archivedAt: null,
+  createdAt: NOW,
+  updatedAt: NOW,
+  ...patch,
+})
+
+export const SUB = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+export const SUB_2 = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+
+export const subscription = (patch: Partial<SubscriptionDTO> = {}): SubscriptionDTO => ({
+  id: SUB,
+  userId: 'u',
+  name: 'Netflix',
+  category: 'streaming',
+  amountCents: 26_900,
+  cadence: 'monthly',
+  nextChargeAt: '2026-11-01',
+  lastOpenedAt: null,
+  unused: false,
+  cancelledAt: null,
   createdAt: NOW,
   updatedAt: NOW,
   ...patch,
