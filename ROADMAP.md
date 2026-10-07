@@ -50,6 +50,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   zona horaria) solo si ese día no anotó nada, una vez por día. Lo corre un intervalo dentro de la API
   cada 5 min (`services/daily-reminder.ts`); el día se reclama con un UPDATE condicional, así que dos
   procesos no lo mandan doble. Ajustes también explica cómo activar avisos en iPhone (pantalla de inicio).
+- Claves VAPID a prueba de errores: una clave mal puesta (repetida, privada en la línea de la pública, con comillas, truncada o de otro par) ya no tumba la API — `web-push` lanza un error al cargar y eso dejaba a todos sin poder entrar. Ahora `lib/vapid.ts` la valida, apaga solo las notificaciones y el log dice qué revisar; Ajustes avisa en español si la clave que trae la web es inválida.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 

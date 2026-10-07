@@ -11,6 +11,7 @@ const { push, mutate } = vi.hoisted(() => ({
     subscribe: vi.fn(),
     unsubscribe: vi.fn(),
     error: null as string | null,
+    keyError: null as string | null,
   },
   mutate: vi.fn(),
 }))
@@ -36,7 +37,7 @@ const Settings = (Route as unknown as { options: { component: () => React.ReactE
 
 afterEach(() => {
   cleanup()
-  Object.assign(push, { supported: true, subscribed: true })
+  Object.assign(push, { supported: true, subscribed: true, keyError: null })
   mutate.mockReset()
 })
 
@@ -66,6 +67,13 @@ describe('Settings › daily reminder', () => {
     push.subscribed = false
     setup()
     expect(screen.queryByText('Recordarme si no anoto nada en el día')).toBeNull()
+  })
+
+  it("says the app's notification key is invalid instead of offering a toggle that can't work", () => {
+    push.keyError = 'La clave de notificaciones de esta versión de la app no es válida'
+    setup()
+    expect(screen.getByText(/clave de notificaciones de esta versión de la app no es válida/)).toBeTruthy()
+    expect(screen.queryByRole('switch', { name: 'Activar notificaciones' })).toBeNull()
   })
 
   it("explains how to get notifications where the browser can't (iPhone outside the home screen)", () => {

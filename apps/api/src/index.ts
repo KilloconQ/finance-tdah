@@ -99,7 +99,7 @@ if (!features.passwordResetEmail) {
 if (!features.webPush) {
   logger.warn('feature_disabled', {
     feature: 'web_push',
-    message: 'VAPID keys are not set — push notifications are disabled. Sign-in is unaffected.',
+    message: `${features.webPushProblem} Push notifications are disabled; sign-in is unaffected.`,
   })
 } else if (env.NODE_ENV !== 'test') {
   startDailyReminders()
