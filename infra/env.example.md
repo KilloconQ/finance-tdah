@@ -48,6 +48,12 @@ VAPID_SUBJECT=mailto:soporte@finance-tdah.local
 - `BETTER_AUTH_SECRET`: cambialo siempre antes de prod. Tirá una variable distinta entre `staging` y `prod`.
 - `PUBLIC_URL`: tiene que matchear el hostname público del tunnel.
 - `CLOUDFLARE_TUNNEL_TOKEN`: ver `infra/cloudflared/README.md`.
+- `VAPID_PUBLIC_KEY` y `VAPID_PRIVATE_KEY`: **una sola línea cada una, sin comillas**. La pública tiene 87
+  caracteres y empieza con `B`; la privada, 43. Si están mal (repetidas, cambiadas de lugar, truncadas o de
+  pares distintos) la API arranca igual con las notificaciones apagadas y el log dice qué línea revisar
+  (`docker compose logs api | grep web_push`); la web, si trae una pública inválida, lo avisa en Ajustes.
+  Cambiar la pública obliga a recompilar la web (`up -d --build`) y a reactivar las notificaciones en
+  cada celular.
 - `RESEND_*` y `VAPID_*` son **opcionales**: vacías sólo apagan reset-por-email y push.
   `docker-compose.yml` ya las pasa al contenedor `api`, y `VAPID_PUBLIC_KEY` también entra
   al build del web como `VITE_VAPID_PUBLIC_KEY` (hay que rebuildear el web si la cambiás).

@@ -70,7 +70,9 @@ function Settings() {
             label="Notificaciones"
             hint="Avisos cuando llegas al presupuesto semanal, completas una meta o no has anotado nada en el día."
           >
-            {push.supported ? (
+            {push.keyError ? (
+              <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{push.keyError}</div>
+            ) : push.supported ? (
               <div className="flex flex-col gap-3">
                 <Toggle
                   label="Activar notificaciones"

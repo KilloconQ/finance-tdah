@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { vapidStatus } from './lib/vapid'
 
 // docker compose passes unset vars through as empty strings (`${FOO:-}`), so an
 // absent credential arrives as '' rather than undefined. Normalize both to undefined.
@@ -55,7 +56,12 @@ if (!parsed.success) {
 export const env = parsed.data
 export type Env = typeof env
 
+const webPush = vapidStatus(env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY)
+
 export const features = {
   passwordResetEmail: Boolean(env.RESEND_API_KEY),
-  webPush: Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
+  // On only for a usable pair: a malformed one would make `web-push` throw while
+  // the API loads. `webPushProblem` says why it's off, for the startup log.
+  webPush: webPush.enabled,
+  webPushProblem: webPush.enabled ? null : webPush.problem,
 } as const

@@ -52,6 +52,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
   cada 5 min (`services/daily-reminder.ts`); el día se reclama con un UPDATE condicional, así que dos
   procesos no lo mandan doble. Ajustes también explica cómo activar avisos en iPhone (pantalla de inicio).
 - CI para PRs (`.github/workflows/ci.yml`): typecheck, lint y tests en cada PR y push a `main`, con un Postgres 17 de servicio para que los tests de integración (cajitas, gastos, recordatorio) corran siempre y no solo si alguien levanta una base. El lint quedó limpio: las reglas de Fast Refresh se desactivan en `src/app/**` (los archivos de ruta de TanStack exportan `Route` junto al componente por diseño) y `TABS` salió de `TabBar.tsx`. Pendiente de activar en GitHub: marcar el check `CI / check` como requerido en la protección de `main`.
+- Claves VAPID a prueba de errores: una clave mal puesta (repetida, privada en la línea de la pública, con comillas, truncada o de otro par) ya no tumba la API — `web-push` lanza un error al cargar y eso dejaba a todos sin poder entrar. Ahora `lib/vapid.ts` la valida, apaga solo las notificaciones y el log dice qué revisar; Ajustes avisa en español si la clave que trae la web es inválida.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
