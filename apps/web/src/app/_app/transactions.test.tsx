@@ -80,6 +80,21 @@ describe('Transactions', () => {
     expect(within(dayGroup(/s[áa]bado/i)).getByText('Cine')).toBeTruthy()
   })
 
+  it('groups by the local calendar day, not the UTC one', async () => {
+    vi.stubEnv('TZ', 'America/Mexico_City') // UTC-6
+    try {
+      // 2026-10-06T03:00Z is Monday 2026-10-05 21:00 in Mexico City.
+      fakeApi(expensesRoute([expense({ occurredAt: '2026-10-06T03:00:00.000Z' })]))
+      render(renderWithQuery(<Transactions />).tree)
+
+      await screen.findByText('Latte')
+      expect(within(dayGroup(/lunes/i)).getByText('Latte')).toBeTruthy()
+      expect(screen.queryByText(/martes/i)).toBeNull()
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
   it('shows expenses, income and transfers with different signs', async () => {
     fakeApi(
       expensesRoute([
@@ -184,7 +199,7 @@ describe('Transactions', () => {
   })
 
   it('keeps the confirmation open when the delete fails', async () => {
-    fakeApi({
+    const api = fakeApi({
       ...expensesRoute([expense()]),
       [`DELETE /expenses/${E1}`]: () => json({ error: 'boom' }, 500),
     })
@@ -195,7 +210,9 @@ describe('Transactions', () => {
     await user.click(screen.getByRole('button', { name: 'Borrar gasto' }))
     await user.click(screen.getByRole('button', { name: 'Confirmar' }))
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Confirmar' })).toHaveProperty('disabled', false))
+    expect(await screen.findByText('No se pudo borrar el gasto. Intenta de nuevo.')).toBeTruthy()
+    expect(api.sent.some((r) => r.method === 'DELETE' && r.path === `/expenses/${E1}`)).toBe(true)
+    expect(screen.getByRole('button', { name: 'Confirmar' })).toHaveProperty('disabled', false)
     expect(screen.getByText('¿Estás seguro?')).toBeTruthy()
     expect(screen.queryByText('✓ Gasto borrado')).toBeNull()
   })
