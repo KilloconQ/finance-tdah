@@ -49,6 +49,22 @@ describe('Panic', () => {
     expect(screen.queryByText(/Te excediste/)).toBeNull()
   })
 
+  it('treats spending exactly the weekly target as within budget', async () => {
+    setup(220_000)
+    expect(await screen.findByText(/Vas dentro de tu presupuesto esta semana/)).toBeTruthy()
+    expect(screen.queryByText(/Te excediste/)).toBeNull()
+  })
+
+  it('shows neutral copy while the summary has not loaded', async () => {
+    fakeApi({
+      'GET /profile': () => json({ profile: null }),
+      'GET /dashboard/home': () => new Promise<Response>(() => {}),
+    })
+    render(renderWithQuery(<Panic />).tree)
+    expect(await screen.findByText('Veamos qué podemos hacer ahora mismo.')).toBeTruthy()
+    expect(screen.queryByText(/Te excediste|Vas dentro/)).toBeNull()
+  })
+
   it('is a modal dialog offering the three recovery actions', async () => {
     setup(100_000)
     expect(screen.getByRole('dialog', { name: 'Modo pánico' })).toBeTruthy()
