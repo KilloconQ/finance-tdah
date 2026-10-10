@@ -10,9 +10,9 @@ function OnboardingWelcome() {
   const navigate = useNavigate()
   return (
     <PhoneShell variant="narrow">
-      <AppBar right={<span className="wf-mono text-[12px] text-ink-mid">1 / 5</span>} />
+      <AppBar right={<span className="wf-mono text-[12px] text-ink-mid">1 / 4</span>} />
       <div className="flex flex-1 flex-col px-7 pb-6 pt-2">
-        <Dots total={5} filled={1} size={6} gap={5} />
+        <Dots total={4} filled={1} size={6} gap={5} />
         <div className="mt-6 text-center">
           <h1 className="text-[28px] font-medium leading-tight text-ink">
             Tus finanzas,

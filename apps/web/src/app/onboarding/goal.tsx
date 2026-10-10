@@ -34,6 +34,11 @@ function OnboardingGoal() {
     navigate({ to: '/onboarding/done' })
   }
 
+  const handleSkip = () => {
+    setOnboardingDraft({ firstGoal: undefined })
+    navigate({ to: '/onboarding/done' })
+  }
+
   return (
     <OnboardingLayout step={3}>
       <h1 className="mt-5 text-[24px] font-medium leading-tight text-ink">
@@ -76,7 +81,7 @@ function OnboardingGoal() {
       <Btn kind="primary" className="w-full py-4" onClick={handleNext}>
         Crear meta
       </Btn>
-      <Btn kind="plain" className="mt-1 w-full" onClick={() => navigate({ to: '/onboarding/done' })}>
+      <Btn kind="plain" className="mt-1 w-full" onClick={handleSkip}>
         Después
       </Btn>
     </OnboardingLayout>

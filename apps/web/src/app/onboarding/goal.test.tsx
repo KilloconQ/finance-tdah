@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearOnboardingDraft } from '@/lib/onboarding-draft'
+import { clearOnboardingDraft, setOnboardingDraft } from '@/lib/onboarding-draft'
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
 vi.mock('@tanstack/react-router', () => ({
@@ -54,5 +54,14 @@ describe('Onboarding › first goal', () => {
 
     expect(navigate).toHaveBeenCalledWith({ to: '/onboarding/done' })
     expect(savedDraft()?.firstGoal).toBeUndefined()
+  })
+
+  it('clears a goal saved earlier when the user skips with "Después"', async () => {
+    setOnboardingDraft({ firstGoal: { name: 'Laptop nueva', emoji: '💻', target: 30000 } })
+    render(<Goal />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Después' }))
+
+    expect(savedDraft().firstGoal).toBeUndefined()
+    expect(navigate).toHaveBeenCalledWith({ to: '/onboarding/done' })
   })
 })

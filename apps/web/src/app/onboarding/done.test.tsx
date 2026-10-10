@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearOnboardingDraft, setOnboardingDraft } from '@/lib/onboarding-draft'
@@ -79,6 +79,31 @@ describe('Onboarding › done', () => {
     expect(api.writes()[0].body?.displayName).toBe('Tú')
   })
 
+  it.each([
+    ['blank', '   '],
+    ['empty', ''],
+  ])('falls back to a generic name when the session name is %s', async (_, name) => {
+    getSession.mockResolvedValue({ data: { user: { name } } })
+    const api = fakeApi(saved)
+    render(<Done />)
+
+    await userEvent.setup().click(finish())
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled())
+    expect(api.writes()[0].body?.displayName).toBe('Tú')
+  })
+
+  it('trims the name and caps it at 60 characters', async () => {
+    getSession.mockResolvedValue({ data: { user: { name: `  ${'a'.repeat(70)}  ` } } })
+    const api = fakeApi(saved)
+    render(<Done />)
+
+    await userEvent.setup().click(finish())
+
+    await waitFor(() => expect(navigate).toHaveBeenCalled())
+    expect(api.writes()[0].body?.displayName).toBe('a'.repeat(60))
+  })
+
   it('disables the button while saving so it cannot be sent twice', async () => {
     let release!: () => void
     const api = fakeApi({
@@ -88,11 +113,12 @@ describe('Onboarding › done', () => {
         }),
     })
     render(<Done />)
-    const user = userEvent.setup()
-
-    await user.click(finish())
+    const button = finish()
+    act(() => {
+      button.click()
+      button.click()
+    })
     await waitFor(() => expect(screen.getByRole('button', { name: 'Guardando…' }).hasAttribute('disabled')).toBe(true))
-    await user.click(finish())
     release()
 
     await waitFor(() => expect(navigate).toHaveBeenCalledTimes(1))
