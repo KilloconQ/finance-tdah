@@ -21,9 +21,13 @@ function Challenge() {
   const days = Math.max(1, Math.min(30, parseInt(daysInput) || 7))
   const [savings, setSavings] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const checkMutation = useMutation({
     mutationFn: (id: string) => mutations.checkChallengeDay(id),
+    onMutate: () => setActionError(null),
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : 'No pudimos marcar el día'),
     onSuccess: () => {
       playCheckSound()
       queryClient.invalidateQueries({ queryKey: ['challenges'] })
@@ -32,6 +36,9 @@ function Challenge() {
 
   const resetMutation = useMutation({
     mutationFn: (id: string) => mutations.resetChallenge(id),
+    onMutate: () => setActionError(null),
+    onError: (err) =>
+      setActionError(err instanceof Error ? err.message : 'No pudimos saltar el reto'),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
   })
 
@@ -164,6 +171,12 @@ function Challenge() {
             ahorrando <Money value={savedSoFarCents / 100} className="text-ink" />
           </div>
         </div>
+
+        {actionError ? (
+          <div className="mt-4 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+            {actionError}
+          </div>
+        ) : null}
 
         <div className="mt-6 flex gap-2">
           <Btn
