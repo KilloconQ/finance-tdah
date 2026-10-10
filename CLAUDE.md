@@ -8,7 +8,7 @@ pnpm workspace monorepo, three packages:
 
 - `apps/api` — Hono server running on **Bun** (`bun --hot src/index.ts`). Auth via better-auth + Drizzle adapter (Postgres).
 - `apps/web` — React 19 + Vite 8 SPA. TanStack Router (file-based, generated tree) + TanStack Query. Tailwind v4.
-- `packages/shared` — single source of truth for **Drizzle schema** (`src/db/schema/`) and **Zod request/response schemas** (`src/schemas/`). Consumed by both apps via `@finance-tdah/shared/{db,schemas,types}`.
+- `packages/shared` — single source of truth for **Drizzle schema** (`src/db/schema/`) and **Zod request/response schemas** (`src/schemas/`). Consumed by both apps via `@finance-tdah/shared/{db,schemas,domain,types}`.
 
 Workspace root (`package.json`) drives everything via `pnpm -r --filter=./apps/*` for app-only ops.
 
@@ -19,15 +19,15 @@ Run from the repo root unless noted:
 ```bash
 pnpm dev                # api + web in parallel
 pnpm dev:web            # web only (Vite, :5173 with /api proxy → :3001)
-pnpm dev:api            # api only (Bun --hot, :3001)
+pnpm dev:api            # api only (bun --hot, :3001)
 pnpm build              # builds both apps
 pnpm typecheck          # tsc --noEmit across all workspaces
-pnpm lint               # eslint (web only — api has no lint script)
+pnpm lint               # eslint (web only — api and shared have no lint script)
 pnpm test               # vitest run across workspaces (apps/api + packages/shared + apps/web)
 
 # Database (proxies to apps/api)
 pnpm db:generate        # drizzle-kit generate from packages/shared/src/db/schema
-pnpm db:migrate         # bun src/db/migrate.ts (reads DATABASE_URL directly, NOT via env.ts)
+pnpm db:migrate         # bun --env-file=../../.env src/db/migrate.ts (reads DATABASE_URL directly, NOT via env.ts)
 pnpm db:seed            # bun src/db/seed.ts
 pnpm db:studio          # drizzle-kit studio
 pnpm auth:schema        # regenerate better-auth tables (writes apps/api/src/db/auth-generated.ts)
@@ -38,9 +38,9 @@ pnpm docker:down
 pnpm docker:logs
 ```
 
-Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test` to `apps/api`, `packages/shared` and `apps/web`. The web suite (`apps/web/vitest.config.ts`, jsdom + Testing Library, `*.test.ts(x)` next to the code) covers the `lib/` session/API layer, the `_app` auth guard, `ExpenseForm`, `EnvelopesView`, `AccountsView`, Settings, the expense, account, envelope, goal and subscription screens, `queries.ts` and `use-tweaks` (run through the real `api` client against a fake network edge, `src/test/fake-api.ts`) — what's left untested is the home, transactions, challenge, panic and onboarding screens. `apps/api/src/routes/envelopes.integration.test.ts` runs the envelope + expense routes against a real, migrated Postgres and is **skipped unless `TEST_DATABASE_URL` is set** (use a throwaway database, e.g. `ft_test`, never the dev one); run it whenever you touch envelopes, expenses or account balances. `apps/api/src/routes/expenses.integration.test.ts` (same opt-in) covers expense edit/delete ownership and concurrent writers, `apps/api/src/routes/accounts.integration.test.ts` account balance edits against envelopes, `apps/api/src/routes/partial-updates.integration.test.ts` that a PATCH leaves unsent fields alone, and `apps/api/src/services/daily-reminder.integration.test.ts` the daily push reminder. CI (`.github/workflows/ci.yml`) runs typecheck, lint and all tests — integration ones included, against a Postgres service — on every PR. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
+Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test` to `apps/api`, `packages/shared` and `apps/web`. The web suite (`apps/web/vitest.config.ts`, jsdom + Testing Library, `*.test.ts(x)` next to the code) covers the `lib/` session/API layer, the `_app` auth guard, `ExpenseForm`, `EnvelopesView`, `AccountsView`, Settings, the expense, account, envelope, goal and subscription screens, `queries.ts` and `use-tweaks` (run through the real `api` client against a fake network edge, `src/test/fake-api.ts`). The home, transactions, challenge, panic and onboarding screens (and `lib/onboarding-draft.ts`) are covered by the `tests-home-transactions`, `tests-challenge-panic` and `tests-onboarding` branches; check that the matching `*.test.tsx` exist next to the screens before saying they are covered or untested. `apps/api/src/routes/envelopes.integration.test.ts` runs the envelope + expense routes against a real, migrated Postgres and is **skipped unless `TEST_DATABASE_URL` is set** (use a throwaway database, e.g. `ft_test`, never the dev one); run it whenever you touch envelopes, expenses or account balances. `apps/api/src/routes/expenses.integration.test.ts` (same opt-in) covers expense edit/delete ownership and concurrent writers, `apps/api/src/routes/accounts.integration.test.ts` account balance edits against envelopes, `apps/api/src/routes/partial-updates.integration.test.ts` that a PATCH leaves unsent fields alone, and `apps/api/src/services/daily-reminder.integration.test.ts` the daily push reminder. CI (`.github/workflows/ci.yml`) runs typecheck, lint and all tests — integration ones included, against a Postgres service — on every PR. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
 
-The api has no lint script; `pnpm lint` only hits `apps/web`. Route files under `src/app/**` are exempt from `react-refresh/only-export-components` (TanStack file routes export `Route` beside their component).
+The api and shared packages have no lint script; `pnpm lint` only hits `apps/web`. Route files under `src/app/**` are exempt from `react-refresh/only-export-components` (TanStack file routes export `Route` beside their component).
 
 ## Environment
 
@@ -84,7 +84,7 @@ better-auth with the Drizzle adapter. The `user`, `session`, `account`, `verific
 ### Server state vs client state
 
 - **TanStack Query** handles all server data via `queryOptions` factories in `apps/web/src/lib/queries.ts`. All `queryFn` calls go through `fetchValidated()` → Zod-validated typed result.
-- **Zustand** (`apps/web/src/store/appStore.ts`) holds UI tweaks + onboarding draft state, persisted to localStorage. Note: the store still contains `MOCK_*` data for accounts/goals/expenses/etc. — that's the legacy mock layer, the real data path is the API + Query.
+- **Client state** is small. There is no global store (no Zustand): UI tweaks (`showBalances`, weekly budget, input preference, daily reminder) are fields of the server profile read via `profileQuery()` in `apps/web/src/lib/use-tweaks.ts`, and the onboarding draft lives in `apps/web/src/lib/onboarding-draft.ts` (localStorage key `finance-tdah:onboarding-draft`, via `useSyncExternalStore`).
 
 ### Naming convention
 
