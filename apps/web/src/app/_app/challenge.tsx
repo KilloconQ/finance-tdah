@@ -18,7 +18,8 @@ function Challenge() {
   const [challengeName, setChallengeName] = useState('')
   const [description, setDescription] = useState('')
   const [daysInput, setDaysInput] = useState('7')
-  const days = Math.max(1, Math.min(30, parseInt(daysInput) || 7))
+  const parsedDays = parseInt(daysInput)
+  const days = Number.isNaN(parsedDays) ? 7 : Math.max(1, Math.min(30, parsedDays))
   const [savings, setSavings] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -28,10 +29,9 @@ function Challenge() {
     onMutate: () => setActionError(null),
     onError: (err) =>
       setActionError(err instanceof Error ? err.message : 'No pudimos marcar el día'),
-    onSuccess: () => {
-      playCheckSound()
-      queryClient.invalidateQueries({ queryKey: ['challenges'] })
-    },
+    onSuccess: playCheckSound,
+    // refetch on failure too, so a 409 "already checked" locks the button
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
   })
 
   const resetMutation = useMutation({
@@ -39,7 +39,7 @@ function Challenge() {
     onMutate: () => setActionError(null),
     onError: (err) =>
       setActionError(err instanceof Error ? err.message : 'No pudimos saltar el reto'),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
   })
 
   const createMutation = useMutation({
@@ -119,11 +119,7 @@ function Challenge() {
             </Field>
           </div>
 
-          {formError ? (
-            <div className="mt-4 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
-              {formError}
-            </div>
-          ) : null}
+          <ErrorBanner message={formError} />
 
           <Btn
             kind="primary"
@@ -172,11 +168,7 @@ function Challenge() {
           </div>
         </div>
 
-        {actionError ? (
-          <div className="mt-4 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
-            {actionError}
-          </div>
-        ) : null}
+        <ErrorBanner message={actionError} />
 
         <div className="mt-6 flex gap-2">
           <Btn
@@ -222,6 +214,14 @@ function playCheckSound() {
 
 const INPUT_CLASS =
   'w-full rounded-xl border border-line bg-surface px-4 py-3 text-[15px] text-ink outline-none transition-colors focus:border-accent'
+
+function ErrorBanner({ message }: { message: string | null }) {
+  return message ? (
+    <div role="alert" className="mt-4 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+      {message}
+    </div>
+  ) : null
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

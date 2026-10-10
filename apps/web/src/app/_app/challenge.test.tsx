@@ -107,30 +107,47 @@ describe('Challenge › active challenge', () => {
   })
 
   it('shows the server error when checking in fails', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(`${TODAY}T12:00:00Z`))
     const user = userEvent.setup()
+    let checkedElsewhere = false
     fakeApi({
-      ...routes(challenge()),
-      [`POST /challenges/${CHALLENGE_ID}/check`]: () => json({ error: 'Ya marcaste el día de hoy' }, 409),
+      ...profileRoute,
+      'GET /challenges/active': () =>
+        json({ challenge: challenge({ lastCheckedAt: checkedElsewhere ? TODAY : null }) }),
+      [`POST /challenges/${CHALLENGE_ID}/check`]: () => {
+        checkedElsewhere = true
+        return json({ error: 'Ya marcaste el día de hoy' }, 409)
+      },
     })
     render(renderWithQuery(<Challenge />).tree)
 
     await user.click(await screen.findByRole('button', { name: 'Sigo en el reto 💪' }))
 
-    expect(await screen.findByText('Ya marcaste el día de hoy')).toBeTruthy()
-    expect(screen.getByText('Día 3 de 7')).toBeTruthy()
+    expect((await screen.findByRole('alert')).textContent).toBe('Ya marcaste el día de hoy')
+    // the failed check-in refreshes the challenge, so the button locks instead of staying stale
+    const locked = await screen.findByRole('button', { name: 'Ya marcaste hoy ✓' })
+    expect((locked as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('shows the server error when skipping fails', async () => {
     const user = userEvent.setup()
+    let fetches = 0
     fakeApi({
-      ...routes(challenge()),
+      ...profileRoute,
+      'GET /challenges/active': () => {
+        fetches++
+        return json({ challenge: challenge() })
+      },
       [`POST /challenges/${CHALLENGE_ID}/reset`]: () => json({ error: 'No hay reto activo' }, 404),
     })
     render(renderWithQuery(<Challenge />).tree)
 
     await user.click(await screen.findByRole('button', { name: 'Saltar' }))
 
-    expect(await screen.findByText('No hay reto activo')).toBeTruthy()
+    expect((await screen.findByRole('alert')).textContent).toBe('No hay reto activo')
+    // the failed skip refetches the challenge
+    await waitFor(() => expect(fetches).toBe(2))
   })
 
   it('goes back when the back button is pressed', async () => {
@@ -139,7 +156,7 @@ describe('Challenge › active challenge', () => {
     render(renderWithQuery(<Challenge />).tree)
 
     await screen.findByText('No gastar en café')
-    await user.click(screen.getByRole('button', { name: /volver|atrás|back/i }))
+    await user.click(screen.getByRole('button', { name: 'Volver' }))
     expect(navigate).toHaveBeenCalledWith({ to: '..' })
   })
 })
@@ -170,7 +187,11 @@ describe('Challenge › creating one', () => {
     let created = false
     const api = fakeApi({
       ...profileRoute,
-      'GET /challenges/active': () => json({ challenge: created ? challenge() : null }),
+      'GET /challenges/active': () => json({
+          challenge: created
+            ? challenge({ name: 'Sin café', description: 'Nada de café fuera', days: 10, doneDays: 0, expectedSavingsCents: 1234 })
+            : null,
+        }),
       'POST /challenges': () => {
         created = true
         return json({})
@@ -185,7 +206,8 @@ describe('Challenge › creating one', () => {
     await user.type(screen.getByLabelText('Ahorro esperado (en pesos)'), '12.34')
     await user.click(screen.getByRole('button', { name: 'Empezar reto' }))
 
-    expect(await screen.findByText('Día 3 de 7')).toBeTruthy()
+    expect(await screen.findByText('Día 0 de 10')).toBeTruthy()
+    expect(screen.getByText('Sin café')).toBeTruthy()
     expect(api.writes()).toEqual([
       {
         method: 'POST',
@@ -195,7 +217,12 @@ describe('Challenge › creating one', () => {
     ])
   })
 
-  it('clamps the duration to 1–30 days', async () => {
+  it.each([
+    ['99', 30],
+    ['0', 1],
+    ['-5', 1],
+    ['', 7],
+  ])('sends a duration of %j as %i days (clamped to 1–30, empty defaults to 7)', async (typed, days) => {
     const user = userEvent.setup()
     const api = fakeApi({ ...routes(null), 'POST /challenges': () => json({}) })
     render(renderWithQuery(<Challenge />).tree)
@@ -203,11 +230,11 @@ describe('Challenge › creating one', () => {
 
     await fill(user, 'Sin café', 'Nada de café fuera')
     await user.clear(screen.getByLabelText('Duración (días)'))
-    await user.type(screen.getByLabelText('Duración (días)'), '99')
+    if (typed) await user.type(screen.getByLabelText('Duración (días)'), typed)
     await user.click(screen.getByRole('button', { name: 'Empezar reto' }))
 
     await waitFor(() => expect(api.writes()).toHaveLength(1))
-    expect(api.writes()[0].body).toMatchObject({ days: 30, expectedSavingsCents: 0 })
+    expect(api.writes()[0].body).toMatchObject({ days, expectedSavingsCents: 0 })
   })
 
   it('shows the error when the server rejects the challenge', async () => {
@@ -219,6 +246,6 @@ describe('Challenge › creating one', () => {
     await fill(user, 'Sin café', 'Nada de café fuera')
     await user.click(screen.getByRole('button', { name: 'Empezar reto' }))
 
-    expect(await screen.findByText('boom')).toBeTruthy()
+    expect((await screen.findByRole('alert')).textContent).toBe('boom')
   })
 })
