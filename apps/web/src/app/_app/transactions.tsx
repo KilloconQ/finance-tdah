@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
@@ -46,9 +46,13 @@ function Transactions() {
   const deleteMutation = useDeleteExpense()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [justDeleted, setJustDeleted] = useState(false)
+  const [deleteFailed, setDeleteFailed] = useState(false)
+  const bannerTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(bannerTimer.current), [])
 
   const grouped = expenses.reduce<Record<string, typeof expenses>>((acc, e) => {
-    const day = e.occurredAt.slice(0, 10)
+    // 'sv-SE' formats as YYYY-MM-DD in the viewer's local time zone.
+    const day = new Date(e.occurredAt).toLocaleDateString('sv-SE')
     acc[day] = acc[day] ? [...acc[day], e] : [e]
     return acc
   }, {})
@@ -103,11 +107,19 @@ function Transactions() {
                           <div className="mb-4 text-xs text-ink-soft">
                             Esta acción no se puede deshacer.
                           </div>
+                          {deleteFailed ? (
+                            <div role="alert" className="mb-4 text-xs font-medium text-danger">
+                              No se pudo borrar el gasto. Intenta de nuevo.
+                            </div>
+                          ) : null}
                           <div className="flex gap-2">
                             <Btn
                               kind="ghost"
                               className="flex-1"
-                              onClick={() => setConfirmingId(null)}
+                              onClick={() => {
+                                setConfirmingId(null)
+                                setDeleteFailed(false)
+                              }}
                             >
                               Cancelar
                             </Btn>
@@ -115,13 +127,18 @@ function Transactions() {
                               kind="danger"
                               className="flex-1"
                               onClick={() =>
-                                deleteMutation.mutate(e.id, {
-                                  onSuccess: () => {
-                                    setConfirmingId(null)
-                                    setJustDeleted(true)
-                                    window.setTimeout(() => setJustDeleted(false), 1400)
-                                  },
-                                })
+                                {
+                                  setDeleteFailed(false)
+                                  deleteMutation.mutate(e.id, {
+                                    onSuccess: () => {
+                                      setConfirmingId(null)
+                                      setJustDeleted(true)
+                                      window.clearTimeout(bannerTimer.current)
+                                      bannerTimer.current = window.setTimeout(() => setJustDeleted(false), 1400)
+                                    },
+                                    onError: () => setDeleteFailed(true),
+                                  })
+                                }
                               }
                               disabled={deleteMutation.isPending}
                             >
