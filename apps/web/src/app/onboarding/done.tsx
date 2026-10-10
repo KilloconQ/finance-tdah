@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Btn, Hello } from '@/components'
 import { mutations } from '@/lib/queries'
@@ -14,14 +14,17 @@ function OnboardingDone() {
   const navigate = useNavigate()
   const draft = useOnboardingDraft()
   const [submitting, setSubmitting] = useState(false)
+  const inFlight = useRef(false)
   const [error, setError] = useState<string | null>(null)
 
   const finish = async () => {
+    if (inFlight.current) return
+    inFlight.current = true
     setSubmitting(true)
     setError(null)
     try {
       const session = await authClient.getSession()
-      const displayName = session.data?.user.name ?? 'Tú'
+      const displayName = Array.from(session.data?.user.name?.trim() ?? '').slice(0, 60).join('').trim() || 'Tú'
 
       await mutations.completeOnboarding({
         displayName,
@@ -31,7 +34,7 @@ function OnboardingDone() {
           ? {
               name: draft.firstGoal.name,
               emoji: draft.firstGoal.emoji,
-              targetCents: draft.firstGoal.target * 100,
+              targetCents: Math.round(draft.firstGoal.target * 100),
             }
           : undefined,
       })
@@ -40,6 +43,7 @@ function OnboardingDone() {
       navigate({ to: '/', replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos guardar tu setup')
+      inFlight.current = false
       setSubmitting(false)
     }
   }

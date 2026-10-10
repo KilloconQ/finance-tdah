@@ -4,7 +4,7 @@ import { Btn, Hello } from '@/components'
 import { JarWithStats } from '@/features/goals'
 import { cn } from '@/lib/cn'
 import { formatMoney } from '@/lib/format'
-import { setOnboardingDraft } from '@/lib/onboarding-draft'
+import { setOnboardingDraft, useOnboardingDraft } from '@/lib/onboarding-draft'
 import { OnboardingLayout } from './-layout'
 
 const PRESETS = [
@@ -20,7 +20,10 @@ export const Route = createFileRoute('/onboarding/goal')({
 
 function OnboardingGoal() {
   const navigate = useNavigate()
-  const [chosenIdx, setChosenIdx] = useState(0)
+  const saved = useOnboardingDraft().firstGoal
+  const [chosenIdx, setChosenIdx] = useState(() =>
+    Math.max(0, PRESETS.findIndex((p) => p.name === saved?.name)),
+  )
   const chosen = PRESETS[chosenIdx]
 
   const handleNext = () => {
@@ -31,6 +34,11 @@ function OnboardingGoal() {
         emoji: chosen.emoji,
       },
     })
+    navigate({ to: '/onboarding/done' })
+  }
+
+  const handleSkip = () => {
+    setOnboardingDraft({ firstGoal: undefined })
     navigate({ to: '/onboarding/done' })
   }
 
@@ -76,7 +84,7 @@ function OnboardingGoal() {
       <Btn kind="primary" className="w-full py-4" onClick={handleNext}>
         Crear meta
       </Btn>
-      <Btn kind="plain" className="mt-1 w-full" onClick={() => navigate({ to: '/onboarding/done' })}>
+      <Btn kind="plain" className="mt-1 w-full" onClick={handleSkip}>
         Después
       </Btn>
     </OnboardingLayout>

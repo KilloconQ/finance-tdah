@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { AppBar, Btn, Dots, Hello, PhoneShell } from '@/components'
 import { Jar } from '@/features/goals'
+import { ONBOARDING_STEPS } from './-layout'
 
 export const Route = createFileRoute('/onboarding/')({
   component: OnboardingWelcome,
@@ -10,9 +11,9 @@ function OnboardingWelcome() {
   const navigate = useNavigate()
   return (
     <PhoneShell variant="narrow">
-      <AppBar right={<span className="wf-mono text-[12px] text-ink-mid">1 / 5</span>} />
+      <AppBar right={<span className="wf-mono text-[12px] text-ink-mid">1 / {ONBOARDING_STEPS}</span>} />
       <div className="flex flex-1 flex-col px-7 pb-6 pt-2">
-        <Dots total={5} filled={1} size={6} gap={5} />
+        <Dots total={ONBOARDING_STEPS} filled={1} size={6} gap={5} />
         <div className="mt-6 text-center">
           <h1 className="text-[28px] font-medium leading-tight text-ink">
             Tus finanzas,
