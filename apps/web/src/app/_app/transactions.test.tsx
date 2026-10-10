@@ -15,8 +15,16 @@ vi.mock('@/components/TabBar', () => ({ TabBar: () => null }))
 const { Route } = await import('./transactions')
 const Transactions = (Route as unknown as { options: { component: () => React.ReactElement } }).options.component
 
-beforeEach(() => navigate.mockReset())
-afterEach(cleanup)
+// Pin the zone so day grouping doesn't depend on the runner: Mexico City is UTC-6 all year.
+beforeEach(() => {
+  navigate.mockReset()
+  vi.stubEnv('TZ', 'America/Mexico_City')
+  expect(new Date('2026-10-06T03:00:00.000Z').getTimezoneOffset()).toBe(360)
+})
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
 
 const E1 = 'e1111111-1111-4111-8111-111111111111'
 const E2 = 'e2222222-2222-4222-8222-222222222222'
@@ -81,18 +89,25 @@ describe('Transactions', () => {
   })
 
   it('groups by the local calendar day, not the UTC one', async () => {
-    vi.stubEnv('TZ', 'America/Mexico_City') // UTC-6
-    try {
-      // 2026-10-06T03:00Z is Monday 2026-10-05 21:00 in Mexico City.
-      fakeApi(expensesRoute([expense({ occurredAt: '2026-10-06T03:00:00.000Z' })]))
-      render(renderWithQuery(<Transactions />).tree)
+    // 2026-10-06T03:00Z is Monday 2026-10-05 21:00 in Mexico City.
+    fakeApi(expensesRoute([expense({ occurredAt: '2026-10-06T03:00:00.000Z' })]))
+    render(renderWithQuery(<Transactions />).tree)
 
-      await screen.findByText('Latte')
-      expect(within(dayGroup(/lunes/i)).getByText('Latte')).toBeTruthy()
-      expect(screen.queryByText(/martes/i)).toBeNull()
-    } finally {
-      vi.unstubAllEnvs()
-    }
+    await screen.findByText('Latte')
+    expect(within(dayGroup(/lunes/i)).getByText('Latte')).toBeTruthy()
+    expect(screen.queryByText(/martes/i)).toBeNull()
+  })
+
+  it('groups by day whatever format the runtime gives for other locales', async () => {
+    const original = Date.prototype.toLocaleDateString
+    vi.spyOn(Date.prototype, 'toLocaleDateString').mockImplementation(function (this: Date, locale, opts) {
+      return locale === 'sv-SE' ? '05/10/2026' : original.call(this, locale, opts)
+    })
+    fakeApi(expensesRoute([expense()]))
+    render(renderWithQuery(<Transactions />).tree)
+
+    await screen.findByText('Latte')
+    expect(within(dayGroup(/lunes/i)).getByText('Latte')).toBeTruthy()
   })
 
   it('shows expenses, income and transfers with different signs', async () => {
@@ -215,5 +230,53 @@ describe('Transactions', () => {
     expect(screen.getByRole('button', { name: 'Confirmar' })).toHaveProperty('disabled', false)
     expect(screen.getByText('¿Estás seguro?')).toBeTruthy()
     expect(screen.queryByText('✓ Gasto borrado')).toBeNull()
+  })
+
+  it('shows a failed delete only inside the row that failed', async () => {
+    fakeApi({
+      ...expensesRoute([expense(), expense({ id: E2, description: 'Taxi' })]),
+      [`DELETE /expenses/${E1}`]: () => json({ error: 'boom' }, 500),
+    })
+    const user = userEvent.setup()
+    render(renderWithQuery(<Transactions />).tree)
+
+    await screen.findByText('Taxi')
+    await user.click(within(row('Latte')).getByRole('button', { name: 'Borrar gasto' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }))
+    await screen.findByRole('alert')
+
+    // Open the confirmation for another row: it must not inherit the error.
+    await user.click(within(row('Taxi')).getByRole('button', { name: 'Borrar gasto' }))
+    expect(screen.getByText('¿Estás seguro?')).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('keeps another row\'s confirmation open when a pending delete finishes', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    let remaining = [expense(), expense({ id: E2, description: 'Taxi' })]
+    fakeApi({
+      ...profileRoute,
+      'GET /expenses': () => json({ expenses: remaining }),
+      [`DELETE /expenses/${E1}`]: async () => {
+        await gate
+        remaining = remaining.filter((e) => e.id !== E1)
+        return json({ ok: true })
+      },
+    })
+    const user = userEvent.setup()
+    render(renderWithQuery(<Transactions />).tree)
+
+    await screen.findByText('Taxi')
+    await user.click(within(row('Latte')).getByRole('button', { name: 'Borrar gasto' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }))
+    // While the delete is in flight the user can't cancel it, but can open another row.
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveProperty('disabled', true)
+    await user.click(within(row('Taxi')).getByRole('button', { name: 'Borrar gasto' }))
+
+    release()
+    expect(await screen.findByText('✓ Gasto borrado')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByText('Latte')).toBeNull())
+    expect(screen.getByText('¿Estás seguro?')).toBeTruthy()
   })
 })
