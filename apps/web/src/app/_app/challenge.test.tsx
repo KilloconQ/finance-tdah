@@ -16,10 +16,13 @@ const { Route } = await import('./challenge')
 const Challenge = (Route as unknown as { options: { component: () => React.ReactElement } }).options.component
 
 beforeEach(() => navigate.mockReset())
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 const CHALLENGE_ID = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd'
-const today = () => new Date().toISOString().slice(0, 10)
+const TODAY = '2026-03-15'
 
 const challenge = (patch: Partial<ChallengeDTO> = {}): ChallengeDTO => ({
   id: CHALLENGE_ID,
@@ -74,7 +77,9 @@ describe('Challenge › active challenge', () => {
   })
 
   it('does not let the user check in twice on the same day', async () => {
-    const api = fakeApi(routes(challenge({ lastCheckedAt: today() })))
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(`${TODAY}T12:00:00Z`))
+    const api = fakeApi(routes(challenge({ lastCheckedAt: TODAY })))
     render(renderWithQuery(<Challenge />).tree)
 
     const button = await screen.findByRole('button', { name: 'Ya marcaste hoy ✓' })
@@ -82,19 +87,50 @@ describe('Challenge › active challenge', () => {
     expect(api.writes()).toEqual([])
   })
 
-  it('skips (resets) the challenge', async () => {
+  it('skips (resets) the challenge and shows it back at day 0', async () => {
     const user = userEvent.setup()
+    let done = 3
     const api = fakeApi({
-      ...routes(challenge()),
-      [`POST /challenges/${CHALLENGE_ID}/reset`]: () => json({}),
+      ...profileRoute,
+      'GET /challenges/active': () => json({ challenge: challenge({ doneDays: done }) }),
+      [`POST /challenges/${CHALLENGE_ID}/reset`]: () => {
+        done = 0
+        return json({})
+      },
     })
     render(renderWithQuery(<Challenge />).tree)
 
     await user.click(await screen.findByRole('button', { name: 'Saltar' }))
 
-    await waitFor(() =>
-      expect(api.writes()).toEqual([{ method: 'POST', path: `/challenges/${CHALLENGE_ID}/reset`, body: undefined }]),
-    )
+    expect(await screen.findByText('Día 0 de 7')).toBeTruthy()
+    expect(api.writes()).toEqual([{ method: 'POST', path: `/challenges/${CHALLENGE_ID}/reset`, body: undefined }])
+  })
+
+  it('shows the server error when checking in fails', async () => {
+    const user = userEvent.setup()
+    fakeApi({
+      ...routes(challenge()),
+      [`POST /challenges/${CHALLENGE_ID}/check`]: () => json({ error: 'Ya marcaste el día de hoy' }, 409),
+    })
+    render(renderWithQuery(<Challenge />).tree)
+
+    await user.click(await screen.findByRole('button', { name: 'Sigo en el reto 💪' }))
+
+    expect(await screen.findByText('Ya marcaste el día de hoy')).toBeTruthy()
+    expect(screen.getByText('Día 3 de 7')).toBeTruthy()
+  })
+
+  it('shows the server error when skipping fails', async () => {
+    const user = userEvent.setup()
+    fakeApi({
+      ...routes(challenge()),
+      [`POST /challenges/${CHALLENGE_ID}/reset`]: () => json({ error: 'No hay reto activo' }, 404),
+    })
+    render(renderWithQuery(<Challenge />).tree)
+
+    await user.click(await screen.findByRole('button', { name: 'Saltar' }))
+
+    expect(await screen.findByText('No hay reto activo')).toBeTruthy()
   })
 
   it('goes back when the back button is pressed', async () => {
@@ -183,6 +219,6 @@ describe('Challenge › creating one', () => {
     await fill(user, 'Sin café', 'Nada de café fuera')
     await user.click(screen.getByRole('button', { name: 'Empezar reto' }))
 
-    await waitFor(() => expect(document.querySelector('.text-danger')?.textContent).toBeTruthy())
+    expect(await screen.findByText('boom')).toBeTruthy()
   })
 })
