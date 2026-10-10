@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Pencil, Plus, Receipt, Trash2 } from 'lucide-react'
@@ -46,9 +46,12 @@ function Transactions() {
   const deleteMutation = useDeleteExpense()
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
   const [justDeleted, setJustDeleted] = useState(false)
+  const [failedId, setFailedId] = useState<string | null>(null)
+  const bannerTimer = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(bannerTimer.current), [])
 
   const grouped = expenses.reduce<Record<string, typeof expenses>>((acc, e) => {
-    const day = e.occurredAt.slice(0, 10)
+    const day = localDayKey(new Date(e.occurredAt))
     acc[day] = acc[day] ? [...acc[day], e] : [e]
     return acc
   }, {})
@@ -103,26 +106,41 @@ function Transactions() {
                           <div className="mb-4 text-xs text-ink-soft">
                             Esta acción no se puede deshacer.
                           </div>
+                          {failedId === e.id ? (
+                            <div role="alert" className="mb-4 text-xs font-medium text-danger">
+                              No se pudo borrar el gasto. Intenta de nuevo.
+                            </div>
+                          ) : null}
                           <div className="flex gap-2">
                             <Btn
                               kind="ghost"
                               className="flex-1"
-                              onClick={() => setConfirmingId(null)}
+                              disabled={deleteMutation.isPending}
+                              onClick={() => {
+                                setConfirmingId(null)
+                                setFailedId(null)
+                              }}
                             >
                               Cancelar
                             </Btn>
                             <Btn
                               kind="danger"
                               className="flex-1"
-                              onClick={() =>
+                              onClick={() => {
+                                setFailedId(null)
                                 deleteMutation.mutate(e.id, {
                                   onSuccess: () => {
-                                    setConfirmingId(null)
+                                    setConfirmingId((id) => (id === e.id ? null : id))
                                     setJustDeleted(true)
-                                    window.setTimeout(() => setJustDeleted(false), 1400)
+                                    window.clearTimeout(bannerTimer.current)
+                                    bannerTimer.current = window.setTimeout(
+                                      () => setJustDeleted(false),
+                                      1400,
+                                    )
                                   },
+                                  onError: () => setFailedId(e.id),
                                 })
-                              }
+                              }}
                               disabled={deleteMutation.isPending}
                             >
                               {deleteMutation.isPending ? 'Borrando...' : 'Confirmar'}
@@ -217,6 +235,12 @@ function amountToneClass(kind: 'expense' | 'income' | 'transfer'): string {
   if (kind === 'income') return 'text-good'
   if (kind === 'transfer') return 'text-ink-mid'
   return 'text-ink'
+}
+
+// Local YYYY-MM-DD, independent of the runtime's locale formatting.
+function localDayKey(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 function prettyDate(d: string): string {
