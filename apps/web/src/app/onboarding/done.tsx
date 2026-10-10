@@ -24,7 +24,7 @@ function OnboardingDone() {
     setError(null)
     try {
       const session = await authClient.getSession()
-      const displayName = session.data?.user.name?.trim().slice(0, 60) || 'Tú'
+      const displayName = Array.from(session.data?.user.name?.trim() ?? '').slice(0, 60).join('').trim() || 'Tú'
 
       await mutations.completeOnboarding({
         displayName,
@@ -34,7 +34,7 @@ function OnboardingDone() {
           ? {
               name: draft.firstGoal.name,
               emoji: draft.firstGoal.emoji,
-              targetCents: draft.firstGoal.target * 100,
+              targetCents: Math.round(draft.firstGoal.target * 100),
             }
           : undefined,
       })

@@ -64,4 +64,12 @@ describe('Onboarding › first goal', () => {
     expect(savedDraft().firstGoal).toBeUndefined()
     expect(navigate).toHaveBeenCalledWith({ to: '/onboarding/done' })
   })
+
+  it('shows the earlier choice when returning to the step', async () => {
+    setOnboardingDraft({ firstGoal: { name: 'Laptop nueva', emoji: '💻', target: 30000 } })
+    render(<Goal />)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear meta' }))
+
+    expect(savedDraft().firstGoal).toEqual({ name: 'Laptop nueva', target: 30000, emoji: '💻' })
+  })
 })

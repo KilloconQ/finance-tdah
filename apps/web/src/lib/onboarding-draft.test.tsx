@@ -70,4 +70,21 @@ describe('onboarding draft', () => {
     render(<FreshProbe />)
     expect(shown()).toEqual({ pain: [], inputPreference: 'manual' })
   })
+
+  it.each([
+    ['pain is not an array', { pain: 'impulso' }, { pain: [], inputPreference: 'manual' }],
+    ['pain holds non-strings', { pain: ['a', 1, null] }, { pain: ['a'], inputPreference: 'manual' }],
+    ['inputPreference is invalid', { inputPreference: 'telepathy' }, { pain: [], inputPreference: 'manual' }],
+    ['firstGoal target is not finite', { firstGoal: { name: 'x', emoji: 'y', target: 'lots' } }, { pain: [], inputPreference: 'manual' }],
+    ['the JSON is not an object', [1, 2], { pain: [], inputPreference: 'manual' }],
+  ])('sanitizes a stored draft of the wrong shape when %s', async (_, stored, expected) => {
+    window.localStorage.setItem(KEY, JSON.stringify(stored))
+    vi.resetModules()
+    const fresh = await import('./onboarding-draft')
+    function FreshProbe() {
+      return <pre data-testid="draft">{JSON.stringify(fresh.useOnboardingDraft())}</pre>
+    }
+    render(<FreshProbe />)
+    expect(shown()).toEqual(expected)
+  })
 })

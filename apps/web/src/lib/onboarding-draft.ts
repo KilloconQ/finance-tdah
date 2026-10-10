@@ -13,6 +13,31 @@ const DEFAULT: OnboardingDraft = {
   inputPreference: 'manual',
 }
 
+const INPUT_PREFERENCES = ['voice', 'widget', 'manual']
+
+// Stored JSON is untrusted: keep only well-shaped fields, default the rest.
+function sanitize(value: unknown): OnboardingDraft {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return DEFAULT
+  const v = value as Record<string, unknown>
+  const draft: OnboardingDraft = {
+    pain: Array.isArray(v.pain) ? v.pain.filter((p): p is string => typeof p === 'string') : [],
+    inputPreference: INPUT_PREFERENCES.includes(v.inputPreference as string)
+      ? (v.inputPreference as OnboardingDraft['inputPreference'])
+      : DEFAULT.inputPreference,
+  }
+  const g = v.firstGoal as Record<string, unknown> | null | undefined
+  if (
+    g &&
+    typeof g.name === 'string' &&
+    typeof g.emoji === 'string' &&
+    typeof g.target === 'number' &&
+    Number.isFinite(g.target)
+  ) {
+    draft.firstGoal = { name: g.name, emoji: g.emoji, target: g.target }
+  }
+  return draft
+}
+
 let cached: OnboardingDraft | null = null
 const listeners = new Set<() => void>()
 
@@ -24,7 +49,7 @@ function read(): OnboardingDraft {
   }
   try {
     const raw = window.localStorage.getItem(KEY)
-    cached = raw ? { ...DEFAULT, ...(JSON.parse(raw) as Partial<OnboardingDraft>) } : DEFAULT
+    cached = raw ? sanitize(JSON.parse(raw)) : DEFAULT
   } catch {
     cached = DEFAULT
   }

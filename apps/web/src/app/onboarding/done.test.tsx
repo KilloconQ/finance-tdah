@@ -104,6 +104,33 @@ describe('Onboarding › done', () => {
     expect(api.writes()[0].body?.displayName).toBe('a'.repeat(60))
   })
 
+  it('truncates by code points, never splitting an emoji, and trims after cutting', async () => {
+    getSession.mockResolvedValue({ data: { user: { name: `${'a'.repeat(59)}😀tail` } } })
+    const api = fakeApi(saved)
+    render(<Done />)
+    await userEvent.setup().click(finish())
+    await waitFor(() => expect(navigate).toHaveBeenCalled())
+    expect(api.writes()[0].body?.displayName).toBe(`${'a'.repeat(59)}😀`)
+  })
+
+  it('drops a trailing space left by the cut', async () => {
+    getSession.mockResolvedValue({ data: { user: { name: `${'a'.repeat(59)} bbb` } } })
+    const api = fakeApi(saved)
+    render(<Done />)
+    await userEvent.setup().click(finish())
+    await waitFor(() => expect(navigate).toHaveBeenCalled())
+    expect(api.writes()[0].body?.displayName).toBe('a'.repeat(59))
+  })
+
+  it('sends an integer number of cents for a fractional target', async () => {
+    setOnboardingDraft({ firstGoal: { name: 'Laptop nueva', emoji: '💻', target: 19.99 } })
+    const api = fakeApi(saved)
+    render(<Done />)
+    await userEvent.setup().click(finish())
+    await waitFor(() => expect(navigate).toHaveBeenCalled())
+    expect((api.writes()[0].body?.firstGoal as { targetCents: number }).targetCents).toBe(1999)
+  })
+
   it('disables the button while saving so it cannot be sent twice', async () => {
     let release!: () => void
     const api = fakeApi({
@@ -137,7 +164,7 @@ describe('Onboarding › done', () => {
     await user.click(finish())
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Entrar a la app' }).hasAttribute('disabled')).toBe(false))
-    expect(screen.getByText(/\S/, { selector: '.text-danger' })).toBeTruthy()
+    expect(screen.getByText('boom')).toBeTruthy()
     expect(navigate).not.toHaveBeenCalled()
     expect(window.localStorage.getItem('finance-tdah:onboarding-draft')).not.toBeNull()
 

@@ -2,13 +2,14 @@ import type { ReactNode } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { AppBar, Dots, PhoneShell } from '@/components'
 
+export const ONBOARDING_STEPS = 4
+
 interface OnboardingLayoutProps {
   step: number
-  total?: number
   children: ReactNode
 }
 
-export function OnboardingLayout({ step, total = 4, children }: OnboardingLayoutProps) {
+export function OnboardingLayout({ step, children }: OnboardingLayoutProps) {
   const navigate = useNavigate()
   return (
     <PhoneShell variant="narrow">
@@ -24,12 +25,12 @@ export function OnboardingLayout({ step, total = 4, children }: OnboardingLayout
         }
         right={
           <span className="wf-mono text-[12px] text-ink-mid">
-            {step} / {total}
+            {step} / {ONBOARDING_STEPS}
           </span>
         }
       />
       <div className="flex flex-1 flex-col overflow-y-auto px-7 pb-6 pt-2">
-        <Dots total={total} filled={step} size={6} gap={5} />
+        <Dots total={ONBOARDING_STEPS} filled={step} size={6} gap={5} />
         {children}
       </div>
     </PhoneShell>
