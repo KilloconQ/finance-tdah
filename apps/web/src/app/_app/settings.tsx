@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { AppBar, PhoneShell, TabBar, Btn } from '@/components'
 import { cn } from '@/lib/cn'
+import { setThemePreference, useThemePreference, type ThemePreference } from '@/lib/theme'
 import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
 import { usePushSubscription } from '@/lib/use-push-subscription'
 import { signOutAndClear } from '@/lib/session-reset'
@@ -52,6 +53,10 @@ function Settings() {
             valueCents={weeklyBudgetCents}
             onCommit={(cents) => setTweak.mutate({ weeklyBudgetCents: cents })}
           />
+        </Section>
+
+        <Section label="Apariencia" hint="Se guarda solo en este dispositivo.">
+          <ThemePicker />
         </Section>
 
         <Section
@@ -200,6 +205,55 @@ function Section({ label, hint, children }: SectionProps) {
       <div className="text-sm font-medium text-ink">{label}</div>
       {hint ? <div className="mt-1 text-xs text-ink-soft">{hint}</div> : null}
       <div className="mt-3">{children}</div>
+    </div>
+  )
+}
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Sistema' },
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Oscuro' },
+]
+
+// Radio group (roving tabindex): arrows move and select, as native radios do.
+function ThemePicker() {
+  const current = useThemePreference()
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+
+  function onKeyDown(e: React.KeyboardEvent, index: number) {
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+    if (!step) return
+    e.preventDefault()
+    const next = (index + step + THEME_OPTIONS.length) % THEME_OPTIONS.length
+    setThemePreference(THEME_OPTIONS[next].value)
+    refs.current[next]?.focus()
+  }
+
+  return (
+    <div role="radiogroup" aria-label="Tema" className="flex gap-1 rounded-xl border border-line bg-bg-alt p-1">
+      {THEME_OPTIONS.map((o, i) => {
+        const selected = o.value === current
+        return (
+          <button
+            key={o.value}
+            ref={(el) => {
+              refs.current[i] = el
+            }}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => setThemePreference(o.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
+            className={cn(
+              'wf-tap flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              selected ? 'bg-surface text-ink shadow-card' : 'text-ink-mid hover:text-ink',
+            )}
+          >
+            {o.label}
+          </button>
+        )
+      })}
     </div>
   )
 }
