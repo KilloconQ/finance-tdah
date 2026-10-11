@@ -17,6 +17,9 @@
         (pref !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
       document.documentElement.dataset.theme = dark ? 'dark' : 'light'
       document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+      // Browser chrome color; keep in sync with THEME_COLORS in src/lib/theme.ts.
+      var meta = document.querySelector('meta[name="theme-color"]')
+      if (meta) meta.setAttribute('content', dark ? '#151412' : '#fafaf9')
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

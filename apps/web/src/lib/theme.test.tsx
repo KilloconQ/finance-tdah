@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -5,6 +7,7 @@ import {
   initTheme,
   resolveTheme,
   setThemePreference,
+  THEME_COLORS,
   THEME_KEY,
   useThemePreference,
 } from './theme'
@@ -36,7 +39,10 @@ function mockSystemScheme(initialDark: boolean) {
 
 const root = () => document.documentElement
 
+const themeColorMeta = () => document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+
 beforeEach(() => {
+  document.head.insertAdjacentHTML('beforeend', '<meta name="theme-color" content="#fafaf9">')
   localStorage.clear()
   root().removeAttribute('data-theme')
   root().style.colorScheme = ''
@@ -45,6 +51,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  themeColorMeta()?.remove()
   vi.restoreAllMocks()
 })
 
@@ -113,6 +120,24 @@ describe('applying the theme', () => {
   it('resolves to light when matchMedia is unavailable', () => {
     vi.stubGlobal('matchMedia', undefined)
     expect(resolveTheme()).toBe('light')
+  })
+})
+
+describe('browser chrome color', () => {
+  it('keeps <meta name="theme-color"> in sync with the resolved theme', () => {
+    mockSystemScheme(false)
+    setThemePreference('dark')
+    expect(themeColorMeta()?.content).toBe(THEME_COLORS.dark)
+    setThemePreference('light')
+    expect(themeColorMeta()?.content).toBe(THEME_COLORS.light)
+  })
+
+  it('uses the same colors as the --color-bg tokens', () => {
+    // Vitest blanks `.css?raw` imports, so read the file (tests run from apps/web).
+    const css = readFileSync('src/index.css', 'utf8')
+    const light = /--color-bg:\s*(#\w+);/.exec(css)?.[1]
+    const dark = /:root\[data-theme='dark'\][^}]*--color-bg:\s*(#\w+);/.exec(css)?.[1]
+    expect(THEME_COLORS).toEqual({ light, dark })
   })
 })
 
@@ -221,5 +246,14 @@ describe('index.html bootstrap script', () => {
 
   it('stays in sync with the key used by the store', () => {
     expect(script).toContain(THEME_KEY)
+  })
+
+  it('sets the browser chrome color before first paint', () => {
+    mockSystemScheme(true)
+    runBootstrap()
+    expect(themeColorMeta()?.content).toBe(THEME_COLORS.dark)
+    localStorage.setItem(THEME_KEY, 'light')
+    runBootstrap()
+    expect(themeColorMeta()?.content).toBe(THEME_COLORS.light)
   })
 })

@@ -20,6 +20,7 @@
   --color-accent: #6f8463;
   --color-accent-strong: #5c7150;
   --color-accent-bg: #e9eee3;
+  --color-accent-muted: #c9d6bf; /* data fills (bar segments); accent-bg is too faint for those */
 
   --color-warn: #b8895c;
   --color-warn-bg: #f6ede3;
@@ -64,6 +65,7 @@
   --color-accent: #8fa881;
   --color-accent-strong: #a9c19b;
   --color-accent-bg: #262e20;
+  --color-accent-muted: #4b5b42;
 
   --color-warn: #d8a876;
   --color-warn-bg: #33291d;
@@ -75,6 +77,17 @@
   /* Shadows barely read on dark surfaces: deepen them, keep them soft. */
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px -2px rgb(0 0 0 / 0.35);
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -8px rgb(0 0 0 / 0.55);
+}
+
+/* Subscription initial avatars: hue per name (lib/avatar.ts), lightness per theme. */
+.avatar-tint {
+  background-color: hsl(var(--avatar-hue) 48% 91%);
+  color: hsl(var(--avatar-hue) 42% 30%);
+}
+
+:root[data-theme='dark'] .avatar-tint {
+  background-color: hsl(var(--avatar-hue) 24% 23%);
+  color: hsl(var(--avatar-hue) 55% 78%);
 }
 
 html,

@@ -6,6 +6,11 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 // bootstrap script in index.html — a test checks the key matches.
 export const THEME_KEY = 'finance-tdah:theme'
 
+// Browser chrome (status bar / address bar) color per theme: the --color-bg
+// tokens in index.css and the bootstrap script in index.html. A test keeps the
+// three in sync. The PWA manifest can't follow the theme: it stays light.
+export const THEME_COLORS = { light: '#fafaf9', dark: '#151412' } as const
+
 const PREFERENCES: readonly string[] = ['system', 'light', 'dark']
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
@@ -32,6 +37,7 @@ function applyTheme() {
   const root = document.documentElement
   root.dataset.theme = theme
   root.style.colorScheme = theme // native controls and scrollbars follow
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[theme])
 }
 
 function notify() {

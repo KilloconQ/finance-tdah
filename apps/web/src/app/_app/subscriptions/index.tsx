@@ -5,24 +5,9 @@ import { monthlyCostCents, yearlyCostCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { daysAgo } from '@/lib/format'
 import { subscriptionsQueryOptions } from '@/features/subscriptions'
+import { avatarTint } from '@/lib/avatar'
 import { queryClient } from '@/lib/query-client'
 import { useTweaks } from '@/lib/use-tweaks'
-
-/**
- * Deterministic pastel color for a subscription's initial avatar, derived from
- * its name so different services read as visually distinct (Apple TV+ ≠ Audible).
- */
-function initialAvatarStyle(name: string): { backgroundColor: string; color: string } {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
-  }
-  const hue = hash % 360
-  return {
-    backgroundColor: `hsl(${hue} 48% 91%)`,
-    color: `hsl(${hue} 42% 34%)`,
-  }
-}
 
 export const Route = createFileRoute('/_app/subscriptions/')({
   loader: () => queryClient.ensureQueryData(subscriptionsQueryOptions()),
@@ -96,8 +81,8 @@ function Subscriptions() {
                     return (
                       <Card key={sub.id} padded={false} className="flex items-center gap-3 p-3">
                         <span
-                          style={initialAvatarStyle(sub.name)}
-                          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
+                          style={avatarTint(sub.name)}
+                          className="avatar-tint inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold"
                           aria-hidden
                         >
                           {sub.name[0]?.toUpperCase() ?? '?'}
@@ -146,8 +131,8 @@ function Subscriptions() {
                     className="wf-tap flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-bg-alt"
                   >
                     <span
-                      style={initialAvatarStyle(sub.name)}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
+                      style={avatarTint(sub.name)}
+                      className="avatar-tint inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
                       aria-hidden
                     >
                       {sub.name[0]?.toUpperCase() ?? '?'}
