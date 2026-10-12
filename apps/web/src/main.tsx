@@ -6,7 +6,10 @@ import { routeTree } from './routeTree.gen'
 import { queryClient, SESSION_QUERY_KEY } from './lib/query-client'
 import { onAuthChange } from './lib/auth-broadcast'
 import { clearSessionCache, setSessionExpiredHandler } from './lib/session-reset'
+import { initTheme } from './lib/theme'
 import './index.css'
+
+initTheme()
 
 const router = createRouter({
   routeTree,

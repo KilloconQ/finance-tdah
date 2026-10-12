@@ -9,21 +9,9 @@ import {
   useCancelSubscription,
   usePauseSubscription,
 } from '@/features/subscriptions'
+import { avatarTint } from '@/lib/avatar'
 import { queryClient } from '@/lib/query-client'
 import { useTweaks } from '@/lib/use-tweaks'
-
-/** Deterministic pastel color for the initial avatar, derived from the name. */
-function initialAvatarStyle(name: string): { backgroundColor: string; color: string } {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
-  }
-  const hue = hash % 360
-  return {
-    backgroundColor: `hsl(${hue} 48% 91%)`,
-    color: `hsl(${hue} 42% 34%)`,
-  }
-}
 
 export const Route = createFileRoute('/_app/subscriptions/$id')({
   loader: ({ params }) => queryClient.ensureQueryData(subscriptionQueryOptions(params.id)),
@@ -83,8 +71,8 @@ function SubscriptionDetail() {
         <div className="max-w-lg space-y-4">
           <div className="flex items-center gap-4">
             <span
-              style={initialAvatarStyle(sub.name)}
-              className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold"
+              style={avatarTint(sub.name)}
+              className="avatar-tint inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold"
               aria-hidden
             >
               {sub.name[0]?.toUpperCase() ?? '?'}

@@ -59,6 +59,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 - Claves VAPID a prueba de errores: una clave mal puesta (repetida, privada en la línea de la pública, con comillas, truncada o de otro par) ya no tumba la API — `web-push` lanza un error al cargar y eso dejaba a todos sin poder entrar. Ahora `lib/vapid.ts` la valida, apaga solo las notificaciones y el log dice qué revisar; Ajustes avisa en español si la clave que trae la web es inválida.
 - Esquemas de actualización sin defaults heredados: un PATCH parcial reescribía campos no enviados porque Zod 4 conserva `.default()` bajo `.partial()` (el saldo de una cuenta → $0, el emoji de una meta → 🌿, la periodicidad de una suscripción → mensual). La web no lo sufría porque sus formularios mandan todo; cualquier otro cliente (las apps nativas) sí. Corregido en cuentas, metas y suscripciones, con una prueba que revisa todos los esquemas de actualización.
 - Suscripciones anuales contadas como mensuales: la lista sumaba el precio crudo de cada suscripción sin usar ("estás perdiendo $X al mes, $12X al año"), así que una anual de $1,200 salía como $1,200 al mes y $14,400 al año; el detalle calculaba "llevas $X pagados" como si todas fueran mensuales (60 días de esa anual: $2,400 en vez de ~$197). Ahora usan `monthlyCostCents` / `yearlyCostCents` / `costOverDaysCents` de `packages/shared`.
+- Dark mode: tema Sistema / Claro / Oscuro (por defecto Sistema), elegible en Ajustes → Apariencia. La preferencia se guarda por dispositivo en `localStorage` (no en el perfil), sigue al sistema en vivo y se aplica antes del primer pintado, así que no hay destello claro al cargar. Paleta oscura cálida (sin negro puro) con contraste AA documentado en `DESIGN.md` §8. Los avatares de suscripciones y la barra de "cuánto tienes" se adaptan al tema; el color de la barra del navegador (`theme-color`) lo sigue. Limitación conocida: el manifiesto de la PWA es estático, así que la pantalla de arranque de la app instalada sigue siendo clara.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
@@ -68,7 +69,6 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 
 - **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
 - **Apps nativas de verdad** (no un wrapper tipo Capacitor): para aprovechar cada plataforma — voz del sistema, widgets, Siri/Atajos y gastos automáticos con Apple Pay, notificaciones nativas, Face ID. Falta decidir entre Swift + Kotlin puro o React Native/Expo con extensiones nativas; en ambos casos hace falta otro método de login (la API usa cookies de sesión) y una Mac con cuenta de Apple Developer para iOS. Es una fase separada; hasta entonces la voz sigue congelada.
-- **Dark mode**: fuera de alcance del rediseño actual (`DESIGN.md` es light-only por decisión de diseño).
 
 ## Cómo se prioriza
 

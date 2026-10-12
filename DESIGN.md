@@ -5,7 +5,7 @@ mobile-first **and** responsive pass. Screens must look intentional on phone, ta
 and desktop — not a phone column stretched across a wide screen.
 
 Product: Spanish-language personal finance app for people with ADHD. Calm, warm,
-low-cognitive-load. Light theme only (dark mode out of scope for now).
+low-cognitive-load. Light and dark themes (System / Light / Dark, default System — see §8).
 
 ---
 
@@ -118,5 +118,70 @@ Keep the warm-neutral + sage palette. Changes:
 
 ## 7. Out of scope now
 
-Dark mode, real brand logos for subscriptions, household/shared accounts, edit/delete UI for
+Real brand logos for subscriptions, household/shared accounts, edit/delete UI for
 existing records (endpoints exist — follow-up), voice transcription (stub stays).
+
+---
+
+## 8. Dark theme
+
+Same warm-neutral + sage identity, not an inversion. `index.css` holds both palettes: light values
+in `@theme`, dark overrides in `:root[data-theme='dark']`. Components only use tokens, so a theme
+swap never touches them.
+
+**Mechanics**
+- Preference `system | light | dark` (default `system`) lives in `localStorage` key
+  `finance-tdah:theme`, per device on purpose, never in the profile. Store: `lib/theme.ts`.
+- `system` follows `prefers-color-scheme` live; Light/Dark ignore the OS.
+- An inline script in `index.html` sets `<html data-theme>` and `color-scheme` before first paint
+  (no light flash). Its rules and `THEME_COLORS` must match `lib/theme.ts` and the `--color-bg`
+  tokens; `lib/theme.test.tsx` fails if they drift.
+- `<meta name="theme-color">` follows the resolved theme. The PWA manifest cannot (one static
+  value): it stays light, so a dark-mode user sees a light splash when launching the installed app.
+- Selector: Ajustes → Apariencia (Sistema / Claro / Oscuro).
+
+**Rules for new UI**
+- Colors come from tokens only. No hex/`rgb()`/Tailwind palette colors (`bg-white`, `text-gray-*`)
+  and no fixed shadows. Per-item colors (e.g. subscription avatars) set only a hue and let a class
+  in `index.css` choose lightness per theme (`.avatar-tint`).
+- Never pure black or pure white: dark background is warm charcoal `#151412`.
+- Text uses `ink`, `ink-mid` or `ink-soft`. `ink-ghost` is decoration only (borders, dividers, icons),
+  never text, and is not used for text today (placeholders use `ink-soft`). Data fills (bar segments) use `accent-muted`, not `accent-bg`
+  (a faint tint for backgrounds behind text).
+- Selected = `accent-bg` + `accent-strong` (soft) or `accent` + `surface` (strong), as in light.
+
+**Dark palette**
+
+| Token | Value | Token | Value |
+|---|---|---|---|
+| `bg` / `canvas` | `#151412` | `accent` | `#8fa881` |
+| `bg-alt` | `#1c1b19` | `accent-strong` | `#a9c19b` |
+| `surface` | `#201f1c` | `accent-bg` | `#262e20` |
+| `line` / `line-soft` | `#36342f` / `#2b2a26` | `accent-muted` | `#4b5b42` (light `#c9d6bf`) |
+| `ink` | `#ece9e3` | `warn` / `warn-bg` | `#d8a876` / `#33291d` |
+| `ink-mid` | `#b0ada6` | `danger` / `danger-bg` | `#dc9494` / `#3b2727` |
+| `ink-soft` | `#908d86` | `good` / `good-bg` | `#8db39f` / `#212f28` |
+| `ink-ghost` | `#5c5a54` (decorative) | | |
+
+**Contrast (WCAG 2.x, text needs 4.5:1)** — computed from the token values with the relative
+luminance formula.
+
+| Pair (foreground on background) | Dark | Light |
+|---|---|---|
+| `ink` on `bg` / `surface` | 15.19 / 13.60 | 15.95 / 16.66 |
+| `ink-mid` on `bg` / `bg-alt` / `surface` | 8.22 / 7.68 / 7.36 | 5.18 / 4.92 / 5.41 |
+| `ink-soft` on `bg` / `bg-alt` / `surface` | 5.56 / 5.20 / 4.98 | 2.45 / 2.32 / 2.56 |
+| `accent-strong` on `bg` / `accent-bg` | 9.46 / 7.22 | 5.11 / 4.53 |
+| `accent` on `bg` / `surface` | 7.09 / 6.35 | 3.90 / 4.07 |
+| `surface` on `accent` (primary button) | 6.35 | 4.07 |
+| `warn` on `bg` / `warn-bg` | 8.58 / 6.63 | 2.97 / 2.68 |
+| `danger` on `bg` / `danger-bg` | 7.63 / 5.78 | 4.07 / 3.50 |
+| `good` on `bg` / `good-bg` | 7.96 / 6.05 | 3.64 / 3.26 |
+| Avatar initial on its tint (worst hue of 360) | 5.98 | 4.85 |
+
+Dark: every text token passes AA on every surface it is used on (lowest: `ink-soft` on `surface`,
+4.98). Light: the pairs below 4.5 are **pre-existing and unchanged** by the dark-mode work, which
+only fixed the avatar initials (lightness 34% → 30%, was 3.95 at yellow hues). Known light-theme
+debt: `ink-soft` hints/captions (2.3–2.6), `warn`, `good`, `danger` and `accent` as small text, and
+the primary button label. Fixing them means darkening those light tokens, a visual change to the
+light theme that needs its own decision.
