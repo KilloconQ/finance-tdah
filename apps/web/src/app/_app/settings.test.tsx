@@ -104,6 +104,7 @@ describe('Settings › theme', () => {
     expect(document.documentElement.dataset.theme).toBe('dark')
     expect(localStorage.getItem(THEME_KEY)).toBe('dark')
     expect(choice('Oscuro').getAttribute('aria-checked')).toBe('true')
+    expect(choice('Oscuro').className).toContain('ring-1')
     expect(choice('Sistema').getAttribute('aria-checked')).toBe('false')
     await user.click(choice('Claro'))
     expect(document.documentElement.dataset.theme).toBe('light')

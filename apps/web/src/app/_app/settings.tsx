@@ -247,7 +247,7 @@ function ThemePicker() {
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cn(
               'wf-tap flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              selected ? 'bg-accent-bg text-accent-strong shadow-card' : 'text-ink-mid hover:text-ink',
+              selected ? 'bg-accent-bg text-accent-strong shadow-card ring-1 ring-accent/60' : 'text-ink-mid hover:text-ink',
             )}
           >
             {o.label}

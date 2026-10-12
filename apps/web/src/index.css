@@ -60,7 +60,7 @@
   --color-ink: #ece9e3;
   --color-ink-mid: #b0ada6;
   --color-ink-soft: #908d86;
-  --color-ink-ghost: #5c5a54; /* decorative only (placeholders, disabled) */
+  --color-ink-ghost: #5c5a54; /* decoration only (borders, dividers, icons), never text; unused as text today */
 
   --color-accent: #8fa881;
   --color-accent-strong: #a9c19b;

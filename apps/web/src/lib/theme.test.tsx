@@ -257,3 +257,53 @@ describe('index.html bootstrap script', () => {
     expect(themeColorMeta()?.content).toBe(THEME_COLORS.light)
   })
 })
+
+describe('theme preference with failing storage', () => {
+  const blockWrites = () =>
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('quota')
+    })
+
+  it('applies the choice when only the write fails', () => {
+    mockSystemScheme(false)
+    blockWrites()
+    const { result } = renderHook(() => useThemePreference())
+    act(() => setThemePreference('dark'))
+    expect(root().dataset.theme).toBe('dark')
+    expect(getThemePreference()).toBe('dark')
+    expect(result.current).toBe('dark')
+  })
+
+  it('goes back to storage after a later successful write', () => {
+    mockSystemScheme(false)
+    const spy = blockWrites()
+    setThemePreference('dark')
+    spy.mockRestore()
+    setThemePreference('light')
+    expect(localStorage.getItem(THEME_KEY)).toBe('light')
+    expect(getThemePreference()).toBe('light')
+    localStorage.setItem(THEME_KEY, 'dark')
+    expect(getThemePreference()).toBe('dark')
+  })
+
+  it('lets a storage event from another tab win over a failed write', () => {
+    mockSystemScheme(false)
+    const spy = blockWrites()
+    const stop = initTheme()
+    setThemePreference('dark')
+    spy.mockRestore()
+    localStorage.setItem(THEME_KEY, 'light')
+    window.dispatchEvent(new StorageEvent('storage', { key: THEME_KEY }))
+    expect(getThemePreference()).toBe('light')
+    stop()
+  })
+
+  it('remembers the last successful read when reads start failing', () => {
+    localStorage.setItem(THEME_KEY, 'dark')
+    expect(getThemePreference()).toBe('dark')
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('denied')
+    })
+    expect(getThemePreference()).toBe('dark')
+  })
+})

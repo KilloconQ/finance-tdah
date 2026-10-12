@@ -145,8 +145,8 @@ swap never touches them.
   and no fixed shadows. Per-item colors (e.g. subscription avatars) set only a hue and let a class
   in `index.css` choose lightness per theme (`.avatar-tint`).
 - Never pure black or pure white: dark background is warm charcoal `#151412`.
-- Text uses `ink`, `ink-mid` or `ink-soft`. `ink-ghost` is decoration only (disabled, placeholders
-  that are not the only cue). Data fills (bar segments) use `accent-muted`, not `accent-bg`
+- Text uses `ink`, `ink-mid` or `ink-soft`. `ink-ghost` is decoration only (borders, dividers, icons),
+  never text, and is not used for text today (placeholders use `ink-soft`). Data fills (bar segments) use `accent-muted`, not `accent-bg`
   (a faint tint for backgrounds behind text).
 - Selected = `accent-bg` + `accent-strong` (soft) or `accent` + `surface` (strong), as in light.
 

@@ -15,13 +15,19 @@ const PREFERENCES: readonly string[] = ['system', 'light', 'dark']
 const DARK_QUERY = '(prefers-color-scheme: dark)'
 
 // Fallback when localStorage is blocked: the choice still holds for this tab.
+// Synced from every valid read; after a failed write it wins over storage until
+// the next successful write or a `storage` event from another tab.
 let memory: ThemePreference = 'system'
+let writeFailed = false
 const listeners = new Set<() => void>()
 
 export function getThemePreference(): ThemePreference {
+  if (writeFailed) return memory
   try {
     const raw = window.localStorage.getItem(THEME_KEY)
-    return PREFERENCES.includes(raw as string) ? (raw as ThemePreference) : 'system'
+    if (!PREFERENCES.includes(raw as string)) return 'system'
+    memory = raw as ThemePreference
+    return memory
   } catch {
     return memory
   }
@@ -48,8 +54,9 @@ export function setThemePreference(preference: ThemePreference) {
   memory = preference
   try {
     window.localStorage.setItem(THEME_KEY, preference)
+    writeFailed = false
   } catch {
-    /* localStorage unavailable — keep in-memory */
+    writeFailed = true // localStorage unavailable — memory wins
   }
   applyTheme()
   notify()
@@ -65,7 +72,9 @@ export function initTheme(): () => void {
     notify()
   }
   const onStorage = (e: StorageEvent) => {
-    if (e.key === THEME_KEY || e.key === null) onChange()
+    if (e.key !== THEME_KEY && e.key !== null) return
+    writeFailed = false // another tab's value is the newest truth
+    onChange()
   }
   media?.addEventListener('change', onChange)
   window.addEventListener('storage', onStorage)
