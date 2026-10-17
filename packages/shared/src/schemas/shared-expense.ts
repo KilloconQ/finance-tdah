@@ -86,3 +86,13 @@ export type SharedExpenseDTO = z.infer<typeof sharedExpenseSchema>
 export type SettlementDTO = z.infer<typeof settlementSchema>
 export type GroupBalancesDTO = z.infer<typeof groupBalancesSchema>
 export type CreateSharedExpenseInput = z.input<typeof createSharedExpenseSchema>
+
+export const groupListSchema = z.object({ groups: z.array(expenseGroupSchema) })
+
+export const groupDetailSchema = z.object({
+  group: expenseGroupSchema,
+  expenses: z.array(sharedExpenseSchema),
+  settlements: z.array(settlementSchema),
+  balances: groupBalancesSchema,
+})
+export type GroupDetailDTO = z.infer<typeof groupDetailSchema>
