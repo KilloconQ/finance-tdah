@@ -13,7 +13,7 @@ S7. Code identifiers in English; UI copy in Spanish. Money in integer cents.
 ## Tasks
 - [x] T1 (S2,S3,S7) shared: Drizzle tables + migration 0007_dazzling_silhouette, Zod schemas, pure domain fns `splitEqual` and `computeBalances`/`simplifyDebts` + unit tests. Route: inline. RED observed (module missing), GREEN 8/8; shared typecheck clean, 98 tests pass. Commit: 03cc638.
 - [x] T2 (S1,S2,S4,S5) api: groups/members/expenses/settlements routes + integration test. Route: inline. 6 integration tests pass on throwaway Postgres (docker ft_test, port 55432); typecheck/lint/all tests green. Not done: PATCH (edit) of a shared expense, only DELETE (S5 edit half). Commit: 6b0ad10.
-- [x] T3 (S1-S4) web: groups list, group detail (expenses, balances, settle), forms, tests, nav entry. Route: inline. 8 new web tests; typecheck/lint/all tests green. Gaps: UI splits equally only (no custom amounts), no expense edit UI, nav = 6th tab 'Grupos'. Commit: see Log L6.
+- [x] T3 (S1-S4) web: groups list, group detail (expenses, balances, settle), forms, tests, nav entry. Route: inline. 8 new web tests; typecheck/lint/all tests green. Gaps: UI splits equally only (no custom amounts), no expense edit UI, nav = 6th tab 'Grupos'. Commit: db4eab1.
 
 ## Log
 L1 (2026-10-15, user): "tengo que tener la parte de los gastos compartidos ya hechos, asi que worktree y branch para hacerlo"
