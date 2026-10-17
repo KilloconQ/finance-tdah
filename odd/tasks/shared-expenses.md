@@ -11,11 +11,13 @@ S6. Not linked to personal accounts/envelopes in this first slice. (assumption)
 S7. Code identifiers in English; UI copy in Spanish. Money in integer cents.
 
 ## Tasks
-- [x] T1 (S2,S3,S7) shared: Drizzle tables + migration 0007_dazzling_silhouette, Zod schemas, pure domain fns `splitEqual` and `computeBalances`/`simplifyDebts` + unit tests. Route: inline. RED observed (module missing), GREEN 8/8; shared typecheck clean, 98 tests pass. Commit: pending (git blocked in this session's shell).
-- [ ] T2 (S1,S2,S4,S5) api: groups/members/expenses/settlements routes + integration test. Route: inline.
+- [x] T1 (S2,S3,S7) shared: Drizzle tables + migration 0007_dazzling_silhouette, Zod schemas, pure domain fns `splitEqual` and `computeBalances`/`simplifyDebts` + unit tests. Route: inline. RED observed (module missing), GREEN 8/8; shared typecheck clean, 98 tests pass. Commit: 03cc638.
+- [x] T2 (S1,S2,S4,S5) api: groups/members/expenses/settlements routes + integration test. Route: inline. 6 integration tests pass on throwaway Postgres (docker ft_test, port 55432); typecheck/lint/all tests green. Not done: PATCH (edit) of a shared expense, only DELETE (S5 edit half). Commit: see Log L5.
 - [ ] T3 (S1-S4) web: groups list, group detail (expenses, balances, settle), forms, tests, nav entry. Route: inline.
 
 ## Log
 L1 (2026-10-15, user): "tengo que tener la parte de los gastos compartidos ya hechos, asi que worktree y branch para hacerlo"
 L2 (2026-10-15, user): "el 1 es para dividir gastos y quien debe a quien" (chose: another person with an account, split expenses, who owes whom)
 L3 (2026-10-16): Explorer map: ids uuid, user.id is text, cents ints, migrations 0007 next, routes via sessionMiddleware+zValidator, new update schemas must be added to update-schemas.test.ts, TabBar already has 5 tabs.
+L4 (2026-10-16): T1 verified (98 shared tests, typecheck) and committed 03cc638.
+L5 (2026-10-16): T2 routes in apps/api/src/routes/groups.ts mounted at /api/groups; tests written after the route (no RED observed). Member-only guard returns 404 for non-members. Integration run against docker postgres:17 ft_test only.
