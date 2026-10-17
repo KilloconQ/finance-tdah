@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { LifeBuoy, PiggyBank, Plus, Settings } from 'lucide-react'
+import { LifeBuoy, PiggyBank, Plus } from 'lucide-react'
 import { jarProgress } from '@finance-tdah/shared/domain'
 import {
   AppBar,
@@ -9,7 +9,6 @@ import {
   Card,
   EmptyState,
   Hello,
-  IconButton,
   Mini,
   Money,
   PhoneShell,
@@ -48,7 +47,8 @@ function Home() {
   const weekLeftCents = Math.max(0, weekTargetCents - weekSpentCents)
   const activeChallenge = challenge.data
 
-  // Primary actions live inline on desktop; the docked bar is mobile-only.
+  // Desktop shows both actions inline. On phones "Registrar gasto" sits under the week box and
+  // "Echar al frasco" lives inside the jar card, so the bottom edge holds only the tab bar.
   const quickActions = (
     <>
       <Btn kind="primary" className="flex-1" onClick={() => navigate({ to: '/add-expense' })}>
@@ -66,19 +66,15 @@ function Home() {
     <PhoneShell>
       <AppBar
         title="Hoy"
-        left={
-          <IconButton onClick={() => navigate({ to: '/settings' })} label="Ajustes">
-            <Settings size={20} strokeWidth={2} />
-          </IconButton>
-        }
         right={
           <button
             type="button"
             onClick={() => navigate({ to: '/panic' })}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-mid transition-colors hover:bg-danger-bg hover:text-danger"
+            aria-label="Modo pánico"
+            className="inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-xl px-3 text-xs font-medium text-ink-mid transition-colors hover:bg-danger-bg hover:text-danger"
           >
-            <LifeBuoy size={15} strokeWidth={2} />
-            Modo pánico
+            <LifeBuoy size={20} strokeWidth={2} />
+            <span className="hidden md:inline">Modo pánico</span>
           </button>
         }
       />
@@ -120,6 +116,14 @@ function Home() {
             <Skeleton className="mt-2 h-12 w-full rounded-xl" />
           )}
 
+          <Btn
+            kind="primary"
+            className="mt-4 h-[52px] w-full text-base md:hidden"
+            onClick={() => navigate({ to: '/add-expense' })}
+          >
+            <Plus size={18} strokeWidth={2.4} />
+            Registrar gasto
+          </Btn>
           <div className="mt-6 hidden gap-2 md:flex">{quickActions}</div>
         </div>
 
@@ -127,15 +131,21 @@ function Home() {
         <div className="flex flex-col gap-4">
           <Card className="flex items-center justify-center">
             {goal && goalProgress ? (
-              <JarWithStats
-                fraction={goalProgress.fraction}
-                label={`${goal.emoji} ${goal.name} · meta`}
-                currentCents={goal.currentCents}
-                targetCents={goal.targetCents}
-                hidden={!showBalances}
-                width={150}
-                height={190}
-              />
+              <div className="flex w-full flex-col items-center gap-3">
+                <JarWithStats
+                  fraction={goalProgress.fraction}
+                  label={`${goal.emoji} ${goal.name} · meta`}
+                  currentCents={goal.currentCents}
+                  targetCents={goal.targetCents}
+                  hidden={!showBalances}
+                  width={150}
+                  height={190}
+                />
+                <Btn kind="ghost" className="w-full md:hidden" onClick={() => navigate({ to: '/goals' })}>
+                  <PiggyBank size={16} strokeWidth={2} />
+                  Echar al frasco
+                </Btn>
+              </div>
             ) : goals.isLoading ? (
               <Skeleton className="h-[190px] w-[150px] rounded-2xl" />
             ) : (
@@ -178,9 +188,7 @@ function Home() {
         </div>
       </div>
 
-      {/* Mobile-only docked CTA */}
-      <div className="flex gap-2 pt-3 pb-4 md:hidden">{quickActions}</div>
-
+      <div className="flex-1" />
       <TabBar />
     </PhoneShell>
   )

@@ -146,28 +146,36 @@ describe('Home', () => {
   })
 
   it.each([
-    ['Gasto', '/add-expense'],
-    ['Echar al frasco', '/goals'],
-  ])('the %s quick action goes to %s', async (name, to) => {
+    ['Gasto', '/add-expense', 1],
+    ['Registrar gasto', '/add-expense', 1],
+    ['Echar al frasco', '/goals', 2],
+  ])('the %s quick action goes to %s', async (name, to, count) => {
     fakeApi(routes())
     const user = userEvent.setup()
     render(renderWithQuery(<Home />).tree)
     await screen.findByText('Hola, Ana 👋')
 
-    // Rendered twice: inline on desktop and docked on mobile.
+    // Desktop shows "Gasto" + "Echar al frasco" inline; phones get "Registrar gasto"
+    // under the week box and "Echar al frasco" inside the jar card (CSS hides the rest).
     const buttons = screen.getAllByRole('button', { name })
-    expect(buttons).toHaveLength(2)
+    expect(buttons).toHaveLength(count)
     await user.click(buttons[0])
     expect(navigate).toHaveBeenCalledWith({ to })
   })
 
-  it('opens settings and panic mode from the app bar', async () => {
+  it('keeps nothing docked above the tab bar on phones', async () => {
+    fakeApi(routes())
+    const { container } = render(renderWithQuery(<Home />).tree)
+    await screen.findByText('Hola, Ana 👋')
+    expect(container.querySelector('.pt-3.pb-4.md\\:hidden')).toBeNull()
+  })
+
+  it('opens panic mode from the app bar; settings moved to "Más"', async () => {
     fakeApi(routes())
     const user = userEvent.setup()
     render(renderWithQuery(<Home />).tree)
 
-    await user.click(screen.getByRole('button', { name: 'Ajustes' }))
-    expect(navigate).toHaveBeenLastCalledWith({ to: '/settings' })
+    expect(screen.queryByRole('button', { name: 'Ajustes' })).toBeNull()
     await user.click(screen.getByRole('button', { name: 'Modo pánico' }))
     expect(navigate).toHaveBeenLastCalledWith({ to: '/panic' })
   })
