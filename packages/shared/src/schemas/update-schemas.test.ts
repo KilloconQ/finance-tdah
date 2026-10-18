@@ -3,6 +3,7 @@ import { updateEnvelopeSchema } from './envelope'
 import { updateExpenseSchema } from './expense'
 import { updateFinancialAccountSchema } from './account'
 import { updateGoalSchema } from './goal'
+import { updateHouseholdSchema, updateSharedExpenseSchema } from './household'
 import { updateProfileSchema } from './profile'
 import { updateSubscriptionSchema } from './subscription'
 
@@ -17,6 +18,8 @@ const UPDATE_SCHEMAS = {
   envelope: updateEnvelopeSchema,
   expense: updateExpenseSchema,
   goal: updateGoalSchema,
+  household: updateHouseholdSchema,
+  sharedExpense: updateSharedExpenseSchema,
   profile: updateProfileSchema,
   subscription: updateSubscriptionSchema,
 }

@@ -69,9 +69,13 @@ tarjeta BBVA") obliga a decidir qué se descuenta de tu cuenta (el total que pag
 y cómo entran/salen las liquidaciones (¿ingreso/transferencia?). Es su propia tarea, después de v1.
 
 ## Fases (cada una con TDD en api/shared)
-- [ ] **F1 — Dominio puro** (`packages/shared`): schemas Zod (con los update schemas sin `.default()`,
-  ver CLAUDE.md), reparto con resto mayor para los 4 modos, cálculo de balances, simplificación de deudas.
-  Tests: suma exacta para montos primos/impares y N variado, `{}` parsea a `{}` en updates.
+- [x] **F1 — Dominio puro** (`packages/shared`): hecho con TDD (rojo observado antes de implementar).
+  `domain/split.ts` (`computeShares`: equal/shares/percent/exact, resto mayor, determinista, errores tipados),
+  `domain/debts.ts` (`computeBalances`, `simplifyDebts`), `schemas/household.ts` (hogar, gasto compartido,
+  liquidación; los update sin `.default()` y sumados a `update-schemas.test.ts`). Los participantes son ids de
+  texto, así que el miembro pendiente no obliga a cambiar nada aquí. Verificado rompiendo a propósito el
+  reparto del resto y el signo de las liquidaciones: 9 tests fallan. Fuera de F1 a propósito: invitaciones
+  (F3) y la validación de que los participantes sean miembros (la hace la ruta).
 - [ ] **F2 — Esquema y migración**: tablas anteriores + índices; `pnpm db:generate`.
 - [ ] **F3 — API** (`apps/api`): hogares, miembros, invitaciones, gastos, liquidaciones, balances.
   Tests de integración contra Postgres real (`TEST_DATABASE_URL`): aislamiento entre hogares, permisos,
