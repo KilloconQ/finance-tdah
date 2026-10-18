@@ -10,7 +10,6 @@ vi.mock('./env', () => ({
     BETTER_AUTH_SECRET: 'x'.repeat(32),
     WEB_ORIGIN: 'http://localhost:5173',
     NODE_ENV: 'test',
-    ALLOWED_EMAILS: [],
   },
   features: { passwordResetEmail: false, webPush: false },
 }))

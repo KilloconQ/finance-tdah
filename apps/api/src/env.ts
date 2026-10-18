@@ -29,19 +29,6 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: optionalSecret,
   VAPID_PRIVATE_KEY: optionalSecret,
   VAPID_SUBJECT: z.string().default('mailto:soporte@finance-tdah.local'),
-  // Comma-separated allowlist of emails permitted to register. When empty, sign-up
-  // is open to anyone (a warning is logged at startup). Set it to lock registration
-  // down to the known users.
-  ALLOWED_EMAILS: z
-    .string()
-    .optional()
-    .default('')
-    .transform((s) =>
-      s
-        .split(',')
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean),
-    ),
 })
 
 const parsed = envSchema.safeParse(process.env)

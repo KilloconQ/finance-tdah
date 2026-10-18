@@ -85,11 +85,6 @@ export type AppRouter = typeof api
 export type AppType = typeof app
 
 logger.info('startup', { port: env.PORT })
-if (env.ALLOWED_EMAILS.length === 0) {
-  logger.warn('signup_open', {
-    message: 'ALLOWED_EMAILS is empty — registration is open to anyone. Set it to lock sign-up down.',
-  })
-}
 if (!features.passwordResetEmail) {
   logger.warn('feature_disabled', {
     feature: 'password_reset_email',

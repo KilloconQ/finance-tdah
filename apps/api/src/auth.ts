@@ -105,21 +105,6 @@ export const auth = betterAuth({
       secure: env.NODE_ENV === 'production',
     },
   },
-  databaseHooks: {
-    user: {
-      create: {
-        before: async (user) => {
-          const allowlist = env.ALLOWED_EMAILS
-          if (allowlist.length > 0 && !allowlist.includes(user.email.toLowerCase())) {
-            throw new APIError('FORBIDDEN', {
-              message: 'Este email no está habilitado para registrarse.',
-            })
-          }
-          return { data: user }
-        },
-      },
-    },
-  },
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       requirePasswordResetConfigured(ctx.path)
