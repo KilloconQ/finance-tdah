@@ -64,11 +64,12 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Nada abierto en tests de pantallas: `apps/web` cubre todas las pantallas de la app. Si aparece una pantalla nueva, súmale su test en el mismo PR.
+- **Gastos compartidos (hogar)**: confirmado por el usuario — gastos compartidos con reparto estilo Splitwise, grupos de N personas, finanzas personales separadas. Diseño en `odd/tasks/shared-expenses.md`; faltan 3 preguntas abiertas antes de tocar el schema.
+- Después: app iOS y cobro (stack por decidir; ver nota en el diseño).
+- Tests de pantallas: `apps/web` cubre todas; si aparece una pantalla nueva, súmale su test en el mismo PR.
 
 ## Más adelante (diferido a propósito, no por olvido)
 
-- **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
 - **Apps nativas de verdad** (no un wrapper tipo Capacitor): para aprovechar cada plataforma — voz del sistema, widgets, Siri/Atajos y gastos automáticos con Apple Pay, notificaciones nativas, Face ID. Falta decidir entre Swift + Kotlin puro o React Native/Expo con extensiones nativas; en ambos casos hace falta otro método de login (la API usa cookies de sesión) y una Mac con cuenta de Apple Developer para iOS. Es una fase separada; hasta entonces la voz sigue congelada.
 
 ## Cómo se prioriza
