@@ -50,11 +50,18 @@ presentación: las liquidaciones reales las registra la gente.
 - Borrado: hard delete del gasto y sus shares (consistente con gastos personales). Las liquidaciones no se editan, se borran.
 
 ## Invitaciones
-Registro abierto, así que no hay allowlist que sortear. Se invita por email: el link con token (solo se guarda
-su hash, vence y es de un solo uso) lleva a crear cuenta o iniciar sesión y, al aceptar, une al hogar. Al
-aceptar debe coincidir el email invitado con el de la cuenta, o el link sería transferible. Rate limit en la
-creación y aceptación de invitaciones (el envío de email depende de Resend, que es opcional: si no está
-configurado, el owner puede copiar el link a mano).
+Registro abierto, así que no hay allowlist que sortear. La invitación es un **link con token al portador**
+(quien lo tiene entra), porque se comparte por WhatsApp/SMS/lo que sea y ahí no hay email que comparar.
+- Token aleatorio de un solo uso que vence; solo se guarda su hash. Rate limit al crear y aceptar.
+- El owner (y quien invitó) puede revocarlo, ve quién se unió y puede quitar a un miembro.
+- **Compartir**: el botón "Invitar" usa el menú nativo del teléfono (`navigator.share`) con respaldo a
+  `https://wa.me/?text=…` y a copiar el link. Sale desde la cuenta de quien invita; la app no integra WhatsApp
+  Business API ni SMS (costo, plantillas aprobadas, verificación; no se justifica en v1).
+- **Email desde la app (opcional)**: Resend con el remitente de prueba solo entrega al correo del dueño de la
+  cuenta; para invitar a terceros hace falta un dominio propio verificado. Mientras no exista, queda solo el link.
+- El token debe sobrevivir al registro, al login y al onboarding (se guarda en el cliente hasta aceptar).
+- **Miembro pendiente (propuesto, falta confirmar)**: poder repartir un gasto con alguien que aún no se une,
+  como en Splitwise. Implica `household_member.userId` nullable + nombre visible y reclamarlo al aceptar.
 
 ## Integración con las finanzas personales (fuera de v1)
 v1 es un libro aparte: un gasto compartido **no toca** tus cuentas. Vincularlo ("pagué $900 desde mi
