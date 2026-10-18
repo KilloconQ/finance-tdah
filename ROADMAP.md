@@ -60,10 +60,11 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 - Esquemas de actualización sin defaults heredados: un PATCH parcial reescribía campos no enviados porque Zod 4 conserva `.default()` bajo `.partial()` (el saldo de una cuenta → $0, el emoji de una meta → 🌿, la periodicidad de una suscripción → mensual). La web no lo sufría porque sus formularios mandan todo; cualquier otro cliente (las apps nativas) sí. Corregido en cuentas, metas y suscripciones, con una prueba que revisa todos los esquemas de actualización.
 - Suscripciones anuales contadas como mensuales: la lista sumaba el precio crudo de cada suscripción sin usar ("estás perdiendo $X al mes, $12X al año"), así que una anual de $1,200 salía como $1,200 al mes y $14,400 al año; el detalle calculaba "llevas $X pagados" como si todas fueran mensuales (60 días de esa anual: $2,400 en vez de ~$197). Ahora usan `monthlyCostCents` / `yearlyCostCents` / `costOverDaysCents` de `packages/shared`.
 - Dark mode: tema Sistema / Claro / Oscuro (por defecto Sistema), elegible en Ajustes → Apariencia. La preferencia se guarda por dispositivo en `localStorage` (no en el perfil), sigue al sistema en vivo y se aplica antes del primer pintado, así que no hay destello claro al cargar. Paleta oscura cálida (sin negro puro) con contraste AA documentado en `DESIGN.md` §8. Los avatares de suscripciones y la barra de "cuánto tienes" se adaptan al tema; el color de la barra del navegador (`theme-color`) lo sigue. Limitación conocida: el manifiesto de la PWA es estático, así que la pantalla de arranque de la app instalada sigue siendo clara.
+- Tests de `apps/web` para las pantallas que faltaban: inicio, movimientos, reto, pánico y onboarding, y las cuatro de auth (entrar, crear cuenta, olvidé mi contraseña, restablecer): credenciales enviadas, botón deshabilitado con contraseña corta, error de contraseña incorrecta vs. API caída vs. sin conexión, duplicado de email, link vencido y confirmación neutra del reset.
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- Tests de `apps/web` para las pantallas que faltan: inicio, movimientos, reto, pánico y onboarding. Las de dinero (gastos, cuentas, cajitas, metas, suscripciones) y `queries.ts` / `use-tweaks` ya están cubiertas, con un helper que simula la API (`src/test/fake-api.ts`).
+- Nada abierto en tests de pantallas: `apps/web` cubre todas las pantallas de la app. Si aparece una pantalla nueva, súmale su test en el mismo PR.
 
 ## Más adelante (diferido a propósito, no por olvido)
 
