@@ -64,7 +64,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 
 ## Próximo (gaps conocidos, sin trabajo iniciado)
 
-- **Gastos compartidos (hogar)**: confirmado por el usuario — gastos compartidos con reparto estilo Splitwise, grupos de N personas, finanzas personales separadas. Diseño en `odd/tasks/shared-expenses.md`; faltan 3 preguntas abiertas antes de tocar el schema.
+- **Gastos compartidos (hogar)**: confirmado por el usuario — gastos compartidos con reparto estilo Splitwise, grupos de N personas, finanzas personales separadas. Diseño en `odd/tasks/shared-expenses.md`; decisiones cerradas: registro abierto (sin `ALLOWED_EMAILS`), solo MXN, sin paywall por ahora. Listo para empezar por F1.
 - Después: app iOS y cobro (stack por decidir; ver nota en el diseño).
 - Tests de pantallas: `apps/web` cubre todas; si aparece una pantalla nueva, súmale su test en el mismo PR.
 

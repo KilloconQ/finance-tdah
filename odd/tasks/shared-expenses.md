@@ -8,11 +8,15 @@ debe a quién, **sin mezclar sus finanzas personales**. Estilo Splitwise, dentro
 - **Solo gastos compartidos con reparto.** Cada quien conserva sus cuentas, cajitas, metas y
   suscripciones privadas. No hay "cuentas del hogar" ni patrimonio común.
 - **Grupos de N personas** (familia, roomies, pareja). Nada de asumir 2.
+- **Sin `ALLOWED_EMAILS`**: se elimina la variable; el registro es abierto y una invitación aceptada
+  no depende de ninguna lista (rama `claude/remove-allowed-emails`).
+- **Moneda única: peso mexicano (MXN).** Sin campo de moneda por hogar.
+- **Sin paywall por ahora.** El módulo compartido es gratis; el cobro se decide después.
 - iOS nativo es una fase posterior y su stack (Expo vs Swift) se decide después. Consecuencia para
   este trabajo: todo lo nuevo debe vivir en la API + Zod compartido, sin lógica solo-web.
 
 ## Modelo (propuesta, a validar)
-Todo en centavos enteros, como el resto del schema. Una sola moneda por hogar (la del perfil del creador).
+Todo en centavos enteros, como el resto del schema. Una sola moneda para toda la app: MXN.
 
 - `household` — id, name, createdBy, createdAt.
 - `household_member` — householdId, userId, role (`owner` | `member`), joinedAt. Único (householdId, userId).
@@ -45,9 +49,12 @@ presentación: las liquidaciones reales las registra la gente.
 - Escrituras de dinero toman lock sobre la fila del `household` (`SELECT … FOR UPDATE`), igual que cuentas/cajitas.
 - Borrado: hard delete del gasto y sus shares (consistente con gastos personales). Las liquidaciones no se editan, se borran.
 
-## Invitaciones y el allowlist de registro
-`ALLOWED_EMAILS` limita quién puede registrarse. Una invitación a un email que no está en el allowlist
-quedaría inservible. **Decisión pendiente** (ver preguntas abiertas).
+## Invitaciones
+Registro abierto, así que no hay allowlist que sortear. Se invita por email: el link con token (solo se guarda
+su hash, vence y es de un solo uso) lleva a crear cuenta o iniciar sesión y, al aceptar, une al hogar. Al
+aceptar debe coincidir el email invitado con el de la cuenta, o el link sería transferible. Rate limit en la
+creación y aceptación de invitaciones (el envío de email depende de Resend, que es opcional: si no está
+configurado, el owner puede copiar el link a mano).
 
 ## Integración con las finanzas personales (fuera de v1)
 v1 es un libro aparte: un gasto compartido **no toca** tus cuentas. Vincularlo ("pagué $900 desde mi
@@ -66,15 +73,11 @@ y cómo entran/salen las liquidaciones (¿ingreso/transferencia?). Es su propia 
   con selector de reparto, liquidar, invitar). Mobile-first según `DESIGN.md`; tests como el resto de pantallas.
 - [ ] **F5 — Avisos push** al agregar un gasto o una liquidación (reusa `push-sender`; respeta que push puede estar apagado).
 
-## Preguntas abiertas (necesito tu respuesta antes de F2)
-1. **Invitaciones vs `ALLOWED_EMAILS`**: ¿una invitación aceptada se salta el allowlist, o sigues
-   controlando tú quién se registra en tu servidor?
-2. **Moneda**: ¿un solo MXN para todos, o hogares con moneda propia?
-3. **Cobrar (siguiente fase)**: ¿qué se cobra, la app entera o solo el módulo compartido? Esto afecta
-   dónde se pone el "paywall" en la API (ver nota abajo).
+## Preguntas abiertas
+Ninguna que bloquee F1–F3. Pendiente más adelante: cuándo y qué lleva paywall.
 
 ## Nota sobre cobrar en iOS (para planificar, no es parte de esta tarea)
 Apple exige que lo digital que se vende dentro de la app use su compra integrada (suscripción vía StoreKit),
 con comisión del 15–30 %; el cobro con Stripe/web desde la app tiene reglas específicas que cambian por región.
-Habrá que decidir cuándo llegue el momento. Lo que sí conviene ya: que la API tenga un concepto de "plan/entitlement"
-por usuario en vez de asumir que todos los usuarios son gratis.
+Habrá que decidir cuándo llegue el momento. Por ahora nada lleva paywall; cuando se decida, conviene un concepto de
+"plan/entitlement" por usuario en la API en vez de asumir que todos son gratis.
