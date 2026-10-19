@@ -15,6 +15,8 @@ export const expenseGroupSchema = z.object({
   createdBy: z.string(),
   createdAt: isoDateTime,
   members: z.array(groupMemberSchema),
+  /** The signed-in user's net balance in this group: positive = is owed, negative = owes. */
+  myBalanceCents: z.number().int(),
 })
 
 export const createGroupSchema = z.object({

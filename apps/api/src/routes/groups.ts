@@ -32,6 +32,14 @@ async function loadMembers(groupId: string) {
     .orderBy(schema.expenseGroupMember.joinedAt)
 }
 
+async function groupBalances(groupId: string) {
+  const [expenses, settlements] = await Promise.all([
+    db.query.sharedExpense.findMany({ where: (e, { eq }) => eq(e.groupId, groupId), with: { splits: true } }),
+    db.query.settlement.findMany({ where: (s, { eq }) => eq(s.groupId, groupId) }),
+  ])
+  return computeBalances({ expenses, settlements })
+}
+
 export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
   .use('*', sessionMiddleware)
 
@@ -44,7 +52,11 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
       .where(eq(schema.expenseGroupMember.userId, user.id))
       .orderBy(schema.expenseGroup.createdAt)
     const groups = await Promise.all(
-      rows.map(async ({ group }) => ({ ...group, members: await loadMembers(group.id) })),
+      rows.map(async ({ group }) => ({
+        ...group,
+        members: await loadMembers(group.id),
+        myBalanceCents: (await groupBalances(group.id))[user.id] ?? 0,
+      })),
     )
     return c.json({ groups })
   })
@@ -60,7 +72,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
       await tx.insert(schema.expenseGroupMember).values({ groupId: created.id, userId: user.id })
       return created
     })
-    return c.json({ group: { ...group, members: await loadMembers(group.id) } }, 201)
+    return c.json({ group: { ...group, members: await loadMembers(group.id), myBalanceCents: 0 } }, 201)
   })
 
   // Every route below is member-only; non-members get the same 404 as a missing group.
@@ -77,6 +89,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
   })
 
   .get('/:id', zValidator('param', idParamSchema), async (c) => {
+    const user = c.get('user')
     const { id } = c.req.valid('param')
     const group = await db.query.expenseGroup.findFirst({ where: (g, { eq }) => eq(g.id, id) })
     if (!group) return c.json({ error: 'Grupo no encontrado' }, 404)
@@ -100,7 +113,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     const balances = computeBalances({ expenses, settlements })
     for (const m of members) balances[m.userId] ??= 0
     return c.json({
-      group: { ...group, members },
+      group: { ...group, members, myBalanceCents: balances[user.id] ?? 0 },
       expenses,
       settlements,
       balances: { balances, debts: simplifyDebts(balances) },

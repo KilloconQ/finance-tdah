@@ -1,22 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { parseAmountToCents } from '@finance-tdah/shared/domain'
-import { AppBar, Btn, Card, Money, PhoneShell, Skeleton, TabBar } from '@/components'
+import { ChevronLeft, Plus, Trash2, UserPlus } from 'lucide-react'
+import { Btn, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { sessionQuery } from '@/lib/session'
-import {
-  groupQueryOptions,
-  useAddMember,
-  useAddSharedExpense,
-  useDeleteSharedExpense,
-  useSettle,
-} from '../api'
+import { groupQueryOptions, useDeleteSharedExpense, useSettle } from '../api'
+import { Avatar } from './Avatar'
+import { ExpenseSheet, MemberSheet } from './GroupSheets'
 
-const FIELD_CLASS =
-  'mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg'
-const LABEL_CLASS = 'block text-sm font-medium text-ink-mid'
 const today = () => new Date().toLocaleDateString('en-CA')
-const errorText = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback)
+const SECTION = 'px-4 pb-2 text-xs font-medium uppercase tracking-wide text-ink-mid'
+const GROUPED = 'divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface'
 
 export function GroupDetail({ groupId }: { groupId: string }) {
   const navigate = useNavigate()
@@ -24,127 +18,97 @@ export function GroupDetail({ groupId }: { groupId: string }) {
   const { data: session } = useQuery(sessionQuery)
   const me = session?.user.id
 
-  const addMember = useAddMember(groupId)
-  const addExpense = useAddSharedExpense(groupId)
   const deleteExpense = useDeleteSharedExpense(groupId)
   const settle = useSettle(groupId)
-
-  const [email, setEmail] = useState('')
-  const [description, setDescription] = useState('')
-  const [amount, setAmount] = useState('')
-  const [paidBy, setPaidBy] = useState('')
-  const [excluded, setExcluded] = useState<string[]>([])
+  const [sheet, setSheet] = useState<'expense' | 'member' | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const back = (
+    <IconButton onClick={() => navigate({ to: '/groups' })} label="Volver">
+      <ChevronLeft size={22} strokeWidth={2.2} />
+    </IconButton>
+  )
 
   if (isLoading || !data) {
     return (
       <PhoneShell>
-        <AppBar back onBack={() => navigate({ to: '/groups' })} title="Grupo" />
-        <Skeleton className="h-24 w-full" />
+        <div className="pt-3">{back}</div>
+        <Skeleton className="mt-4 h-24 w-full" />
         <TabBar />
       </PhoneShell>
     )
   }
 
   const { group, expenses, balances } = data
-  const nameOf = (id: string) => {
-    const m = group.members.find((x) => x.userId === id)
-    return id === me ? 'Vos' : (m?.name ?? 'Alguien')
-  }
-
-  const submitMember = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    addMember.mutate(email.trim(), {
-      onSuccess: () => setEmail(''),
-      onError: (err) => setError(errorText(err, 'No pudimos agregar a esa persona')),
-    })
-  }
-
-  const submitExpense = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    const amountCents = parseAmountToCents(amount)
-    if (amountCents === null || amountCents <= 0) return setError('El monto debe ser mayor a $0')
-    const participantIds = group.members.map((m) => m.userId).filter((id) => !excluded.includes(id))
-    if (participantIds.length === 0) return setError('Elegí al menos a una persona')
-    addExpense.mutate(
-      {
-        paidBy: paidBy || me || group.members[0].userId,
-        description: description.trim(),
-        amountCents,
-        date: today(),
-        participantIds,
-      },
-      {
-        onSuccess: () => {
-          setDescription('')
-          setAmount('')
-          setExcluded([])
-        },
-        onError: (err) => setError(errorText(err, 'No pudimos guardar el gasto')),
-      },
-    )
-  }
+  const nameOf = (id: string) => group.members.find((m) => m.userId === id)?.name ?? 'Alguien'
+  const debtLabel = (from: string, to: string) =>
+    from === me ? `Le debes a ${nameOf(to)}` : to === me ? `${nameOf(from)} te debe` : `${nameOf(from)} le debe a ${nameOf(to)}`
+  const mine = group.myBalanceCents
+  const onError = (fallback: string) => (err: unknown) => setError(err instanceof Error ? err.message : fallback)
 
   return (
     <PhoneShell>
-      <AppBar back onBack={() => navigate({ to: '/groups' })} title={group.name} />
-      <div className="max-w-2xl flex-1 space-y-6 pb-4">
+      <div className="pt-3">{back}</div>
+      <h1 className="px-1 pb-4 pt-1 text-[34px] font-bold leading-tight tracking-tight text-ink">{group.name}</h1>
+
+      <div className="max-w-2xl flex-1 space-y-6 pb-28">
         {error ? <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{error}</div> : null}
 
+        <section className="rounded-2xl border border-line bg-surface p-4">
+          <div className="text-sm text-ink-mid">{mine > 0 ? 'Te deben' : mine < 0 ? 'Debes' : 'Estás al día'}</div>
+          <div className={`money text-3xl font-bold tracking-tight ${mine < 0 ? 'text-danger' : 'text-accent-strong'}`}>
+            <Money value={Math.abs(mine) / 100} weight="semibold" />
+          </div>
+        </section>
+
         <section>
-          <div className="pb-2 text-sm font-medium text-ink-mid">Quién le debe a quién</div>
+          <div className={SECTION}>Quién le debe a quién</div>
           {balances.debts.length === 0 ? (
-            <Card>Están a mano 🎉</Card>
+            <div className={`${GROUPED} px-4 py-4 text-sm text-ink-mid`}>Están a mano 🎉</div>
           ) : (
-            <div className="space-y-2">
+            <div className={GROUPED}>
               {balances.debts.map((d) => (
-                <Card key={`${d.from}-${d.to}`} padded={false} className="flex items-center gap-3 p-3">
-                  <div className="min-w-0 flex-1 text-sm text-ink">
-                    {nameOf(d.from)} {d.from === me ? 'le debés' : 'le debe'} a {nameOf(d.to)}
-                  </div>
-                  <Money value={d.amountCents / 100} className="text-sm text-ink" />
+                <div key={`${d.from}-${d.to}`} className="flex items-center gap-3 px-4 py-3">
+                  <Avatar name={nameOf(d.from === me ? d.to : d.from)} size="sm" />
+                  <div className="min-w-0 flex-1 text-base text-ink">{debtLabel(d.from, d.to)}</div>
+                  <Money value={d.amountCents / 100} className="text-base text-ink" />
                   <Btn
-                    className="h-9 px-3 text-xs"
+                    className="h-8 rounded-full bg-accent-bg px-3 text-sm text-accent-strong shadow-none"
                     disabled={settle.isPending}
                     onClick={() =>
                       settle.mutate(
                         { fromUserId: d.from, toUserId: d.to, amountCents: d.amountCents, date: today() },
-                        { onError: (err) => setError(errorText(err, 'No pudimos registrar el pago')) },
+                        { onError: onError('No pudimos registrar el pago') },
                       )
                     }
                   >
                     Saldar
                   </Btn>
-                </Card>
+                </div>
               ))}
             </div>
           )}
         </section>
 
         <section>
-          <div className="pb-2 text-sm font-medium text-ink-mid">Gastos · {expenses.length}</div>
-          <div className="divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+          <div className={SECTION}>Gastos · {expenses.length}</div>
+          <div className={GROUPED}>
             {expenses.map((e) => (
               <div key={e.id} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-ink">{e.description}</div>
-                  <div className="mt-0.5 text-xs text-ink-mid">Pagó {nameOf(e.paidBy).toLowerCase()}</div>
+                  <div className="truncate text-base text-ink">{e.description}</div>
+                  <div className="mt-0.5 text-sm text-ink-mid">
+                    {e.paidBy === me ? 'Pagaste tú' : `Pagó ${nameOf(e.paidBy)}`} · entre {e.splits.length}
+                  </div>
                 </div>
-                <Money value={e.amountCents / 100} className="text-sm text-ink" />
+                <Money value={e.amountCents / 100} className="text-base text-ink" />
                 {e.paidBy === me || e.createdBy === me ? (
-                  <Btn
-                    kind="danger"
-                    className="h-9 px-3 text-xs"
-                    onClick={() =>
-                      deleteExpense.mutate(e.id, {
-                        onError: (err) => setError(errorText(err, 'No pudimos borrar el gasto')),
-                      })
-                    }
+                  <IconButton
+                    label="Borrar gasto"
+                    onClick={() => deleteExpense.mutate(e.id, { onError: onError('No pudimos borrar el gasto') })}
                   >
-                    Borrar
-                  </Btn>
+                    <Trash2 size={18} strokeWidth={1.9} className="text-danger" />
+                  </IconButton>
                 ) : null}
               </div>
             ))}
@@ -154,72 +118,41 @@ export function GroupDetail({ groupId }: { groupId: string }) {
           </div>
         </section>
 
-        <form onSubmit={submitExpense} className="space-y-4">
-          <div className="text-sm font-medium text-ink-mid">Nuevo gasto compartido</div>
-          <div>
-            <label htmlFor="description" className={LABEL_CLASS}>
-              Descripción
-            </label>
-            <input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className={FIELD_CLASS} />
-          </div>
-          <div>
-            <label htmlFor="amount" className={LABEL_CLASS}>
-              Monto (en pesos)
-            </label>
-            <input id="amount" type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={FIELD_CLASS} />
-          </div>
-          <div>
-            <label htmlFor="paidBy" className={LABEL_CLASS}>
-              Pagó
-            </label>
-            <select id="paidBy" value={paidBy || me || ''} onChange={(e) => setPaidBy(e.target.value)} className={FIELD_CLASS}>
-              {group.members.map((m) => (
-                <option key={m.userId} value={m.userId}>
-                  {nameOf(m.userId)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <fieldset>
-            <legend className={LABEL_CLASS}>Se divide entre</legend>
-            {group.members.map((m) => (
-              <label key={m.userId} className="mt-1.5 flex items-center gap-2 text-sm text-ink">
-                <input
-                  type="checkbox"
-                  checked={!excluded.includes(m.userId)}
-                  onChange={(e) =>
-                    setExcluded((cur) => (e.target.checked ? cur.filter((x) => x !== m.userId) : [...cur, m.userId]))
-                  }
-                />
-                {nameOf(m.userId)}
-              </label>
-            ))}
-          </fieldset>
-          <Btn kind="primary" type="submit" className="w-full" disabled={!description.trim() || !amount || addExpense.isPending}>
-            {addExpense.isPending ? 'Guardando…' : 'Agregar gasto'}
-          </Btn>
-        </form>
-
         <section>
-          <div className="pb-2 text-sm font-medium text-ink-mid">Miembros</div>
-          <ul className="space-y-1 text-sm text-ink">
+          <div className={SECTION}>Miembros · {group.members.length}</div>
+          <div className={GROUPED}>
             {group.members.map((m) => (
-              <li key={m.userId}>
-                {nameOf(m.userId)} <span className="text-ink-mid">· {m.email}</span>
-              </li>
+              <div key={m.userId} className="flex items-center gap-3 px-4 py-3">
+                <Avatar name={m.name} size="sm" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-base text-ink">{m.userId === me ? `${m.name} (tú)` : m.name}</div>
+                  <div className="truncate text-sm text-ink-mid">{m.email}</div>
+                </div>
+              </div>
             ))}
-          </ul>
-          <form onSubmit={submitMember} className="mt-3">
-            <label htmlFor="member-email" className={LABEL_CLASS}>
-              Agregar por email
-            </label>
-            <input id="member-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={FIELD_CLASS} />
-            <Btn type="submit" className="mt-2 w-full" disabled={!email.trim() || addMember.isPending}>
+            <button
+              type="button"
+              onClick={() => setSheet('member')}
+              className="wf-tap flex w-full items-center gap-3 px-4 py-3 text-left text-base text-accent-strong"
+            >
+              <UserPlus size={20} strokeWidth={1.9} />
               Agregar miembro
-            </Btn>
-          </form>
+            </button>
+          </div>
         </section>
       </div>
+
+      <div className="sticky bottom-20 z-10 pb-3 md:bottom-4">
+        <Btn kind="primary" className="h-12 w-full rounded-2xl text-base" onClick={() => setSheet('expense')}>
+          <Plus size={20} strokeWidth={2.4} />
+          Agregar gasto
+        </Btn>
+      </div>
+
+      {sheet === 'expense' ? (
+        <ExpenseSheet group={group} me={me} nameOf={nameOf} onClose={() => setSheet(null)} />
+      ) : null}
+      {sheet === 'member' ? <MemberSheet groupId={group.id} onClose={() => setSheet(null)} /> : null}
       <TabBar />
     </PhoneShell>
   )

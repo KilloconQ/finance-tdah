@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { GroupDetailDTO } from '@finance-tdah/shared/schemas'
@@ -24,7 +24,7 @@ const members = [
 ]
 
 const detail = (patch: Partial<GroupDetailDTO> = {}): GroupDetailDTO => ({
-  group: { id: G, name: 'Viaje', createdBy: 'ana', createdAt: NOW, members },
+  group: { id: G, name: 'Viaje', createdBy: 'ana', createdAt: NOW, members, myBalanceCents: 3_000 },
   expenses: [
     { id: E1, groupId: G, paidBy: 'ana', description: 'Cena', amountCents: 10_000, date: '2026-10-01', createdBy: 'ana', createdAt: NOW, splits: [] },
     { id: E2, groupId: G, paidBy: 'ben', description: 'Taxi', amountCents: 4_000, date: '2026-10-02', createdBy: 'ben', createdAt: NOW, splits: [] },
@@ -46,8 +46,16 @@ describe('GroupDetail', () => {
   it('shows who owes whom, from the signed-in user’s point of view', async () => {
     fakeApi(routes())
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
-    expect(await screen.findByText(/Ben le debe a Vos/)).toBeTruthy()
-    expect(screen.getByText('$30.00')).toBeTruthy()
+    expect(await screen.findByText('Ben te debe')).toBeTruthy()
+    expect(screen.getByText('Te deben')).toBeTruthy()
+    expect(screen.getAllByText('$30.00')).toHaveLength(2) // summary card and the debt row
+  })
+
+  it('words payers by name, and says “tú” for the signed-in user', async () => {
+    fakeApi(routes())
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    expect(await screen.findByText('Pagaste tú · entre 0')).toBeTruthy()
+    expect(screen.getByText('Pagó Ben · entre 0')).toBeTruthy()
   })
 
   it('says everyone is even when there are no debts', async () => {
@@ -67,10 +75,13 @@ describe('GroupDetail', () => {
   it('splits a new expense among everyone ticked, paid by the signed-in user', async () => {
     const api = fakeApi({ ...routes(), [`POST /groups/${G}/expenses`]: () => json({}, 201) })
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
-    await userEvent.type(await screen.findByLabelText('Descripción'), 'Super')
-    await userEvent.type(screen.getByLabelText('Monto (en pesos)'), '12.50')
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar gasto' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar gasto' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Nuevo gasto' }))
+    await userEvent.type(sheet.getByLabelText('Descripción'), 'Super')
+    await userEvent.type(sheet.getByLabelText('Monto (en pesos)'), '12.50')
+    await userEvent.click(sheet.getByRole('button', { name: 'Agregar gasto' }))
     await waitFor(() => expect(api.writes()).toHaveLength(1))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(api.writes()[0].body).toMatchObject({
       paidBy: 'ana', description: 'Super', amountCents: 1_250, participantIds: ['ana', 'ben'],
     })
@@ -80,14 +91,16 @@ describe('GroupDetail', () => {
     fakeApi(routes())
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
     await screen.findByText('Cena')
-    expect(screen.getAllByRole('button', { name: 'Borrar' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Borrar gasto' })).toHaveLength(1)
   })
 
   it('shows the API error when the email is not found', async () => {
     fakeApi({ ...routes(), [`POST /groups/${G}/members`]: () => json({ error: 'No pudimos agregar a esa persona' }, 404) })
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
-    await userEvent.type(await screen.findByLabelText('Agregar por email'), 'zz@x.com')
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar miembro' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar miembro' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Agregar miembro' }))
+    await userEvent.type(sheet.getByLabelText('Email'), 'zz@x.com')
+    await userEvent.click(sheet.getByRole('button', { name: 'Agregar miembro' }))
     expect(await screen.findByText('No pudimos agregar a esa persona')).toBeTruthy()
   })
 })

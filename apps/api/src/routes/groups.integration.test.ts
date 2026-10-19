@@ -123,6 +123,9 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     expect(after.balances.balances[CAM]).toBe(-66)
     expect(after.balances.balances[BEN]).toBe(0)
 
+    const mine = async (as: string) => (await call(as, 'GET', '/groups')).body.groups[0].myBalanceCents
+    expect([await mine(ANA), await mine(CAM)]).toEqual([66, -66])
+
     const self = await call(CAM, 'POST', `/groups/${groupId}/settlements`, {
       fromUserId: CAM, toUserId: CAM, amountCents: 1, date: '2026-01-03',
     })
