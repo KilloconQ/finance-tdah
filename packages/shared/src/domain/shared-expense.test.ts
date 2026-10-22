@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeBalances, simplifyDebts, splitEqual } from './shared-expense'
+import { computeBalances, isEqualSplit, simplifyDebts, splitEqual } from './shared-expense'
 
 describe('splitEqual', () => {
   it('splits evenly', () => {
@@ -74,5 +74,13 @@ describe('simplifyDebts', () => {
     expect(simplifyDebts({ a: 500, b: 0, c: -500 })).toEqual([
       { from: 'c', to: 'a', amountCents: 500 },
     ])
+  })
+})
+
+describe('isEqualSplit', () => {
+  it('recognises the equal split regardless of share order, and flags custom ones', () => {
+    expect(isEqualSplit(1000, [{ userId: 'b', shareCents: 333 }, { userId: 'a', shareCents: 334 }])).toBe(false)
+    expect(isEqualSplit(1000, [{ userId: 'a', shareCents: 500 }, { userId: 'b', shareCents: 500 }])).toBe(true)
+    expect(isEqualSplit(900, [{ userId: 'a', shareCents: 600 }, { userId: 'b', shareCents: 300 }])).toBe(false)
   })
 })

@@ -1,14 +1,14 @@
 import { useState } from 'react'
-import { parseAmountToCents, splitEqual } from '@finance-tdah/shared/domain'
+import { centsToUnits, isEqualSplit, parseAmountToCents } from '@finance-tdah/shared/domain'
 import type { ExpenseGroupDTO, GroupDetailDTO } from '@finance-tdah/shared/schemas'
 import { Btn } from '@/components'
+import { todayLocalISO } from '@/lib/format'
 import { useAddMember, useAddSharedExpense, useUpdateSharedExpense } from '../api'
 import { Sheet } from './Sheet'
 
 const FIELD_CLASS =
   'mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg'
 const LABEL_CLASS = 'block text-sm font-medium text-ink-mid'
-const today = () => new Date().toLocaleDateString('en-CA')
 const errorText = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback)
 
 function ErrorBox({ message }: { message: string | null }) {
@@ -17,7 +17,7 @@ function ErrorBox({ message }: { message: string | null }) {
 
 type GroupExpense = GroupDetailDTO['expenses'][number]
 
-const centsToInput = (cents: number) => (cents / 100).toFixed(2)
+const centsToInput = (cents: number) => centsToUnits(cents).toFixed(2)
 
 export function ExpenseSheet({
   group,
@@ -40,25 +40,16 @@ export function ExpenseSheet({
 
   const [description, setDescription] = useState(expense?.description ?? '')
   const [amount, setAmount] = useState(expense ? centsToInput(expense.amountCents) : '')
-  const [paidBy, setPaidBy] = useState(expense?.paidBy ?? '')
-  const [excluded, setExcluded] = useState<string[]>(
-    expense ? memberIds.filter((id) => !expense.splits.some((s) => s.userId === id)) : [],
+  const [paidBy, setPaidBy] = useState(expense?.paidBy ?? me ?? memberIds[0])
+  const [participantIds, setParticipantIds] = useState(
+    expense ? expense.splits.map((s) => s.userId) : memberIds,
   )
   // An edited expense whose shares aren't the equal split reopens in custom mode.
-  const [custom, setCustom] = useState(
-    !!expense &&
-      JSON.stringify([...expense.splits].sort((a, b) => a.userId.localeCompare(b.userId))) !==
-        JSON.stringify(
-          splitEqual(expense.amountCents, expense.splits.map((s) => s.userId)).sort((a, b) =>
-            a.userId.localeCompare(b.userId),
-          ),
-        ),
-  )
+  const [custom, setCustom] = useState(!!expense && !isEqualSplit(expense.amountCents, expense.splits))
   const [shares, setShares] = useState<Record<string, string>>(
     Object.fromEntries((expense?.splits ?? []).map((s) => [s.userId, centsToInput(s.shareCents)])),
   )
   const [error, setError] = useState<string | null>(null)
-  const participantIds = memberIds.filter((id) => !excluded.includes(id))
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,23 +59,24 @@ export function ExpenseSheet({
     if (participantIds.length === 0) return setError('Elige al menos a una persona')
 
     const body = {
-      paidBy: paidBy || me || group.members[0].userId,
+      paidBy,
       description: description.trim(),
       amountCents,
-      date: expense?.date ?? today(),
+      date: expense?.date ?? todayLocalISO(),
     }
-    let split: { participantIds: string[] } | { splits: { userId: string; shareCents: number }[] } = { participantIds }
-    if (custom) {
-      const splits = participantIds.map((userId) => ({ userId, shareCents: parseAmountToCents(shares[userId] ?? '') ?? 0 }))
+    const splits = custom
+      ? participantIds.map((userId) => ({ userId, shareCents: parseAmountToCents(shares[userId] ?? '') ?? 0 }))
+      : null
+    if (splits) {
       const total = splits.reduce((n, s) => n + s.shareCents, 0)
       if (total !== amountCents) {
         return setError(`Las partes suman $${centsToInput(total)} y el gasto es de $${centsToInput(amountCents)}`)
       }
-      split = { splits }
     }
-    const onError = (err: unknown) => setError(errorText(err, 'No pudimos guardar el gasto'))
-    if (expense) updateExpense.mutate({ expenseId: expense.id, input: { ...body, ...split } }, { onSuccess: onClose, onError })
-    else addExpense.mutate({ ...body, ...split }, { onSuccess: onClose, onError })
+    const input = { ...body, ...(splits ? { splits } : { participantIds }) }
+    const opts = { onSuccess: onClose, onError: (err: unknown) => setError(errorText(err, 'No pudimos guardar el gasto')) }
+    if (expense) updateExpense.mutate({ expenseId: expense.id, input }, opts)
+    else addExpense.mutate(input, opts)
   }
 
   return (
@@ -106,7 +98,7 @@ export function ExpenseSheet({
           <label htmlFor="paidBy" className={LABEL_CLASS}>
             Pagó
           </label>
-          <select id="paidBy" value={paidBy || me || ''} onChange={(e) => setPaidBy(e.target.value)} className={FIELD_CLASS}>
+          <select id="paidBy" value={paidBy} onChange={(e) => setPaidBy(e.target.value)} className={FIELD_CLASS}>
             {group.members.map((m) => (
               <option key={m.userId} value={m.userId}>
                 {m.userId === me ? 'Tú' : nameOf(m.userId)}
@@ -122,14 +114,16 @@ export function ExpenseSheet({
                 <label className="flex flex-1 items-center gap-3">
                   <input
                     type="checkbox"
-                    checked={!excluded.includes(m.userId)}
+                    checked={participantIds.includes(m.userId)}
                     onChange={(e) =>
-                      setExcluded((cur) => (e.target.checked ? cur.filter((x) => x !== m.userId) : [...cur, m.userId]))
+                      setParticipantIds(
+                        memberIds.filter((id) => (id === m.userId ? e.target.checked : participantIds.includes(id))),
+                      )
                     }
                   />
                   {m.userId === me ? 'Tú' : nameOf(m.userId)}
                 </label>
-                {custom && !excluded.includes(m.userId) ? (
+                {custom && participantIds.includes(m.userId) ? (
                   <input
                     aria-label={`Parte de ${m.userId === me ? 'Tú' : nameOf(m.userId)}`}
                     type="number"

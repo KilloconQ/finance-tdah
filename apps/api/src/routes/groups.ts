@@ -41,6 +41,18 @@ async function resolveSplits(groupId: string, input: z.infer<typeof createShared
   return splits
 }
 
+/** The expense if it's in the group and `userId` paid or created it; otherwise the error to send. */
+async function loadOwnedExpense(groupId: string, expenseId: string, userId: string, verb: string) {
+  const expense = await db.query.sharedExpense.findFirst({
+    where: (e, { and, eq }) => and(eq(e.id, expenseId), eq(e.groupId, groupId)),
+  })
+  if (!expense) return { error: 'Gasto no encontrado', status: 404 } as const
+  if (expense.paidBy !== userId && expense.createdBy !== userId) {
+    return { error: `Solo quien pagó o cargó el gasto puede ${verb}`, status: 403 } as const
+  }
+  return { expense }
+}
+
 async function groupBalances(groupId: string) {
   const [expenses, settlements] = await Promise.all([
     db.query.sharedExpense.findMany({ where: (e, { eq }) => eq(e.groupId, groupId), with: { splits: true } }),
@@ -63,8 +75,10 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     const groups = await Promise.all(
       rows.map(async ({ group }) => ({
         ...group,
-        members: await loadMembers(group.id),
-        myBalanceCents: (await groupBalances(group.id))[user.id] ?? 0,
+        ...(await Promise.all([loadMembers(group.id), groupBalances(group.id)]).then(([members, bal]) => ({
+          members,
+          myBalanceCents: bal[user.id] ?? 0,
+        }))),
       })),
     )
     return c.json({ groups })
@@ -100,10 +114,8 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
   .get('/:id', zValidator('param', idParamSchema), async (c) => {
     const user = c.get('user')
     const { id } = c.req.valid('param')
-    const group = await db.query.expenseGroup.findFirst({ where: (g, { eq }) => eq(g.id, id) })
-    if (!group) return c.json({ error: 'Grupo no encontrado' }, 404)
-
-    const [members, expenseRows, settlements] = await Promise.all([
+    const [group, members, expenseRows, settlements] = await Promise.all([
+      db.query.expenseGroup.findFirst({ where: (g, { eq }) => eq(g.id, id) }),
       loadMembers(id),
       db.query.sharedExpense.findMany({
         where: (e, { eq }) => eq(e.groupId, id),
@@ -115,6 +127,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
         orderBy: (s, { desc }) => [desc(s.date), desc(s.createdAt)],
       }),
     ])
+    if (!group) return c.json({ error: 'Grupo no encontrado' }, 404)
     const expenses = expenseRows.map((e) => ({
       ...e,
       splits: e.splits.map((s) => ({ userId: s.userId, shareCents: s.shareCents })),
@@ -173,13 +186,8 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
     const { id, expenseId } = c.req.valid('param')
     const input = c.req.valid('json')
-    const expense = await db.query.sharedExpense.findFirst({
-      where: (e, { and, eq }) => and(eq(e.id, expenseId), eq(e.groupId, id)),
-    })
-    if (!expense) return c.json({ error: 'Gasto no encontrado' }, 404)
-    if (expense.paidBy !== user.id && expense.createdBy !== user.id) {
-      return c.json({ error: 'Solo quien pagó o cargó el gasto puede editarlo' }, 403)
-    }
+    const owned = await loadOwnedExpense(id, expenseId, user.id, 'editarlo')
+    if ('error' in owned) return c.json({ error: owned.error }, owned.status)
     const splits = await resolveSplits(id, input)
     if (!splits) return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
 
@@ -199,13 +207,8 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
   .delete('/:id/expenses/:expenseId', zValidator('param', expenseParamSchema), async (c) => {
     const user = c.get('user')
     const { id, expenseId } = c.req.valid('param')
-    const expense = await db.query.sharedExpense.findFirst({
-      where: (e, { and, eq }) => and(eq(e.id, expenseId), eq(e.groupId, id)),
-    })
-    if (!expense) return c.json({ error: 'Gasto no encontrado' }, 404)
-    if (expense.paidBy !== user.id && expense.createdBy !== user.id) {
-      return c.json({ error: 'Solo quien pagó o cargó el gasto puede borrarlo' }, 403)
-    }
+    const owned = await loadOwnedExpense(id, expenseId, user.id, 'borrarlo')
+    if ('error' in owned) return c.json({ error: owned.error }, owned.status)
     await db.delete(schema.sharedExpense).where(eq(schema.sharedExpense.id, expenseId))
     return c.json({ ok: true })
   })

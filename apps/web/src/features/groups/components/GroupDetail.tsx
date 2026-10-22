@@ -4,12 +4,12 @@ import { useQuery } from '@tanstack/react-query'
 import type { GroupDetailDTO } from '@finance-tdah/shared/schemas'
 import { ChevronLeft, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Btn, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
+import { todayLocalISO } from '@/lib/format'
 import { sessionQuery } from '@/lib/session'
 import { groupQueryOptions, useDeleteSharedExpense, useSettle } from '../api'
 import { Avatar } from './Avatar'
 import { ExpenseSheet, MemberSheet } from './GroupSheets'
 
-const today = () => new Date().toLocaleDateString('en-CA')
 const SECTION = 'px-4 pb-2 text-xs font-medium uppercase tracking-wide text-ink-mid'
 const GROUPED = 'divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface'
 
@@ -79,7 +79,7 @@ export function GroupDetail({ groupId }: { groupId: string }) {
                     disabled={settle.isPending}
                     onClick={() =>
                       settle.mutate(
-                        { fromUserId: d.from, toUserId: d.to, amountCents: d.amountCents, date: today() },
+                        { fromUserId: d.from, toUserId: d.to, amountCents: d.amountCents, date: todayLocalISO() },
                         { onError: onError('No pudimos registrar el pago') },
                       )
                     }

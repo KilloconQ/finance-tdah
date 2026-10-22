@@ -8,6 +8,12 @@ export function splitEqual(amountCents: number, userIds: string[]): Share[] {
   return userIds.map((userId, i) => ({ userId, shareCents: base + (i < extra ? 1 : 0) }))
 }
 
+/** True when `splits` is exactly what `splitEqual` would produce for the same people. */
+export function isEqualSplit(amountCents: number, splits: Share[]): boolean {
+  const equal = new Map(splitEqual(amountCents, splits.map((s) => s.userId)).map((s) => [s.userId, s.shareCents]))
+  return splits.every((s) => equal.get(s.userId) === s.shareCents)
+}
+
 export type ExpenseForBalance = { paidBy: string; amountCents: number; splits: Share[] }
 export type SettlementForBalance = { fromUserId: string; toUserId: string; amountCents: number }
 

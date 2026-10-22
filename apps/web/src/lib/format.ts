@@ -20,3 +20,6 @@ export function daysAgo(date: Date | string): number {
   const diff = Date.now() - d.getTime()
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
+
+/** Today's date in the user's timezone as YYYY-MM-DD. */
+export const todayLocalISO = () => new Date().toLocaleDateString('en-CA')
