@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { parseAmountToCents } from '@finance-tdah/shared/domain'
-import type { ExpenseGroupDTO } from '@finance-tdah/shared/schemas'
+import { parseAmountToCents, splitEqual } from '@finance-tdah/shared/domain'
+import type { ExpenseGroupDTO, GroupDetailDTO } from '@finance-tdah/shared/schemas'
 import { Btn } from '@/components'
-import { useAddMember, useAddSharedExpense } from '../api'
+import { useAddMember, useAddSharedExpense, useUpdateSharedExpense } from '../api'
 import { Sheet } from './Sheet'
 
 const FIELD_CLASS =
@@ -15,45 +15,80 @@ function ErrorBox({ message }: { message: string | null }) {
   return message ? <div className="mt-3 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{message}</div> : null
 }
 
+type GroupExpense = GroupDetailDTO['expenses'][number]
+
+const centsToInput = (cents: number) => (cents / 100).toFixed(2)
+
 export function ExpenseSheet({
   group,
   me,
   nameOf,
+  expense,
   onClose,
 }: {
   group: ExpenseGroupDTO
   me: string | undefined
   nameOf: (id: string) => string
+  /** When set, the sheet edits this expense instead of creating one. */
+  expense?: GroupExpense
   onClose: () => void
 }) {
   const addExpense = useAddSharedExpense(group.id)
-  const [description, setDescription] = useState('')
-  const [amount, setAmount] = useState('')
-  const [paidBy, setPaidBy] = useState('')
-  const [excluded, setExcluded] = useState<string[]>([])
+  const updateExpense = useUpdateSharedExpense(group.id)
+  const save = expense ? updateExpense : addExpense
+  const memberIds = group.members.map((m) => m.userId)
+
+  const [description, setDescription] = useState(expense?.description ?? '')
+  const [amount, setAmount] = useState(expense ? centsToInput(expense.amountCents) : '')
+  const [paidBy, setPaidBy] = useState(expense?.paidBy ?? '')
+  const [excluded, setExcluded] = useState<string[]>(
+    expense ? memberIds.filter((id) => !expense.splits.some((s) => s.userId === id)) : [],
+  )
+  // An edited expense whose shares aren't the equal split reopens in custom mode.
+  const [custom, setCustom] = useState(
+    !!expense &&
+      JSON.stringify([...expense.splits].sort((a, b) => a.userId.localeCompare(b.userId))) !==
+        JSON.stringify(
+          splitEqual(expense.amountCents, expense.splits.map((s) => s.userId)).sort((a, b) =>
+            a.userId.localeCompare(b.userId),
+          ),
+        ),
+  )
+  const [shares, setShares] = useState<Record<string, string>>(
+    Object.fromEntries((expense?.splits ?? []).map((s) => [s.userId, centsToInput(s.shareCents)])),
+  )
   const [error, setError] = useState<string | null>(null)
+  const participantIds = memberIds.filter((id) => !excluded.includes(id))
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     const amountCents = parseAmountToCents(amount)
     if (amountCents === null || amountCents <= 0) return setError('El monto debe ser mayor a $0')
-    const participantIds = group.members.map((m) => m.userId).filter((id) => !excluded.includes(id))
     if (participantIds.length === 0) return setError('Elige al menos a una persona')
-    addExpense.mutate(
-      {
-        paidBy: paidBy || me || group.members[0].userId,
-        description: description.trim(),
-        amountCents,
-        date: today(),
-        participantIds,
-      },
-      { onSuccess: onClose, onError: (err) => setError(errorText(err, 'No pudimos guardar el gasto')) },
-    )
+
+    const body = {
+      paidBy: paidBy || me || group.members[0].userId,
+      description: description.trim(),
+      amountCents,
+      date: expense?.date ?? today(),
+    }
+    let split: { participantIds: string[] } | { splits: { userId: string; shareCents: number }[] } = { participantIds }
+    if (custom) {
+      const splits = participantIds.map((userId) => ({ userId, shareCents: parseAmountToCents(shares[userId] ?? '') ?? 0 }))
+      const total = splits.reduce((n, s) => n + s.shareCents, 0)
+      if (total !== amountCents) {
+        return setError(`Las partes suman $${centsToInput(total)} y el gasto es de $${centsToInput(amountCents)}`)
+      }
+      split = { splits }
+    }
+    const onError = (err: unknown) => setError(errorText(err, 'No pudimos guardar el gasto'))
+    if (expense) updateExpense.mutate({ expenseId: expense.id, input: { ...body, ...split } }, { onSuccess: onClose, onError })
+    else addExpense.mutate({ ...body, ...split }, { onSuccess: onClose, onError })
   }
 
   return (
-    <Sheet title="Nuevo gasto" onClose={onClose}>
+    <Sheet title={expense ? 'Editar gasto' : 'Nuevo gasto'} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4 pt-2">
         <div>
           <label htmlFor="description" className={LABEL_CLASS}>
@@ -83,22 +118,39 @@ export function ExpenseSheet({
           <legend className={LABEL_CLASS}>Se divide entre</legend>
           <div className="mt-1.5 divide-y divide-line-soft overflow-hidden rounded-xl border border-line bg-surface">
             {group.members.map((m) => (
-              <label key={m.userId} className="flex items-center gap-3 px-4 py-3 text-base text-ink">
-                <input
-                  type="checkbox"
-                  checked={!excluded.includes(m.userId)}
-                  onChange={(e) =>
-                    setExcluded((cur) => (e.target.checked ? cur.filter((x) => x !== m.userId) : [...cur, m.userId]))
-                  }
-                />
-                {m.userId === me ? 'Tú' : nameOf(m.userId)}
-              </label>
+              <div key={m.userId} className="flex items-center gap-3 px-4 py-3 text-base text-ink">
+                <label className="flex flex-1 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={!excluded.includes(m.userId)}
+                    onChange={(e) =>
+                      setExcluded((cur) => (e.target.checked ? cur.filter((x) => x !== m.userId) : [...cur, m.userId]))
+                    }
+                  />
+                  {m.userId === me ? 'Tú' : nameOf(m.userId)}
+                </label>
+                {custom && !excluded.includes(m.userId) ? (
+                  <input
+                    aria-label={`Parte de ${m.userId === me ? 'Tú' : nameOf(m.userId)}`}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={shares[m.userId] ?? ''}
+                    onChange={(e) => setShares((cur) => ({ ...cur, [m.userId]: e.target.value }))}
+                    className="w-28 rounded-lg border border-line bg-surface px-3 py-1.5 text-right text-base text-ink"
+                  />
+                ) : null}
+              </div>
             ))}
           </div>
+          <label className="mt-2 flex items-center gap-3 px-1 text-sm text-ink-mid">
+            <input type="checkbox" checked={custom} onChange={(e) => setCustom(e.target.checked)} />
+            Montos personalizados
+          </label>
         </fieldset>
         <ErrorBox message={error} />
-        <Btn kind="primary" type="submit" className="w-full" disabled={!description.trim() || !amount || addExpense.isPending}>
-          {addExpense.isPending ? 'Guardando…' : 'Agregar gasto'}
+        <Btn kind="primary" type="submit" className="w-full" disabled={!description.trim() || !amount || save.isPending}>
+          {save.isPending ? 'Guardando…' : expense ? 'Guardar cambios' : 'Agregar gasto'}
         </Btn>
       </form>
     </Sheet>

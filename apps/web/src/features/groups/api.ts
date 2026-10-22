@@ -43,6 +43,11 @@ export const useAddSharedExpense = (groupId: string) =>
     api.post(`groups/${groupId}/expenses`, { json: input }).json(),
   )
 
+export const useUpdateSharedExpense = (groupId: string) =>
+  useGroupWrite(({ expenseId, input }: { expenseId: string; input: CreateSharedExpenseInput }) =>
+    api.put(`groups/${groupId}/expenses/${expenseId}`, { json: input }).json(),
+  )
+
 export const useDeleteSharedExpense = (groupId: string) =>
   useGroupWrite((expenseId: string) => api.delete(`groups/${groupId}/expenses/${expenseId}`).json())
 

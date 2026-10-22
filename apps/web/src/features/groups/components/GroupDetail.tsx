@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronLeft, Plus, Trash2, UserPlus } from 'lucide-react'
+import type { GroupDetailDTO } from '@finance-tdah/shared/schemas'
+import { ChevronLeft, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Btn, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { sessionQuery } from '@/lib/session'
 import { groupQueryOptions, useDeleteSharedExpense, useSettle } from '../api'
@@ -21,6 +22,7 @@ export function GroupDetail({ groupId }: { groupId: string }) {
   const deleteExpense = useDeleteSharedExpense(groupId)
   const settle = useSettle(groupId)
   const [sheet, setSheet] = useState<'expense' | 'member' | null>(null)
+  const [editing, setEditing] = useState<GroupDetailDTO['expenses'][number] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const back = (
@@ -103,6 +105,11 @@ export function GroupDetail({ groupId }: { groupId: string }) {
                 </div>
                 <Money value={e.amountCents / 100} className="text-base text-ink" />
                 {e.paidBy === me || e.createdBy === me ? (
+                  <IconButton label="Editar gasto" onClick={() => setEditing(e)}>
+                    <Pencil size={18} strokeWidth={1.9} className="text-ink-mid" />
+                  </IconButton>
+                ) : null}
+                {e.paidBy === me || e.createdBy === me ? (
                   <IconButton
                     label="Borrar gasto"
                     onClick={() => deleteExpense.mutate(e.id, { onError: onError('No pudimos borrar el gasto') })}
@@ -151,6 +158,9 @@ export function GroupDetail({ groupId }: { groupId: string }) {
 
       {sheet === 'expense' ? (
         <ExpenseSheet group={group} me={me} nameOf={nameOf} onClose={() => setSheet(null)} />
+      ) : null}
+      {editing ? (
+        <ExpenseSheet group={group} me={me} nameOf={nameOf} expense={editing} onClose={() => setEditing(null)} />
       ) : null}
       {sheet === 'member' ? <MemberSheet groupId={group.id} onClose={() => setSheet(null)} /> : null}
       <TabBar />

@@ -132,6 +132,31 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     expect(self.status).toBe(400)
   })
 
+  it('S2/S5: only the payer or creator can edit an expense; the edit replaces its shares and moves balances', async () => {
+    const find = async () =>
+      (await call(ANA, 'GET', `/groups/${groupId}`)).body.expenses.find((e: { description: string }) => e.description === 'Taxi')
+    const taxi = await find()
+    const path = `/groups/${groupId}/expenses/${taxi.id}`
+    const edit = { paidBy: BEN, description: 'Taxi', amountCents: 800, date: '2026-01-02', participantIds: [BEN, CAM] }
+
+    expect((await call(CAM, 'PUT', path, edit)).status).toBe(403)
+    expect((await call(OUT, 'PUT', path, edit)).status).toBe(404)
+    expect((await call(BEN, 'PUT', path, { ...edit, participantIds: [BEN, OUT] })).status).toBe(400)
+    expect((await call(BEN, 'PUT', path, { ...edit, splits: [{ userId: BEN, shareCents: 1 }] })).status).toBe(400)
+
+    const ok = await call(BEN, 'PUT', path, edit)
+    expect(ok.status).toBe(200)
+    expect(ok.body.expense.splits).toEqual([{ userId: BEN, shareCents: 400 }, { userId: CAM, shareCents: 400 }])
+    const after = await find()
+    expect(after.amountCents).toBe(800)
+    expect(after.splits).toHaveLength(2)
+
+    // Ana no longer owes Ben for the taxi: only the 'Cena' (+666) and the 267 settlement remain in her balance.
+    const balances = (await call(ANA, 'GET', `/groups/${groupId}`)).body.balances.balances
+    expect(Object.values(balances as Record<string, number>).reduce((a, b) => a + b, 0)).toBe(0)
+    expect(balances[ANA]).toBe(1000 - 334)
+  })
+
   it('S5: only the payer or creator can delete an expense', async () => {
     const [taxi] = (await call(ANA, 'GET', `/groups/${groupId}`)).body.expenses.filter(
       (e: { description: string }) => e.description === 'Taxi',

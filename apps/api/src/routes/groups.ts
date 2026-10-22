@@ -32,6 +32,15 @@ async function loadMembers(groupId: string) {
     .orderBy(schema.expenseGroupMember.joinedAt)
 }
 
+/** The expense's shares (equal split unless custom ones were sent), or null if anyone involved isn't a member. */
+async function resolveSplits(groupId: string, input: z.infer<typeof createSharedExpenseSchema>) {
+  const members = new Set(await memberIds(groupId))
+  const splits = input.splits ?? splitEqual(input.amountCents, [...new Set(input.participantIds)])
+  const involved = [input.paidBy, ...splits.map((s) => s.userId)]
+  if (involved.some((u) => !members.has(u)) || new Set(splits.map((s) => s.userId)).size !== splits.length) return null
+  return splits
+}
+
 async function groupBalances(groupId: string) {
   const [expenses, settlements] = await Promise.all([
     db.query.sharedExpense.findMany({ where: (e, { eq }) => eq(e.groupId, groupId), with: { splits: true } }),
@@ -138,12 +147,8 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     const { id } = c.req.valid('param')
     const input = c.req.valid('json')
 
-    const members = new Set(await memberIds(id))
-    const splits = input.splits ?? splitEqual(input.amountCents, [...new Set(input.participantIds)])
-    const involved = [input.paidBy, ...splits.map((s) => s.userId)]
-    if (involved.some((u) => !members.has(u)) || new Set(splits.map((s) => s.userId)).size !== splits.length) {
-      return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
-    }
+    const splits = await resolveSplits(id, input)
+    if (!splits) return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
 
     const expense = await db.transaction(async (tx) => {
       const [created] = await tx
@@ -161,6 +166,34 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
       return created
     })
     return c.json({ expense: { ...expense, splits } }, 201)
+  })
+
+  // Full replacement (same body as create), so no partial-update defaults can leak into stored data.
+  .put('/:id/expenses/:expenseId', zValidator('param', expenseParamSchema), zValidator('json', createSharedExpenseSchema), async (c) => {
+    const user = c.get('user')
+    const { id, expenseId } = c.req.valid('param')
+    const input = c.req.valid('json')
+    const expense = await db.query.sharedExpense.findFirst({
+      where: (e, { and, eq }) => and(eq(e.id, expenseId), eq(e.groupId, id)),
+    })
+    if (!expense) return c.json({ error: 'Gasto no encontrado' }, 404)
+    if (expense.paidBy !== user.id && expense.createdBy !== user.id) {
+      return c.json({ error: 'Solo quien pagó o cargó el gasto puede editarlo' }, 403)
+    }
+    const splits = await resolveSplits(id, input)
+    if (!splits) return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
+
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(schema.sharedExpense)
+        .set({ paidBy: input.paidBy, description: input.description, amountCents: input.amountCents, date: input.date })
+        .where(eq(schema.sharedExpense.id, expenseId))
+        .returning()
+      await tx.delete(schema.sharedExpenseSplit).where(eq(schema.sharedExpenseSplit.expenseId, expenseId))
+      await tx.insert(schema.sharedExpenseSplit).values(splits.map((s) => ({ ...s, expenseId })))
+      return row
+    })
+    return c.json({ expense: { ...updated, splits } })
   })
 
   .delete('/:id/expenses/:expenseId', zValidator('param', expenseParamSchema), async (c) => {

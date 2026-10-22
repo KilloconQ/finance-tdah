@@ -15,6 +15,8 @@ S7. Code identifiers in English; UI copy in Spanish. Money in integer cents.
 - [x] T2 (S1,S2,S4,S5) api: groups/members/expenses/settlements routes + integration test. Route: inline. 6 integration tests pass on throwaway Postgres (docker ft_test, port 55432); typecheck/lint/all tests green. Not done: PATCH (edit) of a shared expense, only DELETE (S5 edit half). Commit: 6b0ad10.
 - [x] T3 (S1-S4) web: groups list, group detail (expenses, balances, settle), forms, tests, nav entry. Route: inline. 8 new web tests; typecheck/lint/all tests green. Gaps: UI splits equally only (no custom amounts), no expense edit UI, nav = 6th tab 'Grupos'. Commit: db4eab1.
 
+- [x] T4 (S2,S5) edit: API `PUT /groups/:id/expenses/:expenseId` (full replacement, payer/creator only, shared `resolveSplits` with create) + web edit sheet and custom per-member amounts. Route: inline. Integration + 2 web tests added; typecheck/lint/all tests green. Commit: see git log.
+
 ## Log
 L1 (2026-10-15, user): "tengo que tener la parte de los gastos compartidos ya hechos, asi que worktree y branch para hacerlo"
 L2 (2026-10-15, user): "el 1 es para dividir gastos y quien debe a quien" (chose: another person with an account, split expenses, who owes whom)
@@ -22,3 +24,4 @@ L3 (2026-10-16): Explorer map: ids uuid, user.id is text, cents ints, migrations
 L4 (2026-10-16): T1 verified (98 shared tests, typecheck) and committed 03cc638.
 L5 (2026-10-16): T2 routes in apps/api/src/routes/groups.ts mounted at /api/groups; tests written after the route (no RED observed). Member-only guard returns 404 for non-members. Integration run against docker postgres:17 ft_test only.
 L6 (2026-10-16): T3 web in features/groups + app/_app/groups; added groupListSchema/groupDetailSchema to shared. Tests written alongside, no RED observed.
+L7 (2026-10-22, user): asked to finish it; closes T2/T3 gaps (expense edit, custom amounts UI). Edit is PUT (full body) rather than PATCH so the update-schema `.default()` pitfall cannot apply.

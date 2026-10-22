@@ -87,11 +87,55 @@ describe('GroupDetail', () => {
     })
   })
 
+  it('sends custom amounts, and refuses ones that do not add up to the expense', async () => {
+    const api = fakeApi({ ...routes(), [`POST /groups/${G}/expenses`]: () => json({}, 201) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar gasto' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Nuevo gasto' }))
+    await userEvent.type(sheet.getByLabelText('Descripción'), 'Cine')
+    await userEvent.type(sheet.getByLabelText('Monto (en pesos)'), '10')
+    await userEvent.click(sheet.getByLabelText('Montos personalizados'))
+    await userEvent.type(sheet.getByLabelText('Parte de Tú'), '7')
+    await userEvent.type(sheet.getByLabelText('Parte de Ben'), '2')
+    await userEvent.click(sheet.getByRole('button', { name: 'Agregar gasto' }))
+    expect(await sheet.findByText('Las partes suman $9.00 y el gasto es de $10.00')).toBeTruthy()
+    expect(api.writes()).toHaveLength(0)
+
+    await userEvent.clear(sheet.getByLabelText('Parte de Ben'))
+    await userEvent.type(sheet.getByLabelText('Parte de Ben'), '3')
+    await userEvent.click(sheet.getByRole('button', { name: 'Agregar gasto' }))
+    await waitFor(() => expect(api.writes()).toHaveLength(1))
+    expect(api.writes()[0].body).toMatchObject({
+      amountCents: 1_000,
+      splits: [{ userId: 'ana', shareCents: 700 }, { userId: 'ben', shareCents: 300 }],
+    })
+  })
+
+  it('edits an expense it can change: prefilled, saved with PUT', async () => {
+    const withSplits = detail()
+    withSplits.expenses[0].splits = [{ userId: 'ana', shareCents: 7_000 }, { userId: 'ben', shareCents: 3_000 }]
+    const api = fakeApi({ ...routes(withSplits), [`PUT /groups/${G}/expenses/${E1}`]: () => json({}) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click((await screen.findAllByRole('button', { name: 'Editar gasto' }))[0])
+    const sheet = within(screen.getByRole('dialog', { name: 'Editar gasto' }))
+    expect((sheet.getByLabelText('Descripción') as HTMLInputElement).value).toBe('Cena')
+    expect((sheet.getByLabelText('Parte de Ben') as HTMLInputElement).value).toBe('30.00') // uneven shares reopen as custom
+    await userEvent.clear(sheet.getByLabelText('Descripción'))
+    await userEvent.type(sheet.getByLabelText('Descripción'), 'Cena rica')
+    await userEvent.click(sheet.getByRole('button', { name: 'Guardar cambios' }))
+    await waitFor(() => expect(api.writes()).toHaveLength(1))
+    expect(api.writes()[0].body).toMatchObject({
+      description: 'Cena rica', amountCents: 10_000, date: '2026-10-01',
+      splits: [{ userId: 'ana', shareCents: 7_000 }, { userId: 'ben', shareCents: 3_000 }],
+    })
+  })
+
   it('only offers to delete expenses the user paid or created', async () => {
     fakeApi(routes())
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
     await screen.findByText('Cena')
     expect(screen.getAllByRole('button', { name: 'Borrar gasto' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Editar gasto' })).toHaveLength(1)
   })
 
   it('shows the API error when the email is not found', async () => {
