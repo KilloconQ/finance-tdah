@@ -50,6 +50,13 @@
       "when": 1790973511845,
       "tag": "0006_add_daily_reminder",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792199574213,
+      "tag": "0007_dazzling_silhouette",
+      "breakpoints": true
     }
   ]
 }

@@ -21,6 +21,9 @@ export function daysAgo(date: Date | string): number {
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
 
+/** Today's date in the user's timezone as YYYY-MM-DD. */
+export const todayLocalISO = () => new Date().toLocaleDateString('en-CA')
+
 /** "1 día" / "3 días". */
 export function formatDays(n: number): string {
   return `${n} ${n === 1 ? 'día' : 'días'}`

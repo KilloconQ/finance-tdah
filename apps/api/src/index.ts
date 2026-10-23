@@ -13,6 +13,7 @@ import { dashboardRoute } from './routes/dashboard'
 import { envelopesRoute } from './routes/envelopes'
 import { expensesRoute } from './routes/expenses'
 import { goalsRoute } from './routes/goals'
+import { groupsRoute } from './routes/groups'
 import { profileRoute } from './routes/profile'
 import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
@@ -54,6 +55,7 @@ const api = app
   .route('/accounts', accountsRoute)
   .route('/envelopes', envelopesRoute)
   .route('/goals', goalsRoute)
+  .route('/groups', groupsRoute)
   .route('/expenses', expensesRoute)
   .route('/push', pushRoute)
   .route('/subscriptions', subscriptionsRoute)
