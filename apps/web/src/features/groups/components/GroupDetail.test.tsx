@@ -74,6 +74,32 @@ describe('GroupDetail', () => {
     expect(api.writes()[0].body).toMatchObject({ fromUserId: 'ben', toUserId: 'ana', amountCents: 3_000 })
   })
 
+  it('refuses an amount above the cap without calling the API', async () => {
+    const api = fakeApi({ ...routes(), [`POST /groups/${G}/expenses`]: () => json({}, 201) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar gasto' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Nuevo gasto' }))
+    await userEvent.type(sheet.getByLabelText('Descripción'), 'Casa')
+    await userEvent.type(sheet.getByLabelText('Monto (en pesos)'), '21474837')
+    await userEvent.click(sheet.getByRole('button', { name: 'Agregar gasto' }))
+    expect(await sheet.findByText('El monto es demasiado grande')).toBeTruthy()
+    expect(api.writes()).toHaveLength(0)
+  })
+
+  it('shows the server message when the group total would be too big', async () => {
+    fakeApi({
+      ...routes(),
+      [`POST /groups/${G}/expenses`]: () => json({ error: 'El total del grupo es demasiado grande' }, 400),
+    })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Agregar gasto' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Nuevo gasto' }))
+    await userEvent.type(sheet.getByLabelText('Descripción'), 'Casa')
+    await userEvent.type(sheet.getByLabelText('Monto (en pesos)'), '100')
+    await userEvent.click(sheet.getByRole('button', { name: 'Agregar gasto' }))
+    expect(await sheet.findByText('El total del grupo es demasiado grande')).toBeTruthy()
+  })
+
   it('splits a new expense among everyone ticked, paid by the signed-in user', async () => {
     const api = fakeApi({ ...routes(), [`POST /groups/${G}/expenses`]: () => json({}, 201) })
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)

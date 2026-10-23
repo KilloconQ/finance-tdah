@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { centsToUnits, isEqualSplit, parseAmountToCents } from '@finance-tdah/shared/domain'
-import type { ExpenseGroupDTO, GroupDetailDTO } from '@finance-tdah/shared/schemas'
+import { MAX_CENTS, type ExpenseGroupDTO, type GroupDetailDTO } from '@finance-tdah/shared/schemas'
 import { Btn } from '@/components'
 import { todayLocalISO } from '@/lib/format'
 import { useAddMember, useAddSharedExpense, useUpdateSharedExpense } from '../api'
@@ -56,6 +56,7 @@ export function ExpenseSheet({
     setError(null)
     const amountCents = parseAmountToCents(amount)
     if (amountCents === null || amountCents <= 0) return setError('El monto debe ser mayor a $0')
+    if (amountCents > MAX_CENTS) return setError('El monto es demasiado grande')
     if (participantIds.length === 0) return setError('Elige al menos a una persona')
 
     const body = {
@@ -68,6 +69,7 @@ export function ExpenseSheet({
       ? participantIds.map((userId) => ({ userId, shareCents: parseAmountToCents(shares[userId] ?? '') ?? 0 }))
       : null
     if (splits) {
+      if (splits.some((s) => s.shareCents > MAX_CENTS)) return setError('El monto es demasiado grande')
       const total = splits.reduce((n, s) => n + s.shareCents, 0)
       if (total !== amountCents) {
         return setError(`Las partes suman $${centsToInput(total)} y el gasto es de $${centsToInput(amountCents)}`)
