@@ -115,9 +115,10 @@ export function ExpenseSheet({
           <div className="mt-1.5 divide-y divide-line-soft overflow-hidden rounded-xl border border-line bg-surface">
             {group.members.map((m) => (
               <div key={m.userId} className="flex items-center gap-3 px-4 py-3 text-base text-ink">
-                <label className="flex flex-1 items-center gap-3">
+                <label className="flex min-h-10 flex-1 items-center gap-3">
                   <input
                     type="checkbox"
+                    className="size-5"
                     checked={participantIds.includes(m.userId)}
                     onChange={(e) =>
                       setParticipantIds(
@@ -141,8 +142,8 @@ export function ExpenseSheet({
               </div>
             ))}
           </div>
-          <label className="mt-2 flex items-center gap-3 px-1 text-sm text-ink-mid">
-            <input type="checkbox" checked={custom} onChange={(e) => setCustom(e.target.checked)} />
+          <label className="mt-2 flex min-h-10 items-center gap-3 px-1 text-sm text-ink-mid">
+            <input type="checkbox" className="size-5" checked={custom} onChange={(e) => setCustom(e.target.checked)} />
             Montos personalizados
           </label>
         </fieldset>
