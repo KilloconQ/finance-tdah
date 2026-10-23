@@ -84,7 +84,7 @@ function SignUp() {
 
           <div className="mt-5 text-center text-sm text-ink-mid">
             ¿Ya tienes cuenta?{' '}
-            <Link to="/auth/sign-in" className="font-medium text-accent-strong underline">
+            <Link to="/auth/sign-in" className="wf-tap inline-flex min-h-10 items-center px-2 font-medium text-accent-strong underline">
               Entrar
             </Link>
           </div>

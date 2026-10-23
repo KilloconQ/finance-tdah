@@ -20,3 +20,8 @@ export function daysAgo(date: Date | string): number {
   const diff = Date.now() - d.getTime()
   return Math.floor(diff / (1000 * 60 * 60 * 24))
 }
+
+/** "1 día" / "3 días". */
+export function formatDays(n: number): string {
+  return `${n} ${n === 1 ? 'día' : 'días'}`
+}

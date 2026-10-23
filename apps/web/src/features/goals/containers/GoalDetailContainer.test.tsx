@@ -31,7 +31,7 @@ function goalApi(initial = goal(), extra: Record<string, (req: SentRequest) => R
   })
 }
 
-const addButton = () => screen.getByRole('button', { name: /^Echar \$/ })
+const addButton = () => screen.getByRole('button', { name: /^Echar / })
 
 describe('GoalDetailContainer', () => {
   it('shows the goal and what is saved', async () => {
@@ -109,7 +109,7 @@ describe('GoalDetailContainer', () => {
     await user.click(addButton())
     await screen.findByText(/guardados al frasco/)
 
-    expect(addButton().textContent).toBe('Echar $0.00')
+    expect(addButton().textContent).toBe('Echar al frasco')
     expect((addButton() as HTMLButtonElement).disabled).toBe(true)
     await user.click(addButton())
     expect(api.writes()).toHaveLength(1)
