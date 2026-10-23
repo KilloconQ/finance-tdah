@@ -180,3 +180,34 @@ export function MemberSheet({ groupId, onClose }: { groupId: string; onClose: ()
     </Sheet>
   )
 }
+
+/** Asks before an action that can't be undone; `onConfirm` runs only on the confirm button. */
+export function ConfirmSheet({
+  title,
+  message,
+  confirmLabel,
+  pending,
+  onConfirm,
+  onClose,
+}: {
+  title: string
+  message: string
+  confirmLabel: string
+  pending?: boolean
+  onConfirm: () => void
+  onClose: () => void
+}) {
+  return (
+    <Sheet title={title} onClose={onClose}>
+      <p className="pt-2 text-base text-ink-mid">{message}</p>
+      <div className="mt-4 flex gap-2">
+        <Btn kind="ghost" className="flex-1" onClick={onClose}>
+          Cancelar
+        </Btn>
+        <Btn kind="danger" className="flex-1" disabled={pending} onClick={onConfirm}>
+          {confirmLabel}
+        </Btn>
+      </div>
+    </Sheet>
+  )
+}

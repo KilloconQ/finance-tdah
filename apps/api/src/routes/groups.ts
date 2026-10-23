@@ -146,13 +146,30 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     const { id } = c.req.valid('param')
     const { email } = c.req.valid('json')
     const target = await db.query.user.findFirst({ where: (u, { eq }) => eq(u.email, email) })
-    // Same generic answer whether or not the account exists, so emails can't be enumerated.
-    if (!target) return c.json({ error: 'No pudimos agregar a esa persona' }, 404)
-    await db
-      .insert(schema.expenseGroupMember)
-      .values({ groupId: id, userId: target.id })
-      .onConflictDoNothing()
+    // Same answer (201 + members) whether or not the account exists, so emails can't be enumerated.
+    if (target) {
+      await db
+        .insert(schema.expenseGroupMember)
+        .values({ groupId: id, userId: target.id })
+        .onConflictDoNothing()
+    }
     return c.json({ members: await loadMembers(id) }, 201)
+  })
+
+  .delete('/:id/members/me', zValidator('param', idParamSchema), async (c) => {
+    const user = c.get('user')
+    const { id } = c.req.valid('param')
+    const balances = await groupBalances(id)
+    if ((balances[user.id] ?? 0) !== 0) return c.json({ error: 'Salda tus deudas antes de salir' }, 409)
+    const members = await memberIds(id)
+    if (members.length <= 1) {
+      await db.delete(schema.expenseGroup).where(eq(schema.expenseGroup.id, id))
+    } else {
+      await db
+        .delete(schema.expenseGroupMember)
+        .where(and(eq(schema.expenseGroupMember.groupId, id), eq(schema.expenseGroupMember.userId, user.id)))
+    }
+    return c.json({ ok: true })
   })
 
   .post('/:id/expenses', zValidator('param', idParamSchema), zValidator('json', createSharedExpenseSchema), async (c) => {
@@ -220,6 +237,10 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     if (!members.has(input.fromUserId) || !members.has(input.toUserId)) {
       return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
     }
+    const owed =
+      simplifyDebts(await groupBalances(id)).find((d) => d.from === input.fromUserId && d.to === input.toUserId)
+        ?.amountCents ?? 0
+    if (input.amountCents > owed) return c.json({ error: 'El pago no puede superar lo que se debe' }, 400)
     const [settlement] = await db
       .insert(schema.settlement)
       .values({ groupId: id, ...input })
