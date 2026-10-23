@@ -41,6 +41,9 @@ export function SubscriptionForm({
     nextChargeAt.trim() !== '' &&
     !submitting
 
+  const hint =
+    !submitting && !canSubmit ? 'Completa nombre, categoría, monto y fecha del próximo cobro.' : null
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
@@ -48,7 +51,7 @@ export function SubscriptionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="pb-4">
+    <form noValidate onSubmit={handleSubmit} className="pb-4">
       <div className="space-y-4">
         <div>
           <label htmlFor="name" className={LABEL_CLASS}>
@@ -124,6 +127,7 @@ export function SubscriptionForm({
         <div className="mt-4 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{error}</div>
       ) : null}
 
+      {hint ? <p className="mt-4 text-xs text-ink-soft">{hint}</p> : null}
       <Btn kind="primary" type="submit" className="mt-5 w-full" disabled={!canSubmit}>
         {submitting ? 'Guardando…' : submitLabel ?? 'Agregar suscripción'}
       </Btn>

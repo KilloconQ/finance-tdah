@@ -60,7 +60,7 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
       <div>
         <label htmlFor="name" className={LABEL_CLASS}>
           Nombre
@@ -151,6 +151,7 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
         <div className="rounded-xl bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{error}</div>
       ) : null}
 
+      {!submitting && name.trim() === '' ? <p className="text-xs text-ink-soft">Ponle un nombre a la cuenta.</p> : null}
       <Btn kind="primary" type="submit" className="mt-2 w-full" disabled={!canSubmit}>
         {submitting ? 'Guardando…' : submitLabel ?? 'Agregar cuenta'}
       </Btn>

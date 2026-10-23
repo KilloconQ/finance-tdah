@@ -28,6 +28,15 @@ function setup(props: Partial<Parameters<typeof ExpenseForm>[0]> = {}) {
 }
 
 describe('ExpenseForm', () => {
+  it('says what is missing while saving is disabled, and marks the note as required', async () => {
+    const { user } = setup()
+    expect(screen.getByText('(obligatoria)')).toBeTruthy()
+    expect(screen.getByText(/Te falta: el monto, la categoría, una nota/)).toBeTruthy()
+
+    await user.type(screen.getByLabelText('Cuánto'), '10')
+    expect(screen.getByText(/Te falta: la categoría, una nota/)).toBeTruthy()
+  })
+
   it('only enables saving an expense once amount, note and category are set', async () => {
     const { user, onSubmit, submit } = setup()
     expect(submit().disabled).toBe(true)
