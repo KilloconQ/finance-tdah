@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
-import { centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
+import { amountFormatError, centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
 import { goalQueryOptions, useUpdateGoal } from '../api'
 import { GoalForm, type GoalFormFields } from '../components/GoalForm'
@@ -39,7 +39,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
 
     const targetCents = parseAmountToCents(fields.target)
     if (targetCents === null || targetCents <= 0) {
-      setError('La meta debe ser mayor a $0')
+      setError(amountFormatError(fields.target) ?? 'La meta debe ser mayor a $0')
       return
     }
 

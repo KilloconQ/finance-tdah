@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AppBar, Btn, Dots, Hello, Money, PhoneShell } from '@/components'
@@ -48,7 +49,7 @@ function Challenge() {
         name: challengeName,
         description,
         days,
-        expectedSavingsCents: Math.round(parseFloat(savings || '0') * 100),
+        expectedSavingsCents: savings.trim() === '' ? 0 : (parseAmountToCents(savings) ?? 0),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['challenges'] })
@@ -61,6 +62,10 @@ function Challenge() {
     setFormError(null)
     if (!challengeName.trim()) { setFormError('El nombre es obligatorio'); return }
     if (!description.trim()) { setFormError('La descripción es obligatoria'); return }
+    if (savings.trim() !== '' && parseAmountToCents(savings) === null) {
+      setFormError(amountFormatError(savings) ?? 'El ahorro esperado no es válido')
+      return
+    }
     createMutation.mutate()
   }
 
@@ -108,12 +113,11 @@ function Challenge() {
 
             <Field label="Ahorro esperado (en pesos)">
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={savings}
                 onChange={(e) => setSavings(e.target.value)}
                 placeholder="0"
-                min="0"
-                step="0.01"
                 className={INPUT_CLASS}
               />
             </Field>

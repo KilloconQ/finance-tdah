@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { CreateExpenseInput, ParsedVoiceExpense } from '@finance-tdah/shared/schemas'
-import { parseAmountToCents } from '@finance-tdah/shared/domain'
+import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { X } from 'lucide-react'
 import { AppBar, IconButton, PhoneShell } from '@/components'
 import { envelopesQueryOptions } from '@/features/envelopes'
@@ -73,7 +73,7 @@ export function AddExpenseContainer() {
     setError(null)
     const amountCents = parseAmountToCents(fields.amount)
     if (amountCents === null) {
-      setError('El monto no es válido')
+      setError(amountFormatError(fields.amount) ?? 'El monto no es válido')
       return
     }
     save({
