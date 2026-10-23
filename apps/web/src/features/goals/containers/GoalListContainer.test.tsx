@@ -81,7 +81,7 @@ describe('GoalListContainer', () => {
 
     await user.click(await screen.findByText('💻 Laptop'))
     expect(navigate).toHaveBeenLastCalledWith({ to: '/goals/$id', params: { id: GOAL_2 } })
-    await user.click(screen.getByLabelText('Nueva meta'))
+    await user.click(screen.getByLabelText('Nuevo frasco'))
     expect(navigate).toHaveBeenLastCalledWith({ to: '/goals/new' })
   })
 })

@@ -25,7 +25,7 @@ function Screen({ title, message }: { title: string; message: string }) {
 
 /** Shown for unknown URLs and ids that point at nothing. */
 export function NotFoundScreen() {
-  return <Screen title="No encontramos esa página" message="Puede que el link esté mal escrito o que ya no exista." />
+  return <Screen title="No encontramos esa página" message="Puede que el enlace esté mal escrito o que ya no exista." />
 }
 
 /** Shown when a route fails to load or render. */

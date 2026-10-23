@@ -24,7 +24,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
   if (!goal) {
     return (
       <PhoneShell variant="narrow">
-        <AppBar title="Editar meta" back onBack={() => navigate({ to: '/goals' })} />
+        <AppBar title="Editar frasco" back onBack={() => navigate({ to: '/goals' })} />
         <EmptyState
           className="flex-1"
           title="No encontramos ese frasco"
@@ -60,7 +60,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
   return (
     <PhoneShell variant="narrow">
       <AppBar
-        title="Editar meta"
+        title="Editar frasco"
         left={
           <IconButton onClick={goBack} label="Cerrar">
             <X size={20} strokeWidth={2} />

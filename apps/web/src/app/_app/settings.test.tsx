@@ -137,7 +137,7 @@ describe('Settings › delete account', () => {
     const user = setup()
     await user.click(screen.getByRole('button', { name: 'Borrar cuenta' }))
     expect(
-      screen.getByText('Se borrarán tu cuenta, tus gastos, metas y suscripciones. No se puede deshacer.'),
+      screen.getByText('Se borrarán tu cuenta, tus gastos, frascos y suscripciones. No se puede deshacer.'),
     ).toBeTruthy()
   })
 })

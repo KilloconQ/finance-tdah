@@ -182,7 +182,7 @@ function Challenge() {
             onClick={() => resetMutation.mutate(challenge.id)}
             disabled={resetMutation.isPending || checkMutation.isPending}
           >
-            {resetMutation.isPending ? '…' : 'Saltar'}
+            {resetMutation.isPending ? '…' : 'Reiniciar'}
           </Btn>
           <Btn
             kind="primary"

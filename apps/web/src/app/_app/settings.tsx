@@ -75,7 +75,7 @@ function Settings() {
         {push.configured ? (
           <Section
             label="Notificaciones"
-            hint="Avisos cuando llegas al presupuesto semanal, completas una meta o no has anotado nada en el día."
+            hint="Avisos cuando llegas al presupuesto semanal, completas un frasco o no has anotado nada en el día."
           >
             {push.keyError ? (
               <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{push.keyError}</div>
@@ -157,7 +157,7 @@ function Settings() {
         ) : (
           <div className="rounded-xl border border-danger bg-danger-bg p-4">
             <div className="mb-3 text-sm font-medium text-danger">¿Estás seguro?</div>
-            <div className="mb-4 text-xs text-ink-soft">Se borrarán tu cuenta, tus gastos, metas y suscripciones. No se puede deshacer.</div>
+            <div className="mb-4 text-xs text-ink-soft">Se borrarán tu cuenta, tus gastos, frascos y suscripciones. No se puede deshacer.</div>
             <div className="flex gap-2">
               <Btn
                 kind="ghost"

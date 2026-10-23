@@ -100,7 +100,7 @@ describe('Challenge › active challenge', () => {
     })
     render(renderWithQuery(<Challenge />).tree)
 
-    await user.click(await screen.findByRole('button', { name: 'Saltar' }))
+    await user.click(await screen.findByRole('button', { name: 'Reiniciar' }))
 
     expect(await screen.findByText('Día 0 de 7')).toBeTruthy()
     expect(api.writes()).toEqual([{ method: 'POST', path: `/challenges/${CHALLENGE_ID}/reset`, body: undefined }])
@@ -143,7 +143,7 @@ describe('Challenge › active challenge', () => {
     })
     render(renderWithQuery(<Challenge />).tree)
 
-    await user.click(await screen.findByRole('button', { name: 'Saltar' }))
+    await user.click(await screen.findByRole('button', { name: 'Reiniciar' }))
 
     expect((await screen.findByRole('alert')).textContent).toBe('No hay reto activo')
     // the failed skip refetches the challenge

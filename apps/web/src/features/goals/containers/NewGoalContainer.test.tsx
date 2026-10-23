@@ -24,7 +24,7 @@ describe('NewGoalContainer', () => {
 
     await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/goals', replace: true }))
     expect(api.writes()).toEqual([
-      { method: 'POST', path: '/goals', body: { name: 'Nueva meta', emoji: '🌿', targetCents: 500_000 } },
+      { method: 'POST', path: '/goals', body: { name: 'Nuevo frasco', emoji: '🌿', targetCents: 500_000 } },
     ])
   })
 
