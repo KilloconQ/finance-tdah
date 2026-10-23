@@ -87,3 +87,20 @@ describe('fetchValidated', () => {
     expect(onExpired).not.toHaveBeenCalled()
   })
 })
+
+describe('user-facing error copy', () => {
+  it('never shows ky\'s raw "Request failed with status code" text', async () => {
+    fetchMock.mockResolvedValue(json({ success: false, error: { name: 'ZodError' } }, 400))
+    await expect(fetchValidated('/x', itemSchema, { method: 'POST', json: {} })).rejects.toThrow(/Revisa los datos/)
+  })
+
+  it('translates an English server message', async () => {
+    fetchMock.mockResolvedValue(json({ error: 'Internal server error' }, 500))
+    await expect(fetchValidated('/x', itemSchema)).rejects.toThrow(/Algo salió mal/)
+  })
+
+  it('turns a failed fetch into Spanish', async () => {
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'))
+    await expect(fetchValidated('/x', itemSchema)).rejects.toThrow(/No pudimos conectar/)
+  })
+})
