@@ -18,6 +18,18 @@ function SignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!name.trim()) {
+      setError('Escribe tu nombre.')
+      return
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError('Escribe un correo válido, por ejemplo nombre@correo.com.')
+      return
+    }
+    if (password.length < 8) {
+      setError('La contraseña tiene que tener al menos 8 caracteres.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -41,9 +53,9 @@ function SignUp() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Vamos a empezar</h1>
           <Hello className="mt-2">Solo lo mínimo para arrancar.</Hello>
 
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+          <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
             <Field label="Tu nombre" type="text" value={name} onChange={setName} required autoComplete="name" />
-            <Field label="Email" type="email" value={email} onChange={setEmail} required autoComplete="email" />
+            <Field label="Correo" type="email" value={email} onChange={setEmail} required autoComplete="email" />
             <Field
               label="Contraseña"
               type="password"
@@ -64,7 +76,7 @@ function SignUp() {
               kind="primary"
               className="mt-2 w-full"
               type="submit"
-              disabled={loading || !email || password.length < 8 || !name}
+              disabled={loading}
             >
               {loading ? 'Creando…' : 'Crear cuenta'}
             </Btn>
@@ -72,7 +84,7 @@ function SignUp() {
 
           <div className="mt-5 text-center text-sm text-ink-mid">
             ¿Ya tienes cuenta?{' '}
-            <Link to="/auth/sign-in" className="font-medium text-accent-strong underline">
+            <Link to="/auth/sign-in" className="wf-tap inline-flex min-h-10 items-center px-2 font-medium text-accent-strong underline">
               Entrar
             </Link>
           </div>

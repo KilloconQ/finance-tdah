@@ -109,13 +109,13 @@ export function AccountsView({
             <div className="flex h-3.5 overflow-hidden rounded-full bg-line-soft">
               <div className="bg-accent" style={{ flex: freeWeight / totalWeight }} />
               <div className="bg-ink-mid" style={{ flex: lockedCents / totalWeight, opacity: 0.45 }} />
-              <div className="bg-accent-bg" style={{ flex: goalsTotalCents / totalWeight }} />
+              <div className="bg-accent-muted" style={{ flex: goalsTotalCents / totalWeight }} />
               <div className="bg-danger" style={{ flex: debtCents / totalWeight, opacity: 0.75 }} />
             </div>
             <div className="mt-3 flex flex-wrap gap-4 text-xs text-ink-mid">
               <LegendDot color="accent" label="libre" />
               {lockedCents > 0 ? <LegendDot color="locked" label="cajitas (bloqueado)" /> : null}
-              <LegendDot color="accent-bg" label="frascos" />
+              <LegendDot color="accent-muted" label="frascos" />
               <LegendDot color="danger" label="deuda" />
             </div>
           </Card>
@@ -238,7 +238,7 @@ function AccountCard({ account, envelopeBalances, showBalances, onEditAccount, o
 }
 
 interface LegendDotProps {
-  color: 'accent' | 'locked' | 'accent-bg' | 'danger'
+  color: 'accent' | 'locked' | 'accent-muted' | 'danger'
   label: string
 }
 
@@ -246,7 +246,7 @@ function LegendDot({ color, label }: LegendDotProps) {
   const cls = {
     accent: 'bg-accent',
     locked: 'bg-ink-mid opacity-45',
-    'accent-bg': 'bg-accent-bg',
+    'accent-muted': 'bg-accent-muted',
     danger: 'bg-danger opacity-75',
   }[color]
   return (

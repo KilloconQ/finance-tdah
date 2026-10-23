@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { authErrorMessage, thrownErrorMessage } from './auth-errors'
+import { authErrorMessage, statusMessage, thrownErrorMessage, translateMessage } from './auth-errors'
 
 const FALLBACK = 'No pudimos entrar.'
 
@@ -22,10 +22,10 @@ describe('authErrorMessage', () => {
 
   it('translates known better-auth codes', () => {
     expect(authErrorMessage({ status: 401, code: 'INVALID_EMAIL_OR_PASSWORD' }, FALLBACK)).toBe(
-      'Email o contraseña incorrectos.',
+      'Correo o contraseña incorrectos.',
     )
     expect(authErrorMessage({ status: 422, code: 'USER_ALREADY_EXISTS' }, FALLBACK)).toBe(
-      'Ya existe una cuenta con ese email.',
+      'Ya existe una cuenta con ese correo. Inicia sesión o usa otro.',
     )
   })
 
@@ -48,7 +48,7 @@ describe('authErrorMessage', () => {
   })
 
   it('falls back to "wrong credentials" for a 401/403 without a message', () => {
-    expect(authErrorMessage({ status: 401 }, FALLBACK)).toBe('Email o contraseña incorrectos.')
+    expect(authErrorMessage({ status: 401 }, FALLBACK)).toBe('Correo o contraseña incorrectos.')
     expect(authErrorMessage({ status: 403, message: 'Email no verificado' }, FALLBACK)).toBe(
       'Email no verificado',
     )
@@ -73,5 +73,25 @@ describe('thrownErrorMessage', () => {
   it('returns the fallback for non-errors', () => {
     expect(thrownErrorMessage('nope')).toBe('Error inesperado')
     expect(thrownErrorMessage(null, 'otro')).toBe('otro')
+  })
+})
+
+describe('translateMessage / statusMessage', () => {
+  it('translates known raw English messages', () => {
+    expect(translateMessage('User already exists. Use another email.')).toMatch(/Ya existe una cuenta/)
+    expect(translateMessage('Failed to fetch')).toMatch(/No pudimos conectar/)
+    expect(translateMessage('Request timed out')).toMatch(/tardó demasiado/)
+    expect(translateMessage('Internal server error')).toMatch(/Algo salió mal/)
+    expect(translateMessage('Not Found')).toMatch(/No encontramos/)
+    expect(translateMessage('Something went wrong!')).toMatch(/Algo salió mal/)
+  })
+
+  it('leaves Spanish messages untouched', () => {
+    expect(translateMessage('Cuenta no encontrada')).toBe('Cuenta no encontrada')
+  })
+
+  it('has calm copy per status', () => {
+    expect(statusMessage(400)).toMatch(/Revisa los datos/)
+    expect(statusMessage(500)).toMatch(/Algo salió mal/)
   })
 })

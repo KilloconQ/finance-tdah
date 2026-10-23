@@ -13,17 +13,17 @@ export interface AuthErrorLike {
 }
 
 const CODE_MESSAGES: Record<string, string> = {
-  INVALID_EMAIL_OR_PASSWORD: 'Email o contraseña incorrectos.',
-  INVALID_PASSWORD: 'Email o contraseña incorrectos.',
-  USER_NOT_FOUND: 'Email o contraseña incorrectos.',
-  USER_ALREADY_EXISTS: 'Ya existe una cuenta con ese email.',
+  INVALID_EMAIL_OR_PASSWORD: 'Correo o contraseña incorrectos.',
+  INVALID_PASSWORD: 'Correo o contraseña incorrectos.',
+  USER_NOT_FOUND: 'Correo o contraseña incorrectos.',
+  USER_ALREADY_EXISTS: 'Ya existe una cuenta con ese correo. Inicia sesión o usa otro.',
   PASSWORD_TOO_SHORT: 'La contraseña tiene que tener al menos 8 caracteres.',
   PASSWORD_TOO_LONG: 'La contraseña es demasiado larga.',
   INVALID_TOKEN: 'El link venció o ya se usó. Pide uno nuevo.',
   PASSWORD_RESET_UNAVAILABLE: 'El reset por email no está configurado. Contacta al admin.',
 }
 
-const OFFLINE = 'No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo.'
+export const OFFLINE = 'No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo.'
 const SERVER_DOWN =
   'El servidor no está respondiendo. Si acaba de actualizarse, revisa que la API haya arrancado bien.'
 const RATE_LIMITED = 'Demasiados intentos seguidos. Espera un minuto y prueba de nuevo.'
@@ -47,13 +47,40 @@ export function authErrorMessage(error: AuthErrorLike | null | undefined, fallba
     return error.code && error.message ? error.message : `${SERVER_DOWN} (error ${status})`
   }
 
-  if (status === 401 || status === 403) return error.message ?? CODE_MESSAGES.INVALID_EMAIL_OR_PASSWORD
-  return error.message ?? fallback
+  if (status === 401 || status === 403) return error.message ? translateMessage(error.message) : CODE_MESSAGES.INVALID_EMAIL_OR_PASSWORD
+  return error.message ? translateMessage(error.message) : fallback
 }
 
 /** Same idea for a thrown exception (better-auth rethrows network failures). */
 export function thrownErrorMessage(err: unknown, fallback = 'Error inesperado'): string {
   if (err instanceof TypeError) return OFFLINE
-  if (err instanceof Error) return err.message || fallback
+  if (err instanceof Error) return err.message ? translateMessage(err.message) : fallback
   return fallback
+}
+
+export const TIMEOUT = 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.'
+
+const ENGLISH_MESSAGES: Array<[RegExp, string]> = [
+  [/user already exists/i, CODE_MESSAGES.USER_ALREADY_EXISTS],
+  [/invalid email or password/i, CODE_MESSAGES.INVALID_EMAIL_OR_PASSWORD],
+  [/failed to fetch|networkerror|load failed|network request failed/i, OFFLINE],
+  [/timed? ?out/i, TIMEOUT],
+  [/internal server error|something went wrong/i, 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.'],
+  [/^not found$/i, 'No encontramos lo que buscas. Vuelve al inicio e intenta de nuevo.'],
+]
+
+/** Calm Spanish copy for an HTTP status when the body carried nothing usable. */
+export function statusMessage(status: number): string {
+  if (status === 401) return 'Tu sesión venció. Inicia sesión de nuevo.'
+  if (status === 403) return 'No tienes permiso para hacer eso.'
+  if (status === 404) return 'No encontramos lo que buscas. Vuelve al inicio e intenta de nuevo.'
+  if (status === 429) return RATE_LIMITED
+  if (status >= 500) return 'Algo salió mal de nuestro lado. Intenta de nuevo en un momento.'
+  return 'Revisa los datos e intenta de nuevo.'
+}
+
+/** Maps a known raw English message to Spanish; returns the input when it is not recognised. */
+export function translateMessage(message: string): string {
+  for (const [re, es] of ENGLISH_MESSAGES) if (re.test(message)) return es
+  return message
 }

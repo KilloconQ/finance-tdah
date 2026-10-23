@@ -23,7 +23,10 @@ export default defineConfig(({ mode }) => {
         strategies: 'injectManifest',
         srcDir: 'src',
         filename: 'sw.ts',
-        injectManifest: {},
+        injectManifest: {
+          // Default patterns omit fonts; precache the self-hosted woff2 for offline.
+          globPatterns: ['**/*.{js,css,html,woff2}'],
+        },
         // vite-plugin-pwa doesn't serve the SW in dev by default — without this,
         // navigator.serviceWorker.ready never resolves and push notifications
         // silently never activate outside a production build.

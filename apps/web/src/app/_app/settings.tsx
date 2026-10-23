@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { parseAmountToCents } from '@finance-tdah/shared/domain'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { AppBar, PhoneShell, TabBar, Btn } from '@/components'
 import { cn } from '@/lib/cn'
+import { setThemePreference, useThemePreference, type ThemePreference } from '@/lib/theme'
 import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
 import { usePushSubscription } from '@/lib/use-push-subscription'
 import { signOutAndClear } from '@/lib/session-reset'
@@ -29,7 +31,8 @@ function Settings() {
       )
     },
     onSuccess: async () => {
-      await signOutAndClear()
+      // The session died with the account, so the sign-out call may 401; still redirect.
+      await signOutAndClear().catch(() => {})
       navigate({ to: '/auth/sign-in' })
     },
   })
@@ -52,6 +55,10 @@ function Settings() {
             valueCents={weeklyBudgetCents}
             onCommit={(cents) => setTweak.mutate({ weeklyBudgetCents: cents })}
           />
+        </Section>
+
+        <Section label="Apariencia" hint="Se guarda solo en este dispositivo.">
+          <ThemePicker />
         </Section>
 
         <Section
@@ -150,7 +157,7 @@ function Settings() {
         ) : (
           <div className="rounded-xl border border-danger bg-danger-bg p-4">
             <div className="mb-3 text-sm font-medium text-danger">¿Estás seguro?</div>
-            <div className="mb-4 text-xs text-ink-soft">Esta acción no se puede deshacer.</div>
+            <div className="mb-4 text-xs text-ink-soft">Se borrarán tu cuenta, tus gastos, metas y suscripciones. No se puede deshacer.</div>
             <div className="flex gap-2">
               <Btn
                 kind="ghost"
@@ -204,6 +211,55 @@ function Section({ label, hint, children }: SectionProps) {
   )
 }
 
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Sistema' },
+  { value: 'light', label: 'Claro' },
+  { value: 'dark', label: 'Oscuro' },
+]
+
+// Radio group (roving tabindex): arrows move and select, as native radios do.
+function ThemePicker() {
+  const current = useThemePreference()
+  const refs = useRef<(HTMLButtonElement | null)[]>([])
+
+  function onKeyDown(e: React.KeyboardEvent, index: number) {
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+    if (!step) return
+    e.preventDefault()
+    const next = (index + step + THEME_OPTIONS.length) % THEME_OPTIONS.length
+    setThemePreference(THEME_OPTIONS[next].value)
+    refs.current[next]?.focus()
+  }
+
+  return (
+    <div role="radiogroup" aria-label="Tema" className="flex gap-1 rounded-xl border border-line bg-bg-alt p-1">
+      {THEME_OPTIONS.map((o, i) => {
+        const selected = o.value === current
+        return (
+          <button
+            key={o.value}
+            ref={(el) => {
+              refs.current[i] = el
+            }}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            tabIndex={selected ? 0 : -1}
+            onClick={() => setThemePreference(o.value)}
+            onKeyDown={(e) => onKeyDown(e, i)}
+            className={cn(
+              'wf-tap flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              selected ? 'bg-accent-bg text-accent-strong shadow-card ring-1 ring-accent/60' : 'text-ink-mid hover:text-ink',
+            )}
+          >
+            {o.label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 interface BudgetInputProps {
   valueCents: number
   onCommit: (cents: number) => void
@@ -213,12 +269,11 @@ function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
   const [draft, setDraft] = useState<string>(() => String(Math.round(valueCents / 100)))
 
   function handleBlur() {
-    const pesos = parseFloat(draft)
-    if (!Number.isFinite(pesos) || pesos < 0) {
+    const cents = draft.trim() === '0' ? 0 : parseAmountToCents(draft)
+    if (cents === null) {
       setDraft(String(Math.round(valueCents / 100)))
       return
     }
-    const cents = Math.round(pesos * 100)
     if (cents !== valueCents) onCommit(cents)
   }
 
@@ -226,9 +281,7 @@ function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
     <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 transition-colors focus-within:border-accent">
       <span className="text-[15px] text-ink-soft">$</span>
       <input
-        type="number"
-        min={0}
-        step={100}
+        type="text"
         inputMode="decimal"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

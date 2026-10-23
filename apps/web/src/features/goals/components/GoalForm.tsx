@@ -38,7 +38,7 @@ export function GoalForm({ submitting, error, onSubmit, initial, submitLabel }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
       <div>
         <label htmlFor="target" className={LABEL_CLASS}>
           ¿Cuánto necesitas?
@@ -104,6 +104,7 @@ export function GoalForm({ submitting, error, onSubmit, initial, submitLabel }: 
         <div className="rounded-xl bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{error}</div>
       ) : null}
 
+      {!submitting && !canSubmit ? <p className="text-xs text-ink-soft">Completa el nombre y cuánto necesitas.</p> : null}
       <Btn kind="primary" type="submit" className="mt-2 w-full" disabled={!canSubmit}>
         {submitting ? 'Guardando…' : submitLabel ?? 'Crear frasco'}
       </Btn>

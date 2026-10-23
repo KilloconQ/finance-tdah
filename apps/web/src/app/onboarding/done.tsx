@@ -70,7 +70,7 @@ function OnboardingDone() {
 
       <div className="flex-1" />
       <Btn kind="primary" className="w-full py-4" onClick={finish} disabled={submitting}>
-        {submitting ? 'Guardando…' : 'Entrar a la app'}
+        {submitting ? 'Guardando…' : 'Empezar'}
       </Btn>
     </OnboardingLayout>
   )

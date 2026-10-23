@@ -3,27 +3,15 @@ import { useQuery } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import { costOverDaysCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
-import { daysAgo, formatMoney } from '@/lib/format'
+import { daysAgo, formatDateOnly, formatDays, formatMoney } from '@/lib/format'
 import {
   subscriptionQueryOptions,
   useCancelSubscription,
   usePauseSubscription,
 } from '@/features/subscriptions'
+import { avatarTint } from '@/lib/avatar'
 import { queryClient } from '@/lib/query-client'
 import { useTweaks } from '@/lib/use-tweaks'
-
-/** Deterministic pastel color for the initial avatar, derived from the name. */
-function initialAvatarStyle(name: string): { backgroundColor: string; color: string } {
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = (hash * 31 + name.charCodeAt(i)) >>> 0
-  }
-  const hue = hash % 360
-  return {
-    backgroundColor: `hsl(${hue} 48% 91%)`,
-    color: `hsl(${hue} 42% 34%)`,
-  }
-}
 
 export const Route = createFileRoute('/_app/subscriptions/$id')({
   loader: ({ params }) => queryClient.ensureQueryData(subscriptionQueryOptions(params.id)),
@@ -83,8 +71,8 @@ function SubscriptionDetail() {
         <div className="max-w-lg space-y-4">
           <div className="flex items-center gap-4">
             <span
-              style={initialAvatarStyle(sub.name)}
-              className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold"
+              style={avatarTint(sub.name)}
+              className="avatar-tint inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl text-2xl font-semibold"
               aria-hidden
             >
               {sub.name[0]?.toUpperCase() ?? '?'}
@@ -103,7 +91,7 @@ function SubscriptionDetail() {
 
           {sub.unused && days !== null ? (
             <Card className="border-danger/40 bg-danger-bg/40">
-              <div className="text-sm font-medium text-danger">No la abres hace {days} días</div>
+              <div className="text-sm font-medium text-danger">No la abres hace {formatDays(days)}</div>
               {totalPaidCents && showBalances ? (
                 <div className="mt-1.5 text-sm leading-relaxed text-ink-mid">
                   Llevas <Money value={totalPaidCents / 100} className="text-ink" /> pagados desde la
@@ -115,16 +103,13 @@ function SubscriptionDetail() {
             <Card>
               <div className="text-sm text-ink-mid">
                 {days !== null
-                  ? `La usaste hace ${days} días.`
+                  ? `La usaste hace ${formatDays(days)}.`
                   : 'No tenemos registro de uso aún.'}
               </div>
               <div className="mt-2 text-sm text-ink-mid">
                 Próximo cobro:{' '}
                 <span className="money text-ink">
-                  {new Date(sub.nextChargeAt).toLocaleDateString('es-MX', {
-                    day: 'numeric',
-                    month: 'short',
-                  })}
+                  {formatDateOnly(sub.nextChargeAt)}
                 </span>
               </div>
             </Card>

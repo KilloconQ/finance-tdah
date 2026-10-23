@@ -1,10 +1,26 @@
 @import 'tailwindcss';
 
+/* Self-hosted Geist (latin subset only; variable font covers every weight). */
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('@fontsource-variable/geist/files/geist-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Geist Mono';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2') format('woff2-variations');
+}
+
 @theme {
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Warm-neutral + sage palette. Single light theme. */
+  /* Warm-neutral + sage palette. Light values; dark overrides follow the @theme block. */
   --color-bg: #fafaf9;
   --color-bg-alt: #f4f4f2;
   --color-canvas: #fafaf9; /* unified with --bg so no grey gutter appears */
@@ -20,6 +36,7 @@
   --color-accent: #6f8463;
   --color-accent-strong: #5c7150;
   --color-accent-bg: #e9eee3;
+  --color-accent-muted: #c9d6bf; /* data fills (bar segments); accent-bg is too faint for those */
 
   --color-warn: #b8895c;
   --color-warn-bg: #f6ede3;
@@ -35,6 +52,58 @@
   /* Warm, soft elevation — gives surfaces depth without the flat wireframe look */
   --shadow-card: 0 1px 2px rgb(31 30 28 / 0.04), 0 2px 8px -2px rgb(31 30 28 / 0.06);
   --shadow-soft: 0 1px 2px rgb(31 30 28 / 0.05), 0 8px 24px -8px rgb(31 30 28 / 0.12);
+}
+
+/*
+ * Dark theme. `data-theme` is set on <html> by the bootstrap script in
+ * index.html and by lib/theme.ts. Same warm-neutral + sage identity: warm
+ * charcoal (never pure black), softened accents. Every text token clears
+ * WCAG AA (4.5:1) on bg, bg-alt and surface — ratios are listed in DESIGN.md.
+ */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #151412;
+  --color-bg-alt: #1c1b19;
+  --color-canvas: #151412;
+  --color-surface: #201f1c;
+  --color-line: #36342f;
+  --color-line-soft: #2b2a26;
+  --color-ink: #ece9e3;
+  --color-ink-mid: #b0ada6;
+  --color-ink-soft: #908d86;
+  --color-ink-ghost: #5c5a54; /* decoration only (borders, dividers, icons), never text; unused as text today */
+
+  --color-accent: #8fa881;
+  --color-accent-strong: #a9c19b;
+  --color-accent-bg: #262e20;
+  --color-accent-muted: #4b5b42;
+
+  --color-warn: #d8a876;
+  --color-warn-bg: #33291d;
+  --color-danger: #dc9494;
+  --color-danger-bg: #3b2727;
+  --color-good: #8db39f;
+  --color-good-bg: #212f28;
+
+  /* Shadows barely read on dark surfaces: deepen them, keep them soft. */
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 8px -2px rgb(0 0 0 / 0.35);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px -8px rgb(0 0 0 / 0.55);
+}
+
+/* Subscription initial avatars: hue per name (lib/avatar.ts), lightness per theme. */
+.avatar-tint {
+  background-color: hsl(var(--avatar-hue) 48% 91%);
+  color: hsl(var(--avatar-hue) 42% 30%);
+}
+
+:root[data-theme='dark'] .avatar-tint {
+  background-color: hsl(var(--avatar-hue) 24% 23%);
+  color: hsl(var(--avatar-hue) 55% 78%);
 }
 
 html,
