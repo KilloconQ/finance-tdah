@@ -4,7 +4,7 @@ import type { JarPace, JarProgress } from '@finance-tdah/shared/domain'
 import { centsToUnits } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, IconButton, Money, PhoneShell, TabBar } from '@/components'
 import { cn } from '@/lib/cn'
-import { formatMoney } from '@/lib/format'
+import { formatDateOnly, formatMoney } from '@/lib/format'
 import { JarWithStats } from './JarWithStats'
 
 interface GoalDetailViewProps {
@@ -82,10 +82,7 @@ export function GoalDetailView({
               </div>
               {goal.deadline ? (
                 <div className="mt-0.5 text-xs text-ink-soft">
-                  {new Date(goal.deadline).toLocaleDateString('es-MX', {
-                    day: 'numeric',
-                    month: 'short',
-                  })}
+                  {formatDateOnly(goal.deadline)}
                   {pace ? ` · faltan ${pace.daysRemaining} días` : null}
                 </div>
               ) : null}
