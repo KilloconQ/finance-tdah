@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { NotFoundScreen, RouteErrorScreen } from './components'
 import { routeTree } from './routeTree.gen'
 import { queryClient, SESSION_QUERY_KEY } from './lib/query-client'
 import { onAuthChange } from './lib/auth-broadcast'
@@ -11,11 +12,22 @@ import './index.css'
 
 initTheme()
 
+// A malformed percent-escape (/%E0%A4%A) makes the router's URL decoding throw
+// before anything renders: send those to the home screen instead of a blank page.
+try {
+  decodeURI(window.location.pathname)
+  decodeURIComponent(window.location.search)
+} catch {
+  window.history.replaceState(null, '', '/')
+}
+
 const router = createRouter({
   routeTree,
   defaultPreload: 'intent',
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
+  defaultNotFoundComponent: NotFoundScreen,
+  defaultErrorComponent: RouteErrorScreen,
 })
 
 // A 401 from the API means the session is gone: go sign in again.

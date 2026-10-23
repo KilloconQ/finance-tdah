@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import { costOverDaysCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
-import { daysAgo, formatDateOnly, formatMoney } from '@/lib/format'
+import { daysAgo, formatDateOnly, formatDays, formatMoney } from '@/lib/format'
 import {
   subscriptionQueryOptions,
   useCancelSubscription,
@@ -91,7 +91,7 @@ function SubscriptionDetail() {
 
           {sub.unused && days !== null ? (
             <Card className="border-danger/40 bg-danger-bg/40">
-              <div className="text-sm font-medium text-danger">No la abres hace {days} días</div>
+              <div className="text-sm font-medium text-danger">No la abres hace {formatDays(days)}</div>
               {totalPaidCents && showBalances ? (
                 <div className="mt-1.5 text-sm leading-relaxed text-ink-mid">
                   Llevas <Money value={totalPaidCents / 100} className="text-ink" /> pagados desde la
@@ -103,7 +103,7 @@ function SubscriptionDetail() {
             <Card>
               <div className="text-sm text-ink-mid">
                 {days !== null
-                  ? `La usaste hace ${days} días.`
+                  ? `La usaste hace ${formatDays(days)}.`
                   : 'No tenemos registro de uso aún.'}
               </div>
               <div className="mt-2 text-sm text-ink-mid">

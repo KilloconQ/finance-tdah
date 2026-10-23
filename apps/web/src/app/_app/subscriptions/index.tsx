@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Plus, Repeat } from 'lucide-react'
 import { monthlyCostCents, yearlyCostCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
-import { daysAgo } from '@/lib/format'
+import { daysAgo, formatDays } from '@/lib/format'
 import { subscriptionsQueryOptions } from '@/features/subscriptions'
 import { avatarTint } from '@/lib/avatar'
 import { queryClient } from '@/lib/query-client'
@@ -96,7 +96,7 @@ function Subscriptions() {
                         >
                           <div className="truncate text-sm font-medium text-ink">{sub.name}</div>
                           <div className="mt-0.5 text-xs text-ink-mid">
-                            {days !== null ? `hace ${days} días` : 'nunca abierto'}
+                            {days !== null ? `hace ${formatDays(days)}` : 'nunca abierto'}
                           </div>
                         </button>
                         <Money

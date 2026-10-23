@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { daysAgo, formatDateOnly, formatMoney, formatMoneyDelta } from './format'
+import { daysAgo, formatDateOnly, formatDays, formatMoney, formatMoneyDelta } from './format'
 
 describe('formatMoney', () => {
   it('formats pesos with a bare $ and grouping', () => {
@@ -35,6 +35,14 @@ describe('daysAgo', () => {
     expect(daysAgo(new Date('2026-09-28T01:00:00Z'))).toBe(0)
     expect(daysAgo('2026-09-27T12:00:00Z')).toBe(1)
     expect(daysAgo('2026-09-20T13:00:00Z')).toBe(7)
+  })
+})
+
+describe('formatDays', () => {
+  it('pluralizes', () => {
+    expect(formatDays(1)).toBe('1 día')
+    expect(formatDays(0)).toBe('0 días')
+    expect(formatDays(3)).toBe('3 días')
   })
 })
 

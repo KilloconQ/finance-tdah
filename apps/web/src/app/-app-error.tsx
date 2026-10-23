@@ -1,20 +1,19 @@
 import {
-  ErrorComponent,
   Link,
   useRouter,
   type ErrorComponentProps,
 } from '@tanstack/react-router'
-import { Btn, Card, Hello, PhoneShell } from '@/components'
+import { Btn, Card, Hello, PhoneShell, RouteErrorScreen } from '@/components'
 import { SessionCheckError } from '@/lib/session'
 
 /**
  * `_app`'s error screen. A failed session check (429, 5xx, offline) lands here
  * with a retry instead of being treated as "signed out".
  */
-export function AppError({ error }: ErrorComponentProps) {
+export function AppError({ error, reset, info }: ErrorComponentProps) {
   const router = useRouter()
-  // Errors from child routes bubble up here too; those keep the default screen.
-  if (!(error instanceof SessionCheckError)) return <ErrorComponent error={error} />
+  // Errors from child routes bubble up here too; those get the generic screen.
+  if (!(error instanceof SessionCheckError)) return <RouteErrorScreen error={error} reset={reset} info={info} />
 
   return (
     <PhoneShell variant="narrow">
