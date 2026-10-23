@@ -31,7 +31,7 @@ export const completeOnboardingSchema = z.object({
     .object({
       name: z.string().min(1).max(80),
       emoji: z.string().min(1).max(8),
-      targetCents: z.number().int().nonnegative(),
+      targetCents: cents,
     })
     .optional(),
 })
