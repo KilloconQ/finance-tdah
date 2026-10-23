@@ -25,7 +25,7 @@ describe('authErrorMessage', () => {
       'Correo o contraseña incorrectos.',
     )
     expect(authErrorMessage({ status: 422, code: 'USER_ALREADY_EXISTS' }, FALLBACK)).toBe(
-      'Ya existe una cuenta con ese email.',
+      'Ya existe una cuenta con ese correo. Inicia sesión o usa otro.',
     )
   })
 

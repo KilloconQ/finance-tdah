@@ -17,6 +17,14 @@ function SignIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError('Escribe un correo válido, por ejemplo nombre@correo.com.')
+      return
+    }
+    if (!password) {
+      setError('Escribe tu contraseña.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -38,11 +46,11 @@ function SignIn() {
       <div className="flex flex-1 flex-col justify-center py-8">
         <Card className="p-6 sm:p-7">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Hola de nuevo 👋</h1>
-          <Hello className="mt-2">Entra con tu email y contraseña.</Hello>
+          <Hello className="mt-2">Entra con tu correo y contraseña.</Hello>
 
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+          <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
             <Field
-              label="Email"
+              label="Correo"
               type="email"
               autoComplete="email"
               value={email}
@@ -74,7 +82,7 @@ function SignIn() {
               kind="primary"
               className="mt-2 w-full"
               type="submit"
-              disabled={loading || !email || !password}
+              disabled={loading}
             >
               {loading ? 'Entrando…' : 'Entrar'}
             </Btn>
