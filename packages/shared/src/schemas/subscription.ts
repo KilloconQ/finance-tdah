@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cents, isoDate, subscriptionCadenceSchema } from './common'
+import { boundedDate, cents, isoDate, subscriptionCadenceSchema, trimmedText } from './common'
 
 export const subscriptionSchema = z.object({
   id: z.uuid(),
@@ -17,11 +17,11 @@ export const subscriptionSchema = z.object({
 })
 
 export const createSubscriptionSchema = z.object({
-  name: z.string().min(1).max(60),
-  category: z.string().min(1).max(40),
+  name: trimmedText(60, 'Ponle un nombre'),
+  category: trimmedText(40, 'Elige una categoría'),
   amountCents: cents.min(1),
   cadence: subscriptionCadenceSchema.default('monthly'),
-  nextChargeAt: isoDate,
+  nextChargeAt: boundedDate,
   lastOpenedAt: isoDate.optional(),
 })
 

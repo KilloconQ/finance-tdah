@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cents, isoDate } from './common'
+import { boundedDate, cents, isoDate, trimmedText } from './common'
 
 export const goalSchema = z.object({
   id: z.uuid(),
@@ -15,10 +15,10 @@ export const goalSchema = z.object({
 })
 
 export const createGoalSchema = z.object({
-  name: z.string().min(1).max(80),
+  name: trimmedText(80, 'Ponle un nombre'),
   emoji: z.string().min(1).max(8).default('🌿'),
   targetCents: cents.min(1, { error: 'La meta debe ser mayor a $0' }),
-  deadline: isoDate.optional(),
+  deadline: boundedDate.optional(),
 })
 
 // `emoji` is redeclared without the create schema's `.default('🌿')`: Zod 4 applies a

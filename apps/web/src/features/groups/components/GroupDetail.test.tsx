@@ -105,6 +105,7 @@ describe('GroupDetail', () => {
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
     await userEvent.click(await screen.findByRole('button', { name: 'Agregar gasto' }))
     const sheet = within(screen.getByRole('dialog', { name: 'Nuevo gasto' }))
+    for (const box of sheet.getAllByRole('checkbox')) expect(box.closest('label')?.className).toContain('min-h-10')
     await userEvent.type(sheet.getByLabelText('Descripción'), 'Super')
     await userEvent.type(sheet.getByLabelText('Monto (en pesos)'), '12.50')
     await userEvent.click(sheet.getByRole('button', { name: 'Agregar gasto' }))

@@ -168,6 +168,7 @@ describe('Home', () => {
 
     await user.click(screen.getByRole('button', { name: 'Ajustes' }))
     expect(navigate).toHaveBeenLastCalledWith({ to: '/settings' })
+    expect(screen.getByRole('button', { name: 'Modo pánico' }).className).toContain('min-h-10')
     await user.click(screen.getByRole('button', { name: 'Modo pánico' }))
     expect(navigate).toHaveBeenLastCalledWith({ to: '/panic' })
   })

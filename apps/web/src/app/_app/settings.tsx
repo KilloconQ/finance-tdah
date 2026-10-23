@@ -18,6 +18,7 @@ export const Route = createFileRoute('/_app/settings')({
 function Settings() {
   const { showBalances, weeklyBudgetCents, dailyReminderEnabled, dailyReminderHour } = useTweaks()
   const setTweak = useSetTweak()
+  const saveBudget = useSetTweak()
   const push = usePushSubscription()
   const navigate = useNavigate()
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -53,7 +54,10 @@ function Settings() {
         >
           <BudgetInput
             valueCents={weeklyBudgetCents}
-            onCommit={(cents) => setTweak.mutate({ weeklyBudgetCents: cents })}
+            onCommit={(cents) => saveBudget.mutate({ weeklyBudgetCents: cents })}
+            saved={saveBudget.isSuccess}
+            saving={saveBudget.isPending}
+            onEdit={saveBudget.reset}
           />
         </Section>
 
@@ -263,9 +267,12 @@ function ThemePicker() {
 interface BudgetInputProps {
   valueCents: number
   onCommit: (cents: number) => void
+  onEdit?: () => void
+  saving?: boolean
+  saved?: boolean
 }
 
-function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
+function BudgetInput({ valueCents, onCommit, onEdit, saving, saved }: BudgetInputProps) {
   const [draft, setDraft] = useState<string>(() => String(Math.round(valueCents / 100)))
 
   function handleBlur() {
@@ -278,17 +285,27 @@ function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
   }
 
   return (
+    <div>
     <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 transition-colors focus-within:border-accent">
       <span className="text-[15px] text-ink-soft">$</span>
       <input
         type="text"
         inputMode="decimal"
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={handleBlur}
-        className="money w-full min-w-0 bg-transparent text-[15px] text-ink outline-none"
+        onChange={(e) => {
+          setDraft(e.target.value)
+          onEdit?.()
+        }}
+        onBlur={() => {
+          handleBlur()
+        }}
+        className="money min-h-10 w-full min-w-0 bg-transparent text-[15px] text-ink outline-none"
       />
       <span className="whitespace-nowrap text-xs text-ink-soft">/ semana</span>
+    </div>
+    <p role="status" className="mt-1.5 min-h-4 px-1 text-xs text-ink-soft">
+      {saving ? 'Guardando…' : saved ? 'Guardado' : ''}
+    </p>
     </div>
   )
 }
