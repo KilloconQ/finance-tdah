@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { eq } from 'drizzle-orm'
+import { eq, inArray } from 'drizzle-orm'
 import { completeOnboardingSchema, updateProfileSchema } from '@finance-tdah/shared/schemas'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
@@ -78,14 +78,14 @@ export const profileRoute = new Hono<{ Variables: SessionVariables }>()
   .post('/delete', async (c) => {
     const user = c.get('user')
 
+    // Every table that references user.id (session, account, verification, push
+    // subscriptions and all finance data) is ON DELETE CASCADE, so removing the
+    // user row removes the credentials, sessions and data in one atomic statement.
+    // `verification` has no FK (it is keyed by identifier, usually the email), so it
+    // is removed explicitly in the same transaction.
     await db.transaction(async (tx) => {
-      await tx.delete(schema.userProfile).where(eq(schema.userProfile.userId, user.id))
-      await tx.delete(schema.financialAccount).where(eq(schema.financialAccount.userId, user.id))
-      await tx.delete(schema.goal).where(eq(schema.goal.userId, user.id))
-      await tx.delete(schema.expense).where(eq(schema.expense.userId, user.id))
-      await tx.delete(schema.subscription).where(eq(schema.subscription.userId, user.id))
-      await tx.delete(schema.challenge).where(eq(schema.challenge.userId, user.id))
-      await tx.delete(schema.dailyBudget).where(eq(schema.dailyBudget.userId, user.id))
+      await tx.delete(schema.verification).where(inArray(schema.verification.identifier, [user.email, user.id]))
+      await tx.delete(schema.user).where(eq(schema.user.id, user.id))
     })
 
     return c.json({ success: true })
