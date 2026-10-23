@@ -205,4 +205,43 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     const gone = await db.query.expenseGroup.findFirst({ where: (g, { eq }) => eq(g.id, groupId) })
     expect(gone).toBeUndefined()
   })
+
+  describe('amount cap', () => {
+    let gid: string
+    const body = (amountCents: number, extra: object = {}) => ({
+      paidBy: ANA, description: 'Casa', amountCents, date: '2026-02-01', participantIds: [ANA], ...extra,
+    })
+
+    beforeAll(async () => {
+      gid = (await call(ANA, 'POST', '/groups', { name: 'Tope' })).body.group.id
+    })
+
+    it('rejects huge amounts, shares and settlements with 400, never 500', async () => {
+      for (const n of [2147483648, 99999999999999]) {
+        expect((await call(ANA, 'POST', `/groups/${gid}/expenses`, body(n))).status).toBe(400)
+        const share = await call(ANA, 'POST', `/groups/${gid}/expenses`, body(1, { participantIds: undefined, splits: [{ userId: ANA, shareCents: n }] }))
+        expect(share.status).toBe(400)
+        const settle = await call(ANA, 'POST', `/groups/${gid}/settlements`, { fromUserId: ANA, toUserId: BEN, amountCents: n, date: '2026-02-01' })
+        expect(settle.status).toBe(400)
+      }
+    })
+
+    it('accepts exactly the cap, then rejects a write that pushes the group total over it', async () => {
+      const max = 2147483647
+      const first = await call(ANA, 'POST', `/groups/${gid}/expenses`, body(max))
+      expect(first.status).toBe(201)
+      const over = await call(ANA, 'POST', `/groups/${gid}/expenses`, body(1))
+      expect(over.status).toBe(400)
+      expect(over.body.error).toBe('El total del grupo es demasiado grande')
+      expect((await call(ANA, 'GET', `/groups/${gid}`)).status).toBe(200)
+      expect((await call(ANA, 'GET', '/groups')).status).toBe(200)
+
+      const edit = await call(ANA, 'PUT', `/groups/${gid}/expenses/${first.body.expense.id}`, body(max - 1))
+      expect(edit.status).toBe(200)
+      const small = await call(ANA, 'POST', `/groups/${gid}/expenses`, body(1))
+      expect(small.status).toBe(201)
+      const grow = await call(ANA, 'PUT', `/groups/${gid}/expenses/${small.body.expense.id}`, body(2))
+      expect(grow.status).toBe(400)
+    })
+  })
 })
