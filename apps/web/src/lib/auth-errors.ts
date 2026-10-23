@@ -58,7 +58,7 @@ export function thrownErrorMessage(err: unknown, fallback = 'Error inesperado'):
   return fallback
 }
 
-export const TIMEOUT = 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.'
+export const TIMEOUT = 'Tarda más de lo normal. Revisa tu conexión e inténtalo de nuevo.'
 
 const ENGLISH_MESSAGES: Array<[RegExp, string]> = [
   [/user already exists/i, CODE_MESSAGES.USER_ALREADY_EXISTS],

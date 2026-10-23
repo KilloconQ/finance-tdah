@@ -6,6 +6,7 @@ import { AppBar, Btn, Card, IconButton, Money, PhoneShell, TabBar } from '@/comp
 import { cn } from '@/lib/cn'
 import { formatDateOnly, formatDays, formatMoney } from '@/lib/format'
 import { JarWithStats } from './JarWithStats'
+import { useSavingLabel } from '@/lib/use-online'
 
 interface GoalDetailViewProps {
   goal: GoalDTO
@@ -60,6 +61,7 @@ export function GoalDetailView({
   onCancelDelete,
   onConfirmDelete,
 }: GoalDetailViewProps) {
+  const savingLabel = useSavingLabel()
   return (
     <PhoneShell>
       <AppBar
@@ -159,7 +161,7 @@ export function GoalDetailView({
               </div>
             ) : null}
             <Btn kind="primary" onClick={onAdd} disabled={isAdding || !canAdd}>
-              {isAdding ? 'Guardando…' : selectedAmount > 0 ? `Echar ${formatMoney(selectedAmount)}` : 'Echar al frasco'}
+              {isAdding ? savingLabel : selectedAmount > 0 ? `Echar ${formatMoney(selectedAmount)}` : 'Echar al frasco'}
             </Btn>
             {confirming ? (
               <div className="text-center text-sm text-good">

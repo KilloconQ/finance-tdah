@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AccountType } from '@finance-tdah/shared/domain'
 import { Btn } from '@/components'
 import { cn } from '@/lib/cn'
+import { useSavingLabel } from '@/lib/use-online'
 
 export interface AccountFormFields {
   name: string
@@ -38,6 +39,7 @@ interface AccountFormProps {
 }
 
 export function AccountForm({ submitting, error, onSubmit, initial, submitLabel }: AccountFormProps) {
+  const savingLabel = useSavingLabel()
   const [name, setName] = useState(initial?.name ?? '')
   const [type, setType] = useState<AccountType>(initial?.type ?? 'debito')
   const [balance, setBalance] = useState(initial?.balance ?? '')
@@ -153,7 +155,7 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
 
       {!submitting && name.trim() === '' ? <p className="text-xs text-ink-soft">Ponle un nombre a la cuenta.</p> : null}
       <Btn kind="primary" type="submit" className="mt-2 w-full" disabled={!canSubmit}>
-        {submitting ? 'Guardando…' : submitLabel ?? 'Agregar cuenta'}
+        {submitting ? savingLabel : submitLabel ?? 'Agregar cuenta'}
       </Btn>
     </form>
   )
