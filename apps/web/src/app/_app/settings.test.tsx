@@ -131,3 +131,13 @@ describe('Settings › theme', () => {
     expect(document.activeElement).toBe(choice('Claro'))
   })
 })
+
+describe('Settings › delete account', () => {
+  it('says what is deleted before the user confirms', async () => {
+    const user = setup()
+    await user.click(screen.getByRole('button', { name: 'Borrar cuenta' }))
+    expect(
+      screen.getByText('Se borrarán tu cuenta, tus gastos, metas y suscripciones. No se puede deshacer.'),
+    ).toBeTruthy()
+  })
+})

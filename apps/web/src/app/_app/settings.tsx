@@ -30,7 +30,8 @@ function Settings() {
       )
     },
     onSuccess: async () => {
-      await signOutAndClear()
+      // The session died with the account, so the sign-out call may 401; still redirect.
+      await signOutAndClear().catch(() => {})
       navigate({ to: '/auth/sign-in' })
     },
   })
@@ -155,7 +156,7 @@ function Settings() {
         ) : (
           <div className="rounded-xl border border-danger bg-danger-bg p-4">
             <div className="mb-3 text-sm font-medium text-danger">¿Estás seguro?</div>
-            <div className="mb-4 text-xs text-ink-soft">Esta acción no se puede deshacer.</div>
+            <div className="mb-4 text-xs text-ink-soft">Se borrarán tu cuenta, tus gastos, metas y suscripciones. No se puede deshacer.</div>
             <div className="flex gap-2">
               <Btn
                 kind="ghost"
