@@ -84,12 +84,11 @@ export function SubscriptionForm({
           </label>
           <input
             id="amount"
-            type="number"
+            type="text"
+            inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
-            min="0"
-            step="0.01"
             className={FIELD_CLASS}
           />
         </div>

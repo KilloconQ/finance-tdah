@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { X } from 'lucide-react'
-import { parseAmountToCents } from '@finance-tdah/shared/domain'
+import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, IconButton, PhoneShell } from '@/components'
 import { useCreateSubscription } from '../api'
 import { SubscriptionForm, type SubscriptionFormFields } from '../components/SubscriptionForm'
@@ -18,7 +18,7 @@ export function NewSubscriptionContainer() {
 
     const amountCents = parseAmountToCents(fields.amount)
     if (amountCents === null || amountCents <= 0) {
-      setError('El monto debe ser mayor a $0')
+      setError(amountFormatError(fields.amount) ?? 'El monto debe ser mayor a $0')
       return
     }
 
