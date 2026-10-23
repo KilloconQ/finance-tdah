@@ -1,7 +1,10 @@
 import { z } from 'zod'
 
-export const cents = z.number().int().nonnegative()
-export const signedCents = z.number().int()
+/** Money columns are Postgres `integer` (int32): anything above this overflows and 500s. */
+export const MAX_CENTS = 2_147_483_647
+const overMax = { error: 'El monto es demasiado grande' }
+export const cents = z.number().int().nonnegative().max(MAX_CENTS, overMax)
+export const signedCents = z.number().int().min(-MAX_CENTS, overMax).max(MAX_CENTS, overMax)
 export const isoDate = z.iso.date()
 export const isoDateTime = z.iso.datetime({ offset: true })
 
