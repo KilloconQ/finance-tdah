@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
 import { Btn, Chip } from '@/components'
 import { formatMoney } from '@/lib/format'
+import { useSavingLabel } from '@/lib/use-online'
 
 export type MovementKind = 'expense' | 'income' | 'transfer'
 
@@ -86,6 +87,7 @@ export function ExpenseForm({
   initial,
   submitLabel,
 }: ExpenseFormProps) {
+  const savingLabel = useSavingLabel()
   const [kind, setKind] = useState<MovementKind>(initial?.kind ?? 'expense')
   const [amount, setAmount] = useState(initial?.amount ?? '')
   const [category, setCategory] = useState(initial?.category ?? '')
@@ -312,7 +314,7 @@ export function ExpenseForm({
       <div className="mt-2">
         {hint ? <p className="mb-2 text-xs text-ink-soft">{hint}</p> : null}
         <Btn kind="primary" type="submit" className="w-full sm:w-auto sm:min-w-48" disabled={!canSubmit}>
-          {submitting ? 'Guardando…' : (submitLabel ?? SUBMIT_LABEL[kind])}
+          {submitting ? savingLabel : (submitLabel ?? SUBMIT_LABEL[kind])}
         </Btn>
         {onUseVoice ? (
           <button

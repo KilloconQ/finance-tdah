@@ -5,6 +5,7 @@ import { Btn } from '@/components'
 import { todayLocalISO } from '@/lib/format'
 import { useAddMember, useAddSharedExpense, useUpdateSharedExpense } from '../api'
 import { Sheet } from './Sheet'
+import { useSavingLabel } from '@/lib/use-online'
 
 const FIELD_CLASS =
   'mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg'
@@ -33,6 +34,7 @@ export function ExpenseSheet({
   expense?: GroupExpense
   onClose: () => void
 }) {
+  const savingLabel = useSavingLabel()
   const addExpense = useAddSharedExpense(group.id)
   const updateExpense = useUpdateSharedExpense(group.id)
   const save = expense ? updateExpense : addExpense
@@ -146,7 +148,7 @@ export function ExpenseSheet({
         </fieldset>
         <ErrorBox message={error} />
         <Btn kind="primary" type="submit" className="w-full" disabled={!description.trim() || !amount || save.isPending}>
-          {save.isPending ? 'Guardando…' : expense ? 'Guardar cambios' : 'Agregar gasto'}
+          {save.isPending ? savingLabel : expense ? 'Guardar cambios' : 'Agregar gasto'}
         </Btn>
       </form>
     </Sheet>

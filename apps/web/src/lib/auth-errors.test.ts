@@ -80,7 +80,7 @@ describe('translateMessage / statusMessage', () => {
   it('translates known raw English messages', () => {
     expect(translateMessage('User already exists. Use another email.')).toMatch(/Ya existe una cuenta/)
     expect(translateMessage('Failed to fetch')).toMatch(/No pudimos conectar/)
-    expect(translateMessage('Request timed out')).toMatch(/tardó demasiado/)
+    expect(translateMessage('Request timed out')).toMatch(/Tarda más de lo normal/)
     expect(translateMessage('Internal server error')).toMatch(/Algo salió mal/)
     expect(translateMessage('Not Found')).toMatch(/No encontramos/)
     expect(translateMessage('Something went wrong!')).toMatch(/Algo salió mal/)

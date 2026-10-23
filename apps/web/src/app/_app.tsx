@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
-import { Sidebar } from '@/components'
+import { OfflineBanner, Sidebar } from '@/components'
 import { forgetSession, getSession } from '@/lib/session'
 import { queryClient, SESSION_QUERY_KEY } from '@/lib/query-client'
 import { syncSessionCache } from '@/lib/session-reset'
@@ -35,6 +35,7 @@ function AppLayout() {
       <Sidebar />
       {/* Single-tone main so no grey gutter shows between rail and content. */}
       <main className="flex min-h-dvh min-w-0 flex-1 flex-col bg-bg">
+        <OfflineBanner />
         <Outlet />
       </main>
     </div>

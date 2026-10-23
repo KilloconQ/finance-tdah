@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Btn, Chip } from '@/components'
+import { useSavingLabel } from '@/lib/use-online'
 
 export interface SubscriptionFormFields {
   name: string
@@ -28,6 +29,7 @@ export function SubscriptionForm({
   initial,
   submitLabel,
 }: SubscriptionFormProps) {
+  const savingLabel = useSavingLabel()
   const [name, setName] = useState(initial?.name ?? '')
   const [category, setCategory] = useState(initial?.category ?? '')
   const [amount, setAmount] = useState(initial?.amount ?? '')
@@ -128,7 +130,7 @@ export function SubscriptionForm({
 
       {hint ? <p className="mt-4 text-xs text-ink-soft">{hint}</p> : null}
       <Btn kind="primary" type="submit" className="mt-5 w-full" disabled={!canSubmit}>
-        {submitting ? 'Guardando…' : submitLabel ?? 'Agregar suscripción'}
+        {submitting ? savingLabel : submitLabel ?? 'Agregar suscripción'}
       </Btn>
     </form>
   )
