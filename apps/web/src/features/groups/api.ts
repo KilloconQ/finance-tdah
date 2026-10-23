@@ -55,3 +55,6 @@ export const useSettle = (groupId: string) =>
   useGroupWrite((input: { fromUserId: string; toUserId: string; amountCents: number; date: string }) =>
     api.post(`groups/${groupId}/settlements`, { json: input }).json(),
   )
+
+export const useLeaveGroup = (groupId: string) =>
+  useGroupWrite(() => api.delete(`groups/${groupId}/members/me`).json())

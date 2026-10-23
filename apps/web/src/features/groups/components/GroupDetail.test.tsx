@@ -68,6 +68,8 @@ describe('GroupDetail', () => {
     const api = fakeApi({ ...routes(), [`POST /groups/${G}/settlements`]: () => json({}, 201) })
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
     await userEvent.click(await screen.findByRole('button', { name: 'Saldar' }))
+    expect(api.writes()).toHaveLength(0)
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Saldar deuda' })).getByRole('button', { name: 'Saldar' }))
     await waitFor(() => expect(api.writes()).toHaveLength(1))
     expect(api.writes()[0].body).toMatchObject({ fromUserId: 'ben', toUserId: 'ana', amountCents: 3_000 })
   })
@@ -146,5 +148,38 @@ describe('GroupDetail', () => {
     await userEvent.type(sheet.getByLabelText('Email'), 'zz@x.com')
     await userEvent.click(sheet.getByRole('button', { name: 'Agregar miembro' }))
     expect(await screen.findByText('No pudimos agregar a esa persona')).toBeTruthy()
+  })
+
+  it('asks before deleting an expense, and does nothing on cancel', async () => {
+    const api = fakeApi({ ...routes(), [`DELETE /groups/${G}/expenses/${E1}`]: () => json({ ok: true }) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Borrar gasto' }))
+    const dialog = within(screen.getByRole('dialog', { name: 'Borrar gasto' }))
+    await userEvent.click(dialog.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(api.writes()).toHaveLength(0)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Borrar gasto' }))
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Borrar gasto' })).getByRole('button', { name: 'Borrar' }))
+    await waitFor(() => expect(api.writes()).toHaveLength(1))
+  })
+
+  it('leaves the group after confirming and goes back to the list', async () => {
+    const api = fakeApi({ ...routes(), [`DELETE /groups/${G}/members/me`]: () => json({ ok: true }) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Salir del grupo' }))
+    expect(api.writes()).toHaveLength(0)
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Salir del grupo' })).getByRole('button', { name: 'Salir' }))
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/groups' }))
+    expect(api.writes()).toHaveLength(1)
+  })
+
+  it('shows the API error when leaving with debts', async () => {
+    fakeApi({ ...routes(), [`DELETE /groups/${G}/members/me`]: () => json({ error: 'Salda tus deudas antes de salir' }, 409) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Salir del grupo' }))
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Salir del grupo' })).getByRole('button', { name: 'Salir' }))
+    expect(await screen.findByText('Salda tus deudas antes de salir')).toBeTruthy()
+    expect(navigate).not.toHaveBeenCalled()
   })
 })

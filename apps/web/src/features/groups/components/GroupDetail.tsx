@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { GroupDetailDTO } from '@finance-tdah/shared/schemas'
-import { ChevronLeft, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
+import { ChevronLeft, LogOut, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Btn, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { todayLocalISO } from '@/lib/format'
 import { sessionQuery } from '@/lib/session'
-import { groupQueryOptions, useDeleteSharedExpense, useSettle } from '../api'
+import { groupQueryOptions, useDeleteSharedExpense, useLeaveGroup, useSettle } from '../api'
 import { Avatar } from './Avatar'
-import { ExpenseSheet, MemberSheet } from './GroupSheets'
+import { ConfirmSheet, ExpenseSheet, MemberSheet } from './GroupSheets'
 
 const SECTION = 'px-4 pb-2 text-xs font-medium uppercase tracking-wide text-ink-mid'
 const GROUPED = 'divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface'
@@ -21,7 +21,10 @@ export function GroupDetail({ groupId }: { groupId: string }) {
 
   const deleteExpense = useDeleteSharedExpense(groupId)
   const settle = useSettle(groupId)
-  const [sheet, setSheet] = useState<'expense' | 'member' | null>(null)
+  const leave = useLeaveGroup(groupId)
+  const [sheet, setSheet] = useState<'expense' | 'member' | 'leave' | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  const [settling, setSettling] = useState<GroupDetailDTO['balances']['debts'][number] | null>(null)
   const [editing, setEditing] = useState<GroupDetailDTO['expenses'][number] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -77,12 +80,7 @@ export function GroupDetail({ groupId }: { groupId: string }) {
                   <Btn
                     className="h-8 rounded-full bg-accent-bg px-3 text-sm text-accent-strong shadow-none"
                     disabled={settle.isPending}
-                    onClick={() =>
-                      settle.mutate(
-                        { fromUserId: d.from, toUserId: d.to, amountCents: d.amountCents, date: todayLocalISO() },
-                        { onError: onError('No pudimos registrar el pago') },
-                      )
-                    }
+                    onClick={() => setSettling(d)}
                   >
                     Saldar
                   </Btn>
@@ -112,7 +110,7 @@ export function GroupDetail({ groupId }: { groupId: string }) {
                 {e.paidBy === me || e.createdBy === me ? (
                   <IconButton
                     label="Borrar gasto"
-                    onClick={() => deleteExpense.mutate(e.id, { onError: onError('No pudimos borrar el gasto') })}
+                    onClick={() => setDeleting(e.id)}
                   >
                     <Trash2 size={18} strokeWidth={1.9} className="text-danger" />
                   </IconButton>
@@ -145,6 +143,14 @@ export function GroupDetail({ groupId }: { groupId: string }) {
               <UserPlus size={20} strokeWidth={1.9} />
               Agregar miembro
             </button>
+            <button
+              type="button"
+              onClick={() => setSheet('leave')}
+              className="wf-tap flex w-full items-center gap-3 px-4 py-3 text-left text-base text-danger"
+            >
+              <LogOut size={20} strokeWidth={1.9} />
+              Salir del grupo
+            </button>
           </div>
         </section>
       </div>
@@ -163,6 +169,55 @@ export function GroupDetail({ groupId }: { groupId: string }) {
         <ExpenseSheet group={group} me={me} nameOf={nameOf} expense={editing} onClose={() => setEditing(null)} />
       ) : null}
       {sheet === 'member' ? <MemberSheet groupId={group.id} onClose={() => setSheet(null)} /> : null}
+      {settling ? (
+        <ConfirmSheet
+          title="Saldar deuda"
+          message={`¿Registrar el pago de ${Math.abs(settling.amountCents / 100).toFixed(2)} de ${nameOf(settling.from)} a ${nameOf(settling.to)}?`}
+          confirmLabel="Saldar"
+          pending={settle.isPending}
+          onClose={() => setSettling(null)}
+          onConfirm={() => {
+            const { from, to, amountCents } = settling
+            setSettling(null)
+            settle.mutate(
+              { fromUserId: from, toUserId: to, amountCents, date: todayLocalISO() },
+              { onError: onError('No pudimos registrar el pago') },
+            )
+          }}
+        />
+      ) : null}
+      {deleting ? (
+        <ConfirmSheet
+          title="Borrar gasto"
+          message="¿Borrar este gasto? Los saldos se recalculan y no se puede deshacer."
+          confirmLabel="Borrar"
+          pending={deleteExpense.isPending}
+          onClose={() => setDeleting(null)}
+          onConfirm={() => {
+            const id = deleting
+            setDeleting(null)
+            deleteExpense.mutate(id, { onError: onError('No pudimos borrar el gasto') })
+          }}
+        />
+      ) : null}
+      {sheet === 'leave' ? (
+        <ConfirmSheet
+          title="Salir del grupo"
+          message="¿Salir de este grupo? Solo puedes salir si no tienes deudas pendientes."
+          confirmLabel="Salir"
+          pending={leave.isPending}
+          onClose={() => setSheet(null)}
+          onConfirm={() =>
+            leave.mutate(undefined, {
+              onSuccess: () => navigate({ to: '/groups' }),
+              onError: (err) => {
+                setSheet(null)
+                onError('No pudimos sacarte del grupo')(err)
+              },
+            })
+          }
+        />
+      ) : null}
       <TabBar />
     </PhoneShell>
   )

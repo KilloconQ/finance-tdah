@@ -59,14 +59,17 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     await db.delete(schema.user).where(inArray(schema.user.id, [ANA, BEN, CAM, OUT]))
   })
 
-  it('S1: creator is a member, members see the group, unknown email gets a generic error', async () => {
+  it('S1: creator is a member, members see the group, unknown email gets the same answer as a known one', async () => {
     const list = await call(BEN, 'GET', '/groups')
     expect(list.body.groups.map((g: { id: string }) => g.id)).toEqual([groupId])
     expect(list.body.groups[0].members).toHaveLength(3)
 
     const missing = await call(ANA, 'POST', `/groups/${groupId}/members`, { email: 'nadie@test.local' })
-    expect(missing.status).toBe(404)
-    expect(missing.body.error).toBe('No pudimos agregar a esa persona')
+    const known = await call(ANA, 'POST', `/groups/${groupId}/members`, { email: email(BEN) })
+    expect(missing.status).toBe(201)
+    expect(known.status).toBe(201)
+    expect(missing.body).toEqual(known.body)
+    expect(missing.body.members).toHaveLength(3)
   })
 
   it('S5: a non-member can neither read nor write the group', async () => {
@@ -126,6 +129,15 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     const mine = async (as: string) => (await call(as, 'GET', '/groups')).body.groups[0].myBalanceCents
     expect([await mine(ANA), await mine(CAM)]).toEqual([66, -66])
 
+    const tooMuch = await call(CAM, 'POST', `/groups/${groupId}/settlements`, {
+      fromUserId: CAM, toUserId: ANA, amountCents: 67, date: '2026-01-03',
+    })
+    expect(tooMuch.status).toBe(400)
+    const reversed = await call(ANA, 'POST', `/groups/${groupId}/settlements`, {
+      fromUserId: ANA, toUserId: CAM, amountCents: 1, date: '2026-01-03',
+    })
+    expect(reversed.status).toBe(400)
+
     const self = await call(CAM, 'POST', `/groups/${groupId}/settlements`, {
       fromUserId: CAM, toUserId: CAM, amountCents: 1, date: '2026-01-03',
     })
@@ -165,5 +177,32 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     expect((await call(BEN, 'DELETE', `/groups/${groupId}/expenses/${taxi.id}`)).status).toBe(200)
     const left = (await call(ANA, 'GET', `/groups/${groupId}`)).body.expenses
     expect(left.map((e: { description: string }) => e.description)).toEqual(['Cena'])
+  })
+
+  it('members can leave once settled; indebted members cannot; the last one out deletes the group', async () => {
+    const path = `/groups/${groupId}/members/me`
+    // Ana is owed money and Cam owes it: neither may leave yet.
+    const blocked = await call(CAM, 'DELETE', path)
+    expect(blocked.status).toBe(409)
+    expect(blocked.body.error).toBe('Salda tus deudas antes de salir')
+    expect((await call(ANA, 'DELETE', path)).status).toBe(409)
+    expect((await call(OUT, 'DELETE', path)).status).toBe(404)
+
+    // Only the Cena remains: Ben owes Ana 600 and Cam owes her 66.
+    for (const [from, amountCents] of [[CAM, 66], [BEN, 600]] as const) {
+      const paid = await call(from, 'POST', `/groups/${groupId}/settlements`, {
+        fromUserId: from, toUserId: ANA, amountCents, date: '2026-01-04',
+      })
+      expect(paid.status).toBe(201)
+    }
+    expect((await call(CAM, 'DELETE', path)).status).toBe(200)
+    expect((await call(CAM, 'GET', `/groups/${groupId}`)).status).toBe(404)
+    expect((await call(ANA, 'GET', `/groups/${groupId}`)).body.group.members).toHaveLength(2)
+
+    // Ben is settled too, so he leaves; then Ana, the last member: the group goes away.
+    expect((await call(BEN, 'DELETE', path)).status).toBe(200)
+    expect((await call(ANA, 'DELETE', path)).status).toBe(200)
+    const gone = await db.query.expenseGroup.findFirst({ where: (g, { eq }) => eq(g.id, groupId) })
+    expect(gone).toBeUndefined()
   })
 })
