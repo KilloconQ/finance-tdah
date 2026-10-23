@@ -25,3 +25,14 @@ export function daysAgo(date: Date | string): number {
 export function formatDays(n: number): string {
   return `${n} ${n === 1 ? 'día' : 'días'}`
 }
+
+// Formats a date-only 'YYYY-MM-DD' string as that same calendar day. Parsing it
+// with `new Date(str)` reads it as UTC midnight, which shows the previous day in
+// timezones behind UTC (e.g. Mexico).
+export function formatDateOnly(
+  date: string,
+  options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' },
+): string {
+  const [y, m, d] = date.slice(0, 10).split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString('es-MX', options)
+}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { daysAgo, formatDays, formatMoney, formatMoneyDelta } from './format'
+import { daysAgo, formatDateOnly, formatDays, formatMoney, formatMoneyDelta } from './format'
 
 describe('formatMoney', () => {
   it('formats pesos with a bare $ and grouping', () => {
@@ -43,5 +43,13 @@ describe('formatDays', () => {
     expect(formatDays(1)).toBe('1 día')
     expect(formatDays(0)).toBe('0 días')
     expect(formatDays(3)).toBe('3 días')
+  })
+})
+
+describe('formatDateOnly', () => {
+  it('shows a YYYY-MM-DD calendar date as that same day in any timezone', () => {
+    expect(formatDateOnly('2026-11-01')).toBe('1 nov')
+    expect(formatDateOnly('2026-01-01')).toBe('1 ene')
+    expect(formatDateOnly('2026-12-31')).toBe('31 dic')
   })
 })

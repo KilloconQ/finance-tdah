@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import { costOverDaysCents } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
-import { daysAgo, formatDays, formatMoney } from '@/lib/format'
+import { daysAgo, formatDateOnly, formatDays, formatMoney } from '@/lib/format'
 import {
   subscriptionQueryOptions,
   useCancelSubscription,
@@ -109,10 +109,7 @@ function SubscriptionDetail() {
               <div className="mt-2 text-sm text-ink-mid">
                 Próximo cobro:{' '}
                 <span className="money text-ink">
-                  {new Date(sub.nextChargeAt).toLocaleDateString('es-MX', {
-                    day: 'numeric',
-                    month: 'short',
-                  })}
+                  {formatDateOnly(sub.nextChargeAt)}
                 </span>
               </div>
             </Card>

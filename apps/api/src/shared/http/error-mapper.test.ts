@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import { HTTPException } from 'hono/http-exception'
 import { mapErrorToResponse } from './error-mapper'
 import { DomainError } from '../errors/domain-error'
 import { NotFoundError } from '../errors/not-found.error'
@@ -67,5 +68,20 @@ describe('mapErrorToResponse', () => {
     mapErrorToResponse(err, c)
 
     expect(c.json).toHaveBeenCalledWith({ error: 'Conflicto de recurso' }, 409)
+  })
+
+  it('maps malformed JSON bodies to a Spanish 400', () => {
+    const c = makeContext()
+    mapErrorToResponse(new HTTPException(400, { message: 'Malformed JSON in request body' }), c)
+    expect(c.json).toHaveBeenCalledWith({ error: 'El cuerpo de la solicitud no es un JSON válido' }, 400)
+  })
+
+  it('maps a wrapped unique violation on the account name to a 409', () => {
+    const c = makeContext()
+    const err = Object.assign(new Error('Failed query'), {
+      cause: { code: '23505', constraint_name: 'financial_account_user_name_idx' },
+    })
+    mapErrorToResponse(err, c)
+    expect(c.json).toHaveBeenCalledWith({ error: 'Ya tienes una cuenta con ese nombre' }, 409)
   })
 })
