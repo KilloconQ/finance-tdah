@@ -21,7 +21,7 @@ const TYPES: AccountTypeOption[] = [
   { value: 'debito', label: 'Débito', emoji: '🏦' },
   { value: 'credito', label: 'Crédito', emoji: '💳' },
   { value: 'efectivo', label: 'Efectivo', emoji: '💵' },
-  { value: 'wallet', label: 'Wallet', emoji: '📱' },
+  { value: 'wallet', label: 'Billetera', emoji: '📱' },
   { value: 'ahorro', label: 'Ahorro', emoji: '🐷' },
 ]
 

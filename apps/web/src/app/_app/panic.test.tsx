@@ -85,7 +85,7 @@ describe('Panic', () => {
 
   it('lets the user look at the damage in transactions', async () => {
     const user = setup(250_000)
-    await user.click(screen.getByRole('button', { name: 'Solo quería ver el daño' }))
+    await user.click(screen.getByRole('button', { name: 'Ver mis movimientos' }))
     expect(navigate).toHaveBeenCalledWith({ to: '/transactions' })
   })
 

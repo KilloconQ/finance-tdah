@@ -19,8 +19,8 @@ const CODE_MESSAGES: Record<string, string> = {
   USER_ALREADY_EXISTS: 'Ya existe una cuenta con ese correo. Inicia sesión o usa otro.',
   PASSWORD_TOO_SHORT: 'La contraseña tiene que tener al menos 8 caracteres.',
   PASSWORD_TOO_LONG: 'La contraseña es demasiado larga.',
-  INVALID_TOKEN: 'El link venció o ya se usó. Pide uno nuevo.',
-  PASSWORD_RESET_UNAVAILABLE: 'El reset por email no está configurado. Contacta al admin.',
+  INVALID_TOKEN: 'El enlace venció o ya se usó. Pide uno nuevo.',
+  PASSWORD_RESET_UNAVAILABLE: 'El restablecimiento por correo no está configurado. Contacta a quien administra la app.',
 }
 
 export const OFFLINE = 'No pudimos conectar con el servidor. Revisa tu conexión e intenta de nuevo.'

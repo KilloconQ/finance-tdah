@@ -63,7 +63,7 @@ export function GoalDetailView({
   return (
     <PhoneShell>
       <AppBar
-        title="Mi frasco"
+        title="Frasco"
         back
         onBack={onBack}
         right={

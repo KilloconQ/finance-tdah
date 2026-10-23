@@ -44,11 +44,11 @@ function ResetPassword() {
         <div className="flex flex-1 flex-col justify-center py-8">
           <Card className="p-6 sm:p-7">
             <h1 className="text-2xl font-semibold tracking-tight text-ink">Link inválido o vencido.</h1>
-            <Hello className="mt-2">Pide un nuevo link para restablecer tu contraseña.</Hello>
+            <Hello className="mt-2">Pide un nuevo enlace para restablecer tu contraseña.</Hello>
 
             <div className="mt-5 text-center text-sm text-ink-mid">
               <Link to="/auth/forgot-password" className="font-medium text-accent-strong underline">
-                Pedir link nuevo
+                Pedir enlace nuevo
               </Link>
             </div>
           </Card>

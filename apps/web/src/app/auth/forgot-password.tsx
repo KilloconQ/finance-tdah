@@ -44,11 +44,11 @@ function ForgotPassword() {
       <div className="flex flex-1 flex-col justify-center py-8">
         <Card className="p-6 sm:p-7">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">¿Olvidaste tu contraseña?</h1>
-          <Hello className="mt-2">Te mandamos un link para restablecerla.</Hello>
+          <Hello className="mt-2">Te mandamos un enlace para restablecerla.</Hello>
 
           {sent ? (
             <div className="mt-6 rounded-xl bg-surface px-3 py-3 text-sm text-ink-mid">
-              Si ese correo existe, te mandamos un link para restablecer tu contraseña.
+              Si ese correo existe, te mandamos un enlace para restablecer tu contraseña.
             </div>
           ) : (
             <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
@@ -68,7 +68,7 @@ function ForgotPassword() {
               ) : null}
 
               <Btn kind="primary" className="mt-2 w-full" type="submit" disabled={loading}>
-                {loading ? 'Enviando…' : 'Enviar link'}
+                {loading ? 'Enviando…' : 'Enviar enlace'}
               </Btn>
             </form>
           )}

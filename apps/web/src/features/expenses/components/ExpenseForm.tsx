@@ -46,7 +46,7 @@ const CATEGORIES: ExpenseCategory[] = [
   { value: 'salidas', label: 'Salidas', emoji: '🎉' },
   { value: 'salud', label: 'Salud', emoji: '💊' },
   { value: 'casa', label: 'Casa', emoji: '🏠' },
-  { value: 'subs', label: 'Subs', emoji: '📺' },
+  { value: 'subs', label: 'Suscripciones', emoji: '📺' },
   { value: 'otro', label: 'Otro', emoji: '•' },
 ]
 

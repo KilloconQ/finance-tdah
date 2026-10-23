@@ -31,7 +31,7 @@ describe('authErrorMessage', () => {
 
   it('prefers a known code over the generic 5xx message', () => {
     expect(authErrorMessage({ status: 503, code: 'PASSWORD_RESET_UNAVAILABLE' }, FALLBACK)).toMatch(
-      /reset por email no está configurado/,
+      /restablecimiento por correo no está configurado/,
     )
   })
 

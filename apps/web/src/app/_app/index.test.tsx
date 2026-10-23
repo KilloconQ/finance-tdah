@@ -99,7 +99,7 @@ describe('Home', () => {
     fakeApi(routes({ goals: [goal(), goal({ id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', name: 'Laptop' })] }))
     render(renderWithQuery(<Home />).tree)
 
-    expect(await screen.findByText('✈️ Vacaciones · meta')).toBeTruthy()
+    expect(await screen.findByText('✈️ Vacaciones · frasco')).toBeTruthy()
     expect(screen.getByText('$4,000.00 / $10,000.00')).toBeTruthy()
     expect(screen.queryByText(/Laptop/)).toBeNull()
   })
@@ -110,7 +110,7 @@ describe('Home', () => {
     render(renderWithQuery(<Home />).tree)
 
     expect(await screen.findByText('Aún no tienes un frasco')).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+    await user.click(screen.getByRole('button', { name: 'Crear frasco' }))
     expect(navigate).toHaveBeenCalledWith({ to: '/goals' })
   })
 
@@ -132,7 +132,7 @@ describe('Home', () => {
     render(renderWithQuery(<Home />).tree)
 
     await screen.findByText('Hola, Ana 👋')
-    await screen.findByText('✈️ Vacaciones · meta')
+    await screen.findByText('✈️ Vacaciones · frasco')
     // The profile arrives separately; amounts get masked once it does.
     await waitFor(() => expect(screen.queryAllByText(/\$\d/)).toEqual([]))
     expect(screen.getByText('•••• / ••••')).toBeTruthy()
