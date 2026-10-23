@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { isoDate, isoDateTime } from './common'
+import { cents, isoDate, isoDateTime } from './common'
 
-const positiveCents = z.number().int().positive({ error: 'El monto debe ser mayor a 0' })
+const positiveCents = cents.positive({ error: 'El monto debe ser mayor a 0' })
 
 export const groupMemberSchema = z.object({
   userId: z.string(),
@@ -29,7 +29,7 @@ export const addMemberSchema = z.object({
 
 export const shareSchema = z.object({
   userId: z.string(),
-  shareCents: z.number().int().nonnegative(),
+  shareCents: cents,
 })
 
 export const sharedExpenseSchema = z.object({

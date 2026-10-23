@@ -1,7 +1,8 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, ne, sql } from 'drizzle-orm'
 import {
+  MAX_CENTS,
   addMemberSchema,
   createGroupSchema,
   createSettlementSchema,
@@ -51,6 +52,28 @@ async function loadOwnedExpense(groupId: string, expenseId: string, userId: stri
     return { error: `Solo quien pagó o cargó el gasto puede ${verb}`, status: 403 } as const
   }
   return { expense }
+}
+
+const TOTAL_TOO_BIG = 'El total del grupo es demasiado grande'
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+/**
+ * Locks the group row (so concurrent writers queue) and says whether adding
+ * `addCents` to the group's expenses, ignoring `exceptId`, would pass the cap.
+ * Summed in SQL as bigint: an int32 sum could itself overflow.
+ */
+async function totalWouldOverflow(tx: Tx, groupId: string, addCents: number, exceptId?: string) {
+  await tx.select({ id: schema.expenseGroup.id }).from(schema.expenseGroup).where(eq(schema.expenseGroup.id, groupId)).for('update')
+  const [row] = await tx
+    .select({ total: sql<string>`coalesce(sum(${schema.sharedExpense.amountCents}::bigint), 0)` })
+    .from(schema.sharedExpense)
+    .where(
+      exceptId
+        ? and(eq(schema.sharedExpense.groupId, groupId), ne(schema.sharedExpense.id, exceptId))
+        : eq(schema.sharedExpense.groupId, groupId),
+    )
+  return Number(row.total) + addCents > MAX_CENTS
 }
 
 async function groupBalances(groupId: string) {
@@ -181,6 +204,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     if (!splits) return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
 
     const expense = await db.transaction(async (tx) => {
+      if (await totalWouldOverflow(tx, id, input.amountCents)) return null
       const [created] = await tx
         .insert(schema.sharedExpense)
         .values({
@@ -195,6 +219,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
       await tx.insert(schema.sharedExpenseSplit).values(splits.map((s) => ({ ...s, expenseId: created.id })))
       return created
     })
+    if (!expense) return c.json({ error: TOTAL_TOO_BIG }, 400)
     return c.json({ expense: { ...expense, splits } }, 201)
   })
 
@@ -209,6 +234,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     if (!splits) return c.json({ error: 'Todos deben ser miembros del grupo' }, 400)
 
     const updated = await db.transaction(async (tx) => {
+      if (await totalWouldOverflow(tx, id, input.amountCents, expenseId)) return null
       const [row] = await tx
         .update(schema.sharedExpense)
         .set({ paidBy: input.paidBy, description: input.description, amountCents: input.amountCents, date: input.date })
@@ -218,6 +244,7 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
       await tx.insert(schema.sharedExpenseSplit).values(splits.map((s) => ({ ...s, expenseId })))
       return row
     })
+    if (!updated) return c.json({ error: TOTAL_TOO_BIG }, 400)
     return c.json({ expense: { ...updated, splits } })
   })
 
