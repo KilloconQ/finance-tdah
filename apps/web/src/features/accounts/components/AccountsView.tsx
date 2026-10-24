@@ -1,6 +1,6 @@
 import type { EnvelopeDTO, FinancialAccountDTO } from '@finance-tdah/shared/schemas'
 import { accountSupportsEnvelopes, allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
-import { ChevronRight, Plus, Wallet } from 'lucide-react'
+import { ChevronRight, Plus, Repeat, Wallet } from 'lucide-react'
 import {
   AppBar,
   BigNumber,
@@ -45,6 +45,8 @@ interface AccountsViewProps {
   onAddAccount: () => void
   onEditAccount: (id: string) => void
   onOpenEnvelopes: (id: string) => void
+  /** Subscriptions have no bottom tab on phones; this is their entry point. */
+  onOpenSubscriptions?: () => void
 }
 
 export function AccountsView({
@@ -60,6 +62,7 @@ export function AccountsView({
   onAddAccount,
   onEditAccount,
   onOpenEnvelopes,
+  onOpenSubscriptions,
 }: AccountsViewProps) {
   // What's left after debt and after what's locked in envelopes.
   const availableCents = netWorthCents - lockedCents
@@ -157,6 +160,13 @@ export function AccountsView({
             </div>
           )}
         </div>
+
+        {onOpenSubscriptions ? (
+          <Btn kind="ghost" className="md:hidden" onClick={onOpenSubscriptions}>
+            <Repeat size={16} strokeWidth={2} />
+            Suscripciones
+          </Btn>
+        ) : null}
       </div>
 
       <TabBar />
