@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cents, isoDate, isoDateTime } from './common'
+import { boundedDate, cents, isoDate, isoDateTime } from './common'
 
 const positiveCents = cents.positive({ error: 'El monto debe ser mayor a 0' })
 
@@ -50,7 +50,7 @@ export const createSharedExpenseSchema = z
     paidBy: z.string(),
     description: z.string().trim().min(1, { error: 'Falta la descripción' }).max(120),
     amountCents: positiveCents,
-    date: isoDate,
+    date: boundedDate,
     participantIds: z.array(z.string()).min(1).optional(),
     splits: z.array(shareSchema).min(1).optional(),
   })

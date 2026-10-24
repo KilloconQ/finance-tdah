@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cents } from './common'
+import { boundedDateTime, cents } from './common'
 
 export const expenseSchema = z.object({
   id: z.uuid(),
@@ -25,14 +25,14 @@ export const expenseSchema = z.object({
 const expenseBaseSchema = z.object({
   amountCents: cents.min(1, { error: 'Tiene que ser mayor que cero' }),
   category: z.string().min(1).max(40),
-  description: z.string().min(1).max(120),
+  description: z.string().trim().min(1, { error: 'Falta la descripción' }).max(120),
   accountId: z.uuid().optional(),
   toAccountId: z.uuid().optional(),
   // Only an expense can come out of an envelope ("cajita"), and only one of
   // its own account's. null clears it on update.
   envelopeId: z.uuid().nullable().optional(),
   kind: z.enum(['expense', 'income', 'transfer']),
-  occurredAt: z.iso.datetime({ offset: true }).optional(),
+  occurredAt: boundedDateTime.optional(),
 })
 
 export const createExpenseSchema = expenseBaseSchema

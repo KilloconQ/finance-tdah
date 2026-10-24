@@ -75,7 +75,7 @@ function Home() {
           <button
             type="button"
             onClick={() => navigate({ to: '/panic' })}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-mid transition-colors hover:bg-danger-bg hover:text-danger"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-mid transition-colors hover:bg-danger-bg hover:text-danger"
           >
             <LifeBuoy size={15} strokeWidth={2} />
             Modo pánico
