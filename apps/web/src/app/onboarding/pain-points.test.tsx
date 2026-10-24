@@ -58,7 +58,7 @@ describe('Onboarding › pain points', () => {
 
   it('goes back one step with the arrow', async () => {
     render(<PainPoints />)
-    await userEvent.setup().click(screen.getByRole('button', { name: '←' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Volver' }))
     expect(navigate).toHaveBeenCalledWith({ to: '..' })
   })
 })

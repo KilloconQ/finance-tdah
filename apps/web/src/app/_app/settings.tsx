@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { parseAmountToCents } from '@finance-tdah/shared/domain'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { AppBar, PhoneShell, TabBar, Btn } from '@/components'
@@ -17,6 +18,7 @@ export const Route = createFileRoute('/_app/settings')({
 function Settings() {
   const { showBalances, weeklyBudgetCents, dailyReminderEnabled, dailyReminderHour } = useTweaks()
   const setTweak = useSetTweak()
+  const saveBudget = useSetTweak()
   const push = usePushSubscription()
   const navigate = useNavigate()
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -30,7 +32,8 @@ function Settings() {
       )
     },
     onSuccess: async () => {
-      await signOutAndClear()
+      // The session died with the account, so the sign-out call may 401; still redirect.
+      await signOutAndClear().catch(() => {})
       navigate({ to: '/auth/sign-in' })
     },
   })
@@ -51,7 +54,10 @@ function Settings() {
         >
           <BudgetInput
             valueCents={weeklyBudgetCents}
-            onCommit={(cents) => setTweak.mutate({ weeklyBudgetCents: cents })}
+            onCommit={(cents) => saveBudget.mutate({ weeklyBudgetCents: cents })}
+            saved={saveBudget.isSuccess}
+            saving={saveBudget.isPending}
+            onEdit={saveBudget.reset}
           />
         </Section>
 
@@ -73,7 +79,7 @@ function Settings() {
         {push.configured ? (
           <Section
             label="Notificaciones"
-            hint="Avisos cuando llegas al presupuesto semanal, completas una meta o no has anotado nada en el día."
+            hint="Avisos cuando llegas al presupuesto semanal, completas un frasco o no has anotado nada en el día."
           >
             {push.keyError ? (
               <div className="rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{push.keyError}</div>
@@ -155,7 +161,7 @@ function Settings() {
         ) : (
           <div className="rounded-xl border border-danger bg-danger-bg p-4">
             <div className="mb-3 text-sm font-medium text-danger">¿Estás seguro?</div>
-            <div className="mb-4 text-xs text-ink-soft">Esta acción no se puede deshacer.</div>
+            <div className="mb-4 text-xs text-ink-soft">Se borrarán tu cuenta, tus gastos, frascos y suscripciones. No se puede deshacer.</div>
             <div className="flex gap-2">
               <Btn
                 kind="ghost"
@@ -261,35 +267,45 @@ function ThemePicker() {
 interface BudgetInputProps {
   valueCents: number
   onCommit: (cents: number) => void
+  onEdit?: () => void
+  saving?: boolean
+  saved?: boolean
 }
 
-function BudgetInput({ valueCents, onCommit }: BudgetInputProps) {
+function BudgetInput({ valueCents, onCommit, onEdit, saving, saved }: BudgetInputProps) {
   const [draft, setDraft] = useState<string>(() => String(Math.round(valueCents / 100)))
 
   function handleBlur() {
-    const pesos = parseFloat(draft)
-    if (!Number.isFinite(pesos) || pesos < 0) {
+    const cents = draft.trim() === '0' ? 0 : parseAmountToCents(draft)
+    if (cents === null) {
       setDraft(String(Math.round(valueCents / 100)))
       return
     }
-    const cents = Math.round(pesos * 100)
     if (cents !== valueCents) onCommit(cents)
   }
 
   return (
+    <div>
     <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 transition-colors focus-within:border-accent">
       <span className="text-[15px] text-ink-soft">$</span>
       <input
-        type="number"
-        min={0}
-        step={100}
+        type="text"
         inputMode="decimal"
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={handleBlur}
-        className="money w-full min-w-0 bg-transparent text-[15px] text-ink outline-none"
+        onChange={(e) => {
+          setDraft(e.target.value)
+          onEdit?.()
+        }}
+        onBlur={() => {
+          handleBlur()
+        }}
+        className="money min-h-10 w-full min-w-0 bg-transparent text-[15px] text-ink outline-none"
       />
       <span className="whitespace-nowrap text-xs text-ink-soft">/ semana</span>
+    </div>
+    <p role="status" className="mt-1.5 min-h-4 px-1 text-xs text-ink-soft">
+      {saving ? 'Guardando…' : saved ? 'Guardado' : ''}
+    </p>
     </div>
   )
 }

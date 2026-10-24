@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
-import { centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
+import { amountFormatError, centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
 import { goalQueryOptions, useUpdateGoal } from '../api'
 import { GoalForm, type GoalFormFields } from '../components/GoalForm'
@@ -24,7 +24,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
   if (!goal) {
     return (
       <PhoneShell variant="narrow">
-        <AppBar title="Editar meta" back onBack={() => navigate({ to: '/goals' })} />
+        <AppBar title="Editar frasco" back onBack={() => navigate({ to: '/goals' })} />
         <EmptyState
           className="flex-1"
           title="No encontramos ese frasco"
@@ -39,7 +39,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
 
     const targetCents = parseAmountToCents(fields.target)
     if (targetCents === null || targetCents <= 0) {
-      setError('La meta debe ser mayor a $0')
+      setError(amountFormatError(fields.target) ?? 'La meta debe ser mayor a $0')
       return
     }
 
@@ -60,7 +60,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
   return (
     <PhoneShell variant="narrow">
       <AppBar
-        title="Editar meta"
+        title="Editar frasco"
         left={
           <IconButton onClick={goBack} label="Cerrar">
             <X size={20} strokeWidth={2} />

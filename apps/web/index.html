@@ -21,16 +21,18 @@
       var meta = document.querySelector('meta[name="theme-color"]')
       if (meta) meta.setAttribute('content', dark ? '#151412' : '#fafaf9')
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <style>
+      /* Splash shown until React mounts; colors mirror --color-bg / --color-ink in index.css. */
+      html[data-theme='dark'] body { background: #151412; color: #ece9e3; }
+      body { margin: 0; background: #fafaf9; color: #1f1e1c; }
+      #splash { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; font-family: system-ui, -apple-system, sans-serif; }
+      #splash img { width: 72px; height: 72px; border-radius: 18px; }
+      #splash span { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; opacity: 0.85; }
+    </style>
     <title>Cada Quien</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="splash"><img src="/pwa-192x192.png" alt="" width="72" height="72" /><span>Cada Quien</span></div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

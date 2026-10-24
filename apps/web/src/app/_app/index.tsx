@@ -75,7 +75,7 @@ function Home() {
           <button
             type="button"
             onClick={() => navigate({ to: '/panic' })}
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-mid transition-colors hover:bg-danger-bg hover:text-danger"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-mid transition-colors hover:bg-danger-bg hover:text-danger"
           >
             <LifeBuoy size={15} strokeWidth={2} />
             Modo pánico
@@ -129,7 +129,7 @@ function Home() {
             {goal && goalProgress ? (
               <JarWithStats
                 fraction={goalProgress.fraction}
-                label={`${goal.emoji} ${goal.name} · meta`}
+                label={`${goal.emoji} ${goal.name} · frasco`}
                 currentCents={goal.currentCents}
                 targetCents={goal.targetCents}
                 hidden={!showBalances}
@@ -142,10 +142,10 @@ function Home() {
               <EmptyState
                 icon={<PiggyBank size={22} strokeWidth={1.8} />}
                 title="Aún no tienes un frasco"
-                hint="Crea una meta para empezar a guardar."
+                hint="Crea un frasco para empezar a guardar."
                 action={
                   <Btn kind="primary" onClick={() => navigate({ to: '/goals' })}>
-                    Crear meta
+                    Crear frasco
                   </Btn>
                 }
               />
@@ -162,7 +162,7 @@ function Home() {
               />
               <Mini
                 compact
-                label="meta"
+                label="presupuesto"
                 value={weekTargetCents / 100}
                 hidden={!showBalances}
               />

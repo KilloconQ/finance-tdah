@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AppBar, Btn, Dots, Hello, Money, PhoneShell } from '@/components'
 import { activeChallengeQuery, mutations } from '@/lib/queries'
+import { formatDays } from '@/lib/format'
 import { queryClient } from '@/lib/query-client'
 
 export const Route = createFileRoute('/_app/challenge')({
@@ -48,7 +50,7 @@ function Challenge() {
         name: challengeName,
         description,
         days,
-        expectedSavingsCents: Math.round(parseFloat(savings || '0') * 100),
+        expectedSavingsCents: savings.trim() === '' ? 0 : (parseAmountToCents(savings) ?? 0),
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['challenges'] })
@@ -61,6 +63,10 @@ function Challenge() {
     setFormError(null)
     if (!challengeName.trim()) { setFormError('El nombre es obligatorio'); return }
     if (!description.trim()) { setFormError('La descripción es obligatoria'); return }
+    if (savings.trim() !== '' && parseAmountToCents(savings) === null) {
+      setFormError(amountFormatError(savings) ?? 'El ahorro esperado no es válido')
+      return
+    }
     createMutation.mutate()
   }
 
@@ -108,12 +114,11 @@ function Challenge() {
 
             <Field label="Ahorro esperado (en pesos)">
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
                 value={savings}
                 onChange={(e) => setSavings(e.target.value)}
                 placeholder="0"
-                min="0"
-                step="0.01"
                 className={INPUT_CLASS}
               />
             </Field>
@@ -146,7 +151,7 @@ function Challenge() {
       <div className="w-full max-w-lg pb-8">
         <div className="text-center sm:text-left">
           <div className="text-xs font-medium uppercase tracking-wide text-ink-soft">
-            {challenge.doneDays} / {challenge.days} días
+            {challenge.doneDays} / {formatDays(challenge.days)}
           </div>
           <div className="mt-3 text-6xl sm:text-5xl">☕</div>
           <h1 className="mt-3 text-xl font-semibold tracking-tight text-ink">
@@ -163,7 +168,7 @@ function Challenge() {
             <Dots total={challenge.days} filled={challenge.doneDays} size={14} gap={6} />
           </div>
           <div className="mt-3 text-sm text-ink-mid">
-            Llevas <span className="font-medium text-good">{challenge.doneDays} días</span> · vas
+            Llevas <span className="font-medium text-good">{formatDays(challenge.doneDays)}</span> · vas
             ahorrando <Money value={savedSoFarCents / 100} className="text-ink" />
           </div>
         </div>
@@ -177,7 +182,7 @@ function Challenge() {
             onClick={() => resetMutation.mutate(challenge.id)}
             disabled={resetMutation.isPending || checkMutation.isPending}
           >
-            {resetMutation.isPending ? '…' : 'Saltar'}
+            {resetMutation.isPending ? '…' : 'Reiniciar'}
           </Btn>
           <Btn
             kind="primary"

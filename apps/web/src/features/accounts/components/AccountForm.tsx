@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { AccountType } from '@finance-tdah/shared/domain'
 import { Btn } from '@/components'
 import { cn } from '@/lib/cn'
+import { useSavingLabel } from '@/lib/use-online'
 
 export interface AccountFormFields {
   name: string
@@ -21,7 +22,7 @@ const TYPES: AccountTypeOption[] = [
   { value: 'debito', label: 'Débito', emoji: '🏦' },
   { value: 'credito', label: 'Crédito', emoji: '💳' },
   { value: 'efectivo', label: 'Efectivo', emoji: '💵' },
-  { value: 'wallet', label: 'Wallet', emoji: '📱' },
+  { value: 'wallet', label: 'Billetera', emoji: '📱' },
   { value: 'ahorro', label: 'Ahorro', emoji: '🐷' },
 ]
 
@@ -38,6 +39,7 @@ interface AccountFormProps {
 }
 
 export function AccountForm({ submitting, error, onSubmit, initial, submitLabel }: AccountFormProps) {
+  const savingLabel = useSavingLabel()
   const [name, setName] = useState(initial?.name ?? '')
   const [type, setType] = useState<AccountType>(initial?.type ?? 'debito')
   const [balance, setBalance] = useState(initial?.balance ?? '')
@@ -60,7 +62,7 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
+    <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-6 py-2">
       <div>
         <label htmlFor="name" className={LABEL_CLASS}>
           Nombre
@@ -151,8 +153,9 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
         <div className="rounded-xl bg-danger-bg px-3.5 py-2.5 text-sm text-danger">{error}</div>
       ) : null}
 
+      {!submitting && name.trim() === '' ? <p className="text-xs text-ink-soft">Ponle un nombre a la cuenta.</p> : null}
       <Btn kind="primary" type="submit" className="mt-2 w-full" disabled={!canSubmit}>
-        {submitting ? 'Guardando…' : submitLabel ?? 'Agregar cuenta'}
+        {submitting ? savingLabel : submitLabel ?? 'Agregar cuenta'}
       </Btn>
     </form>
   )

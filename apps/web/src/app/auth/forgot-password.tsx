@@ -16,6 +16,10 @@ function ForgotPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError('Escribe un correo válido, por ejemplo nombre@correo.com.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -40,16 +44,16 @@ function ForgotPassword() {
       <div className="flex flex-1 flex-col justify-center py-8">
         <Card className="p-6 sm:p-7">
           <h1 className="text-2xl font-semibold tracking-tight text-ink">¿Olvidaste tu contraseña?</h1>
-          <Hello className="mt-2">Te mandamos un link para restablecerla.</Hello>
+          <Hello className="mt-2">Te mandamos un enlace para restablecerla.</Hello>
 
           {sent ? (
             <div className="mt-6 rounded-xl bg-surface px-3 py-3 text-sm text-ink-mid">
-              Si ese email existe, te mandamos un link para restablecer tu contraseña.
+              Si ese correo existe, te mandamos un enlace para restablecer tu contraseña.
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+            <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
               <Field
-                label="Email"
+                label="Correo"
                 type="email"
                 autoComplete="email"
                 value={email}
@@ -63,8 +67,8 @@ function ForgotPassword() {
                 </div>
               ) : null}
 
-              <Btn kind="primary" className="mt-2 w-full" type="submit" disabled={loading || !email}>
-                {loading ? 'Enviando…' : 'Enviar link'}
+              <Btn kind="primary" className="mt-2 w-full" type="submit" disabled={loading}>
+                {loading ? 'Enviando…' : 'Enviar enlace'}
               </Btn>
             </form>
           )}

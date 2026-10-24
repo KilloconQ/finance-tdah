@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { X } from 'lucide-react'
-import { parseAmountToCents } from '@finance-tdah/shared/domain'
+import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, IconButton, PhoneShell } from '@/components'
 import { useCreateGoal } from '../api'
 import { GoalForm, type GoalFormFields } from '../components/GoalForm'
@@ -18,7 +18,7 @@ export function NewGoalContainer() {
 
     const targetCents = parseAmountToCents(fields.target)
     if (targetCents === null || targetCents <= 0) {
-      setError('La meta debe ser mayor a $0')
+      setError(amountFormatError(fields.target) ?? 'La meta debe ser mayor a $0')
       return
     }
 
@@ -39,7 +39,7 @@ export function NewGoalContainer() {
   return (
     <PhoneShell variant="narrow">
       <AppBar
-        title="Nueva meta"
+        title="Nuevo frasco"
         left={
           <IconButton onClick={() => navigate({ to: '/goals' })} label="Cerrar">
             <X size={20} strokeWidth={2} />
@@ -50,7 +50,7 @@ export function NewGoalContainer() {
         submitting={createGoal.isPending}
         error={error}
         onSubmit={handleSubmit}
-        initial={{ name: 'Nueva meta', emoji: '🌿', target: '5000' }}
+        initial={{ name: 'Nuevo frasco', emoji: '🌿', target: '5000' }}
         submitLabel="Crear frasco"
       />
     </PhoneShell>

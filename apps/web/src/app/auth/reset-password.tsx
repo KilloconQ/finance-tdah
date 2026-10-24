@@ -18,6 +18,10 @@ function ResetPassword() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!token) return
+    if (password.length < 8) {
+      setError('La contraseña tiene que tener al menos 8 caracteres.')
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -40,11 +44,11 @@ function ResetPassword() {
         <div className="flex flex-1 flex-col justify-center py-8">
           <Card className="p-6 sm:p-7">
             <h1 className="text-2xl font-semibold tracking-tight text-ink">Link inválido o vencido.</h1>
-            <Hello className="mt-2">Pide un nuevo link para restablecer tu contraseña.</Hello>
+            <Hello className="mt-2">Pide un nuevo enlace para restablecer tu contraseña.</Hello>
 
             <div className="mt-5 text-center text-sm text-ink-mid">
               <Link to="/auth/forgot-password" className="font-medium text-accent-strong underline">
-                Pedir link nuevo
+                Pedir enlace nuevo
               </Link>
             </div>
           </Card>
@@ -60,7 +64,7 @@ function ResetPassword() {
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Nueva contraseña</h1>
           <Hello className="mt-2">Elige una contraseña nueva.</Hello>
 
-          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
+          <form noValidate onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
             <Field
               label="Contraseña nueva"
               type="password"
@@ -81,7 +85,7 @@ function ResetPassword() {
               kind="primary"
               className="mt-2 w-full"
               type="submit"
-              disabled={loading || password.length < 8}
+              disabled={loading}
             >
               {loading ? 'Guardando…' : 'Restablecer contraseña'}
             </Btn>

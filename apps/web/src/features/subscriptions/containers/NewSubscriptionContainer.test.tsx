@@ -22,6 +22,31 @@ async function fill(user: ReturnType<typeof userEvent.setup>, amount = '129.90')
 }
 
 describe('NewSubscriptionContainer', () => {
+  it('reads a comma decimal as decimal, not thousands', async () => {
+    const api = fakeApi(created)
+    const user = userEvent.setup()
+    render(renderWithQuery(<NewSubscriptionContainer />).tree)
+
+    await fill(user, '12,50')
+    expect(screen.getByLabelText('Monto (en pesos)').getAttribute('inputmode')).toBe('decimal')
+    await user.click(save())
+
+    await waitFor(() => expect(api.writes()).toHaveLength(1))
+    expect(api.writes()[0].body).toMatchObject({ amountCents: 1_250 })
+  })
+
+  it('rejects more than 2 decimals with a clear message instead of rounding', async () => {
+    const api = fakeApi(created)
+    const user = userEvent.setup()
+    render(renderWithQuery(<NewSubscriptionContainer />).tree)
+
+    await fill(user, '10.555')
+    await user.click(save())
+
+    expect(await screen.findByText('El monto admite máximo 2 decimales')).toBeTruthy()
+    expect(api.writes()).toEqual([])
+  })
+
   it('sends the subscription with the price in cents, monthly by default', async () => {
     const api = fakeApi(created)
     const user = userEvent.setup()

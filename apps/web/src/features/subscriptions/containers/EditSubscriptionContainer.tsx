@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
-import { centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
+import { amountFormatError, centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
 import { subscriptionQueryOptions, useUpdateSubscription } from '../api'
 import { SubscriptionForm, type SubscriptionFormFields } from '../components/SubscriptionForm'
@@ -39,7 +39,7 @@ export function EditSubscriptionContainer({ subscriptionId }: EditSubscriptionCo
 
     const amountCents = parseAmountToCents(fields.amount)
     if (amountCents === null || amountCents <= 0) {
-      setError('El monto debe ser mayor a $0')
+      setError(amountFormatError(fields.amount) ?? 'El monto debe ser mayor a $0')
       return
     }
 

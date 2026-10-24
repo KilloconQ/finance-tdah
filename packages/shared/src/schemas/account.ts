@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { accountTypeSchema, signedCents } from './common'
+import { accountTypeSchema, signedCents, trimmedText } from './common'
 
 export const financialAccountSchema = z.object({
   id: z.uuid(),
@@ -17,10 +17,11 @@ export const financialAccountSchema = z.object({
 })
 
 export const createFinancialAccountSchema = financialAccountSchema
-  .pick({ name: true, type: true, institution: true, last4: true })
+  .pick({ type: true, institution: true, last4: true })
   .extend({
+    name: trimmedText(60, 'Ponle un nombre'),
     balanceCents: signedCents.default(0),
-    institution: z.string().max(60).optional(),
+    institution: z.string().trim().max(60).optional(),
     last4: z
       .string()
       .regex(/^\d{4}$/, { error: 'Solo 4 dígitos' })

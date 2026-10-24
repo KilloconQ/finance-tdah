@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getThemePreference, setThemePreference, THEME_KEY } from '@/lib/theme'
 
-const { push, mutate } = vi.hoisted(() => ({
+const { push, mutate, mutation } = vi.hoisted(() => ({
+  mutation: { isSuccess: false, isPending: false },
   push: {
     supported: true,
     configured: true,
@@ -20,7 +21,7 @@ const { push, mutate } = vi.hoisted(() => ({
 vi.mock('@/lib/use-push-subscription', () => ({ usePushSubscription: () => push }))
 vi.mock('@/lib/use-tweaks', () => ({
   useTweaks: () => ({ showBalances: true, weeklyBudgetCents: 220000, dailyReminderEnabled: true, dailyReminderHour: 21 }),
-  useSetTweak: () => ({ mutate }),
+  useSetTweak: () => ({ mutate, reset: vi.fn(), ...mutation }),
 }))
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: () => (opts: unknown) => ({ options: opts }),
@@ -40,6 +41,7 @@ afterEach(() => {
   cleanup()
   Object.assign(push, { supported: true, subscribed: true, keyError: null })
   mutate.mockReset()
+  Object.assign(mutation, { isSuccess: false, isPending: false })
   setThemePreference('system')
   localStorage.clear()
 })
@@ -129,5 +131,39 @@ describe('Settings › theme', () => {
     await user.keyboard('{ArrowRight}')
     expect(choice('Claro').getAttribute('aria-checked')).toBe('true')
     expect(document.activeElement).toBe(choice('Claro'))
+  })
+})
+
+describe('Settings › delete account', () => {
+  it('says what is deleted before the user confirms', async () => {
+    const user = setup()
+    await user.click(screen.getByRole('button', { name: 'Borrar cuenta' }))
+    expect(
+      screen.getByText('Se borrarán tu cuenta, tus gastos, frascos y suscripciones. No se puede deshacer.'),
+    ).toBeTruthy()
+  })
+})
+
+describe('Settings › weekly budget', () => {
+  it('saves on blur and confirms with an accessible status', async () => {
+    const user = setup()
+    expect(screen.getByRole('status').textContent).toBe('')
+    const input = screen.getByDisplayValue('2200')
+    await user.clear(input)
+    await user.type(input, '3000')
+    await user.tab()
+    expect(mutate).toHaveBeenCalledWith({ weeklyBudgetCents: 300000 })
+  })
+
+  it('shows "Guardado" once the save succeeded', () => {
+    mutation.isSuccess = true
+    setup()
+    expect(screen.getByRole('status').textContent).toBe('Guardado')
+  })
+
+  it('shows "Guardando…" while saving', () => {
+    mutation.isPending = true
+    setup()
+    expect(screen.getByRole('status').textContent).toBe('Guardando…')
   })
 })

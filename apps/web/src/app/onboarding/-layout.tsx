@@ -18,7 +18,8 @@ export function OnboardingLayout({ step, children }: OnboardingLayoutProps) {
           <button
             type="button"
             onClick={() => navigate({ to: '..' })}
-            className="wf-tap text-[16px] text-ink"
+            aria-label="Volver"
+            className="wf-tap inline-flex h-10 min-w-10 items-center justify-center text-[16px] text-ink"
           >
             ←
           </button>

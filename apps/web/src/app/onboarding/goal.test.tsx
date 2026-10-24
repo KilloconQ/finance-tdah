@@ -32,7 +32,7 @@ describe('Onboarding › first goal', () => {
 
   it('saves the first preset by default and continues', async () => {
     render(<Goal />)
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear meta' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear frasco' }))
 
     expect(savedDraft().firstGoal).toEqual({ name: 'Vacaciones a Oaxaca', target: 5000, emoji: '🌵' })
     expect(navigate).toHaveBeenCalledWith({ to: '/onboarding/done' })
@@ -43,7 +43,7 @@ describe('Onboarding › first goal', () => {
     render(<Goal />)
 
     await user.click(screen.getByRole('button', { name: /Laptop nueva/ }))
-    await user.click(screen.getByRole('button', { name: 'Crear meta' }))
+    await user.click(screen.getByRole('button', { name: 'Crear frasco' }))
 
     expect(savedDraft().firstGoal).toEqual({ name: 'Laptop nueva', target: 30000, emoji: '💻' })
   })
@@ -68,7 +68,7 @@ describe('Onboarding › first goal', () => {
   it('shows the earlier choice when returning to the step', async () => {
     setOnboardingDraft({ firstGoal: { name: 'Laptop nueva', emoji: '💻', target: 30000 } })
     render(<Goal />)
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear meta' }))
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear frasco' }))
 
     expect(savedDraft().firstGoal).toEqual({ name: 'Laptop nueva', target: 30000, emoji: '💻' })
   })

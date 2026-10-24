@@ -23,10 +23,15 @@ import { useTweaks } from '@/lib/use-tweaks'
 // Single category-icon system: the emoji the data maps to. Unknown categories
 // fall back to a neutral coin so the iconography stays consistent.
 const CATEGORY_EMOJI: Record<string, string> = {
+  comida: '🍔',
   café: '☕',
-  comida: '🍴',
-  transporte: '🚖',
-  subs: '🔁',
+  transporte: '🚗',
+  super: '🛒',
+  salidas: '🎉',
+  salud: '💊',
+  casa: '🏠',
+  subs: '📺',
+  // Legacy values from older rows.
   ocio: '🎬',
   hogar: '🏠',
   otros: '🪙',

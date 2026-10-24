@@ -47,7 +47,7 @@ function OnboardingGoal() {
       <h1 className="mt-5 text-[24px] font-medium leading-tight text-ink">
         Empecemos con
         <br />
-        una sola meta.
+        un solo frasco.
       </h1>
       <Hello className="mt-2">Algo cortito. Algo que de verdad quieras.</Hello>
 
@@ -82,7 +82,7 @@ function OnboardingGoal() {
 
       <div className="flex-1" />
       <Btn kind="primary" className="w-full py-4" onClick={handleNext}>
-        Crear meta
+        Crear frasco
       </Btn>
       <Btn kind="plain" className="mt-1 w-full" onClick={handleSkip}>
         Después

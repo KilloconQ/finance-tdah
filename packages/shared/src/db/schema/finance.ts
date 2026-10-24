@@ -247,6 +247,109 @@ export const challengeRelations = relations(challenge, ({ one }) => ({
   user: one(user, { fields: [challenge.userId], references: [user.id] }),
 }))
 
+export const expenseGroup = pgTable('expense_group', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  createdBy: text('created_by')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+export const expenseGroupMember = pgTable(
+  'expense_group_member',
+  {
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => expenseGroup.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    joinedAt: timestamp('joined_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('expense_group_member_idx').on(t.groupId, t.userId),
+    index('expense_group_member_user_idx').on(t.userId),
+  ],
+)
+
+export const sharedExpense = pgTable(
+  'shared_expense',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => expenseGroup.id, { onDelete: 'cascade' }),
+    paidBy: text('paid_by')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    description: text('description').notNull(),
+    amountCents: integer('amount_cents').notNull(),
+    date: date('date').notNull(),
+    createdBy: text('created_by')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('shared_expense_group_idx').on(t.groupId)],
+)
+
+export const sharedExpenseSplit = pgTable(
+  'shared_expense_split',
+  {
+    expenseId: uuid('expense_id')
+      .notNull()
+      .references(() => sharedExpense.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    shareCents: integer('share_cents').notNull(),
+  },
+  (t) => [uniqueIndex('shared_expense_split_idx').on(t.expenseId, t.userId)],
+)
+
+export const settlement = pgTable(
+  'settlement',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => expenseGroup.id, { onDelete: 'cascade' }),
+    fromUserId: text('from_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    toUserId: text('to_user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    amountCents: integer('amount_cents').notNull(),
+    date: date('date').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('settlement_group_idx').on(t.groupId)],
+)
+
+export const expenseGroupRelations = relations(expenseGroup, ({ many }) => ({
+  members: many(expenseGroupMember),
+  expenses: many(sharedExpense),
+  settlements: many(settlement),
+}))
+
+export const expenseGroupMemberRelations = relations(expenseGroupMember, ({ one }) => ({
+  group: one(expenseGroup, { fields: [expenseGroupMember.groupId], references: [expenseGroup.id] }),
+  user: one(user, { fields: [expenseGroupMember.userId], references: [user.id] }),
+}))
+
+export const sharedExpenseRelations = relations(sharedExpense, ({ many }) => ({
+  splits: many(sharedExpenseSplit),
+}))
+
+export const sharedExpenseSplitRelations = relations(sharedExpenseSplit, ({ one }) => ({
+  expense: one(sharedExpense, {
+    fields: [sharedExpenseSplit.expenseId],
+    references: [sharedExpense.id],
+  }),
+}))
+
 export const numericAmount = numeric
 
 export const ENUMS = {

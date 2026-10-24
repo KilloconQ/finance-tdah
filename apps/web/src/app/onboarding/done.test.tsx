@@ -14,7 +14,7 @@ vi.mock('@/lib/auth-client', () => ({ authClient: { getSession } }))
 const { Route } = await import('./done')
 const Done = (Route as unknown as { options: { component: () => React.ReactElement } }).options.component
 
-const finish = () => screen.getByRole('button', { name: /Entrar a la app|Guardando/ })
+const finish = () => screen.getByRole('button', { name: /Empezar|Guardando/ })
 const saved = { 'POST /profile/onboarding': () => json({ profile: {} }, 201) }
 
 beforeEach(() => {
@@ -163,7 +163,7 @@ describe('Onboarding › done', () => {
 
     await user.click(finish())
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Entrar a la app' }).hasAttribute('disabled')).toBe(false))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Empezar' }).hasAttribute('disabled')).toBe(false))
     expect(screen.getByText('boom')).toBeTruthy()
     expect(navigate).not.toHaveBeenCalled()
     expect(window.localStorage.getItem('finance-tdah:onboarding-draft')).not.toBeNull()

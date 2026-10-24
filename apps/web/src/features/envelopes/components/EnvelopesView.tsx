@@ -11,6 +11,7 @@ import {
 } from '@finance-tdah/shared/domain'
 import { AppBar, Btn, Card, Chip, EmptyState, IconButton, Money, PhoneShell, SectionHeader } from '@/components'
 import { formatMoney } from '@/lib/format'
+import { useSavingLabel } from '@/lib/use-online'
 
 const ENVELOPE_EMOJIS = ['📦', '🛒', '🏠', '🚗', '🎉', '💊', '📺', '✈️', '🎁', '🐷']
 
@@ -292,6 +293,7 @@ function EnvelopeCard({
   onRename,
   onDelete,
 }: EnvelopeCardProps) {
+  const savingLabel = useSavingLabel()
   const [mode, setMode] = useState<Mode>('idle')
   const [amount, setAmount] = useState('')
   const [name, setName] = useState(envelope.name)
@@ -392,7 +394,7 @@ function EnvelopeCard({
           </p>
           <FormFooter
             problem={error ?? problem}
-            submitLabel={pending ? 'Guardando…' : mode === 'add' ? 'Apartar' : 'Liberar'}
+            submitLabel={pending ? savingLabel : mode === 'add' ? 'Apartar' : 'Liberar'}
             canSubmit={deltaCents !== null && !problem && !pending}
             onCancel={() => setMode('idle')}
           />
@@ -421,7 +423,7 @@ function EnvelopeCard({
           <EmojiPicker value={emoji} onChange={setEmoji} />
           <FormFooter
             problem={error}
-            submitLabel={pending ? 'Guardando…' : 'Guardar'}
+            submitLabel={pending ? savingLabel : 'Guardar'}
             canSubmit={name.trim() !== '' && !pending}
             onCancel={() => setMode('idle')}
           />

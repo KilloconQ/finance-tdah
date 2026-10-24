@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
 import { Btn, Chip } from '@/components'
 import { formatMoney } from '@/lib/format'
+import { useSavingLabel } from '@/lib/use-online'
 
 export type MovementKind = 'expense' | 'income' | 'transfer'
 
@@ -46,7 +47,7 @@ const CATEGORIES: ExpenseCategory[] = [
   { value: 'salidas', label: 'Salidas', emoji: '🎉' },
   { value: 'salud', label: 'Salud', emoji: '💊' },
   { value: 'casa', label: 'Casa', emoji: '🏠' },
-  { value: 'subs', label: 'Subs', emoji: '📺' },
+  { value: 'subs', label: 'Suscripciones', emoji: '📺' },
   { value: 'otro', label: 'Otro', emoji: '•' },
 ]
 
@@ -86,6 +87,7 @@ export function ExpenseForm({
   initial,
   submitLabel,
 }: ExpenseFormProps) {
+  const savingLabel = useSavingLabel()
   const [kind, setKind] = useState<MovementKind>(initial?.kind ?? 'expense')
   const [amount, setAmount] = useState(initial?.amount ?? '')
   const [category, setCategory] = useState(initial?.category ?? '')
@@ -145,6 +147,14 @@ export function ExpenseForm({
     (!isTransfer || effectiveToAccountId !== '') &&
     !submitting
 
+  const missing: string[] = []
+  if (!hasAmount) missing.push('el monto')
+  if (!isTransfer && !isIncome && category === '') missing.push('la categoría')
+  if (description.trim() === '') missing.push('una nota')
+  if (availableAccounts.length > 0 && effectiveAccountId === '') missing.push('la cuenta')
+  if (isTransfer && effectiveToAccountId === '') missing.push('la cuenta de destino')
+  const hint = !submitting && missing.length > 0 ? `Te falta: ${missing.join(', ')}.` : null
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!canSubmit) return
@@ -162,7 +172,7 @@ export function ExpenseForm({
   const sourceLabel = isTransfer ? 'Desde qué cuenta' : kind === 'income' ? 'A qué cuenta' : 'De qué cuenta'
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full max-w-lg flex-1 flex-col gap-6 pb-8">
+    <form noValidate onSubmit={handleSubmit} className="flex w-full max-w-lg flex-1 flex-col gap-6 pb-8">
       <div>
         <span className="text-sm font-medium text-ink-mid">Tipo</span>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -216,7 +226,8 @@ export function ExpenseForm({
       <div>
         <label htmlFor="description" className="text-sm font-medium text-ink-mid">
           Nota
-        </label>
+        </label>{' '}
+        <span className="text-xs text-ink-soft">(obligatoria)</span>
         <input
           id="description"
           value={description}
@@ -301,8 +312,9 @@ export function ExpenseForm({
       ) : null}
 
       <div className="mt-2">
+        {hint ? <p className="mb-2 text-xs text-ink-soft">{hint}</p> : null}
         <Btn kind="primary" type="submit" className="w-full sm:w-auto sm:min-w-48" disabled={!canSubmit}>
-          {submitting ? 'Guardando…' : (submitLabel ?? SUBMIT_LABEL[kind])}
+          {submitting ? savingLabel : (submitLabel ?? SUBMIT_LABEL[kind])}
         </Btn>
         {onUseVoice ? (
           <button

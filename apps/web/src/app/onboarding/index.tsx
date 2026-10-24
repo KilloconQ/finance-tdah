@@ -30,7 +30,7 @@ function OnboardingWelcome() {
         </div>
 
         <div className="mt-4 space-y-1.5 text-center text-[13px] text-ink-mid">
-          <p>· Frascos visuales para metas</p>
+          <p>· Frascos visuales para ahorrar</p>
           <p>· Sin juicios, en segunda persona</p>
         </div>
 

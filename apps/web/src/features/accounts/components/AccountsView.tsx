@@ -27,7 +27,7 @@ const ACCOUNT_LABEL: Record<string, string> = {
   debito: 'Débito',
   credito: 'Crédito',
   efectivo: 'Efectivo',
-  wallet: 'Wallet',
+  wallet: 'Billetera',
   ahorro: 'Ahorro',
 }
 

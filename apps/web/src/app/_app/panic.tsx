@@ -134,9 +134,9 @@ function Panic() {
           <button
             type="button"
             onClick={() => navigate({ to: '/transactions' })}
-            className="text-sm text-ink-mid underline"
+            className="inline-flex min-h-10 items-center text-sm text-ink-mid underline"
           >
-            Solo quería ver el daño
+            Ver mis movimientos
           </button>
           <button
             type="button"

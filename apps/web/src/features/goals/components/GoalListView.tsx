@@ -36,7 +36,7 @@ export function GoalListView({
       <AppBar
         title="Frascos"
         right={
-          <IconButton onClick={onAddNew} label="Nueva meta">
+          <IconButton onClick={onAddNew} label="Nuevo frasco">
             <Plus size={20} strokeWidth={2} />
           </IconButton>
         }

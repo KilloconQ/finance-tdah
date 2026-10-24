@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { cents, signedCents } from './common'
+import { cents, signedCents, trimmedText } from './common'
 
 export const envelopeSchema = z.object({
   id: z.uuid(),
@@ -15,13 +15,13 @@ export const envelopeSchema = z.object({
 
 export const createEnvelopeSchema = z.object({
   accountId: z.uuid(),
-  name: z.string().trim().min(1, { error: 'Ponle un nombre' }).max(60),
+  name: trimmedText(60, 'Ponle un nombre'),
   emoji: z.string().min(1).max(8).default('📦'),
   amountCents: cents.default(0),
 })
 
 export const updateEnvelopeSchema = z.object({
-  name: z.string().trim().min(1, { error: 'Ponle un nombre' }).max(60).optional(),
+  name: trimmedText(60, 'Ponle un nombre').optional(),
   emoji: z.string().min(1).max(8).optional(),
 })
 
