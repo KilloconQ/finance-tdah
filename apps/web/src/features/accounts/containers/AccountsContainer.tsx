@@ -35,6 +35,7 @@ export function AccountsContainer() {
       loading={isLoading}
       onAddAccount={() => navigate({ to: '/accounts/new' })}
       onEditAccount={(id) => navigate({ to: '/accounts/$id', params: { id } })}
+      onOpenSubscriptions={() => navigate({ to: '/subscriptions' })}
       onOpenEnvelopes={(id) => navigate({ to: '/accounts/$id/envelopes', params: { id } })}
     />
   )

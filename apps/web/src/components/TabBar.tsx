@@ -7,7 +7,7 @@ export function TabBar() {
 
   return (
     <nav className="sticky bottom-0 left-0 right-0 -mx-4 flex border-t border-line bg-surface px-2 pt-2 pb-6 sm:-mx-6 sm:px-4 md:hidden">
-      {TABS.map((tab) => {
+      {TABS.filter((tab) => !tab.desktopOnly).map((tab) => {
         const isActive =
           tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)
         const Icon = tab.icon
