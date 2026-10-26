@@ -16,9 +16,10 @@ import {
   Skeleton,
   TabBar,
 } from '@/components'
-import { JarWithStats, goalsQueryOptions } from '@/features/goals'
+import { Jar, goalsQueryOptions } from '@/features/goals'
 import { activeChallengeQuery, homeSummaryQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
+import { formatMoney } from '@/lib/format'
 import { useTweaks } from '@/lib/use-tweaks'
 
 export const Route = createFileRoute('/_app/')({
@@ -123,29 +124,36 @@ function Home() {
 
         {/* Right: goal jar, mini stats and the challenge */}
         <div className="flex flex-col gap-4">
-          <Card className="flex flex-col items-center justify-center gap-3">
+          {/* Compact on purpose: the jar sits beside its numbers so it never takes over the screen. */}
+          <Card
+            data-testid="home-jar"
+            className={
+              goal && goalProgress ? 'flex items-center gap-4' : 'flex flex-col items-center justify-center gap-3'
+            }
+          >
             {goal && goalProgress ? (
               <>
-                <JarWithStats
-                  fraction={goalProgress.fraction}
-                  label={`${goal.emoji} ${goal.name} · frasco`}
-                  currentCents={goal.currentCents}
-                  targetCents={goal.targetCents}
-                  hidden={!showBalances}
-                  width={150}
-                  height={190}
-                />
+                <Jar fraction={goalProgress.fraction} width={56} height={76} />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="truncate text-[12px] text-ink-mid">{`${goal.emoji} ${goal.name} · frasco`}</span>
+                  <span className="money text-sm font-medium text-ink">
+                    {showBalances
+                      ? `${formatMoney(goal.currentCents / 100)} / ${formatMoney(goal.targetCents / 100)}`
+                      : '•••• / ••••'}
+                  </span>
+                </div>
                 <Btn
                   kind="ghost"
-                  className="w-full"
+                  className="shrink-0"
+                  aria-label="Echar al frasco"
                   onClick={() => navigate({ to: '/goals/$id', params: { id: goal.id } })}
                 >
                   <PiggyBank size={16} strokeWidth={2} />
-                  Echar al frasco
+                  Echar
                 </Btn>
               </>
             ) : goals.isLoading ? (
-              <Skeleton className="h-[190px] w-[150px] rounded-2xl" />
+              <Skeleton className="h-[76px] w-full rounded-2xl" />
             ) : (
               <EmptyState
                 icon={<PiggyBank size={22} strokeWidth={1.8} />}
