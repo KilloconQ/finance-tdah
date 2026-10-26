@@ -2,43 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repo layout
+## Tests
 
-pnpm workspace monorepo, three packages:
-
-- `apps/api` — Hono server running on **Bun** (`bun --hot src/index.ts`). Auth via better-auth + Drizzle adapter (Postgres).
-- `apps/web` — React 19 + Vite 8 SPA. TanStack Router (file-based, generated tree) + TanStack Query. Tailwind v4.
-- `packages/shared` — single source of truth for **Drizzle schema** (`src/db/schema/`) and **Zod request/response schemas** (`src/schemas/`). Consumed by both apps via `@finance-tdah/shared/{db,schemas,domain,types}`.
-
-Workspace root (`package.json`) drives everything via `pnpm -r --filter=./apps/*` for app-only ops.
-
-## Commands
-
-Run from the repo root unless noted:
-
-```bash
-pnpm dev                # api + web in parallel
-pnpm dev:web            # web only (Vite, :5173 with /api proxy → :3001)
-pnpm dev:api            # api only (bun --hot, :3001)
-pnpm build              # builds both apps
-pnpm typecheck          # tsc --noEmit across all workspaces
-pnpm lint               # eslint (web only — api and shared have no lint script)
-pnpm test               # vitest run across workspaces (apps/api + packages/shared + apps/web)
-
-# Database (proxies to apps/api)
-pnpm db:generate        # drizzle-kit generate from packages/shared/src/db/schema
-pnpm db:migrate         # bun --env-file=../../.env src/db/migrate.ts (reads DATABASE_URL directly, NOT via env.ts)
-pnpm db:seed            # bun src/db/seed.ts
-pnpm db:studio          # drizzle-kit studio
-pnpm auth:schema        # regenerate better-auth tables (writes apps/api/src/db/auth-generated.ts)
-
-# Docker (full stack: postgres + api + web + caddy + cloudflared)
-pnpm docker:up          # uses .env at repo root
-pnpm docker:down
-pnpm docker:logs
-```
-
-Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test` to `apps/api`, `packages/shared` and `apps/web`. The web suite (`apps/web/vitest.config.ts`, jsdom + Testing Library, `*.test.ts(x)` next to the code) covers the `lib/` session/API layer, the `_app` auth guard, `ExpenseForm`, `EnvelopesView`, `AccountsView`, Settings, the expense, account, envelope, goal, subscription and Dinero (`/money`) screens, the `TabBar`/`Sidebar` navigation, `queries.ts` and `use-tweaks` (run through the real `api` client against a fake network edge, `src/test/fake-api.ts`). The home, transactions, challenge, panic and onboarding screens (and `lib/onboarding-draft.ts`) are covered by the `tests-home-transactions`, `tests-challenge-panic` and `tests-onboarding` branches; check that the matching `*.test.tsx` exist next to the screens before saying they are covered or untested. `apps/api/src/routes/envelopes.integration.test.ts` runs the envelope + expense routes against a real, migrated Postgres and is **skipped unless `TEST_DATABASE_URL` is set** (use a throwaway database, e.g. `ft_test`, never the dev one); run it whenever you touch envelopes, expenses or account balances. `apps/api/src/routes/expenses.integration.test.ts` (same opt-in) covers expense edit/delete ownership and concurrent writers, `apps/api/src/routes/accounts.integration.test.ts` account balance edits against envelopes, `apps/api/src/routes/partial-updates.integration.test.ts` that a PATCH leaves unsent fields alone, and `apps/api/src/services/daily-reminder.integration.test.ts` the daily push reminder. CI (`.github/workflows/ci.yml`) runs typecheck, lint and all tests — integration ones included, against a Postgres service — on every PR. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
+Tests run on **Vitest**. `pnpm test` at the root fans out via `pnpm -r test` to `apps/api`, `packages/shared` and `apps/web`. The web suite (`apps/web/vitest.config.ts`, jsdom + Testing Library, `*.test.ts(x)` next to the code). `apps/api/src/routes/envelopes.integration.test.ts` runs the envelope + expense routes against a real, migrated Postgres and is **skipped unless `TEST_DATABASE_URL` is set** (use a throwaway database, e.g. `ft_test`, never the dev one); run it whenever you touch envelopes, expenses or account balances. `apps/api/src/routes/expenses.integration.test.ts` (same opt-in) covers expense edit/delete ownership and concurrent writers, `apps/api/src/routes/accounts.integration.test.ts` account balance edits against envelopes, `apps/api/src/routes/partial-updates.integration.test.ts` that a PATCH leaves unsent fields alone, and `apps/api/src/services/daily-reminder.integration.test.ts` the daily push reminder. CI (`.github/workflows/ci.yml`) runs typecheck, lint and all tests — integration ones included, against a Postgres service — on every PR. Run the suite before claiming tests pass, and don't claim coverage it doesn't have.
 
 The api and shared packages have no lint script; `pnpm lint` only hits `apps/web`. Route files under `src/app/**` are exempt from `react-refresh/only-export-components` (TanStack file routes export `Route` beside their component).
 
