@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.0](https://github.com/KilloconQ/finance-tdah/compare/v0.1.0...v0.1.0) (2026-10-26)
+
+
+### Features
+
+* **web:** add Dinero hub and slim the mobile tab bar to four tabs ([c3c8923](https://github.com/KilloconQ/finance-tdah/commit/c3c8923e268e1cf0903d8922a46cce1325145355))
+* **web:** Dinero hub and a four-tab mobile bar ([a9dc70b](https://github.com/KilloconQ/finance-tdah/commit/a9dc70bb0cf91357c49618c93cb4866f24f94ab4))
+* **web:** keep one docked action on Hoy and show the challenge as a card ([290f34f](https://github.com/KilloconQ/finance-tdah/commit/290f34f8abcffcf200bdf1e176693c0ec896b047))
+
+
+### Bug Fixes
+
+* **web:** handle load errors and narrow screens on Dinero and Hoy ([25cfac2](https://github.com/KilloconQ/finance-tdah/commit/25cfac236cb0cbe101484740fa05db71ab85f275))
+
 ## 0.1.0 (2026-10-24)
 
 
