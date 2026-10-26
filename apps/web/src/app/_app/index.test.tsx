@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ChallengeDTO, HomeSummaryDTO } from '@finance-tdah/shared/schemas'
-import { goal, NOW, profileRoute } from '@/test/fixtures'
+import { GOAL, goal, NOW, profileRoute } from '@/test/fixtures'
 import { fakeApi, json, renderWithQuery } from '@/test/fake-api'
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }))
@@ -114,17 +114,26 @@ describe('Home', () => {
     expect(navigate).toHaveBeenCalledWith({ to: '/goals' })
   })
 
-  it('shows the active challenge progress, and nothing when there is none', async () => {
+  it('shows the active challenge as a card that opens it', async () => {
     fakeApi(routes({ active: challenge() }))
+    const user = userEvent.setup()
     render(renderWithQuery(<Home />).tree)
-    expect(await screen.findByText('3/7 🔥')).toBeTruthy()
-    expect(screen.getByText('reto')).toBeTruthy()
-    cleanup()
 
-    fakeApi(routes())
-    render(renderWithQuery(<Home />).tree)
-    await screen.findByText('Hola, Ana 👋')
+    const card = await screen.findByRole('button', { name: /Semana sin café/ })
+    expect(within(card).getByText('Día 3 de 7')).toBeTruthy()
+    // The card replaces the old "reto" mini stat.
     expect(screen.queryByText('reto')).toBeNull()
+    await user.click(card)
+    expect(navigate).toHaveBeenCalledWith({ to: '/challenge' })
+  })
+
+  it('invites the user to start a challenge when there is none', async () => {
+    fakeApi(routes())
+    const user = userEvent.setup()
+    render(renderWithQuery(<Home />).tree)
+
+    await user.click(await screen.findByRole('button', { name: /Empieza un reto/ }))
+    expect(navigate).toHaveBeenCalledWith({ to: '/challenge' })
   })
 
   it('masks every amount when the user chose to hide balances', async () => {
@@ -145,20 +154,30 @@ describe('Home', () => {
     expect(api.writes()).toEqual([])
   })
 
-  it.each([
-    ['Gasto', '/add-expense'],
-    ['Echar al frasco', '/goals'],
-  ])('the %s quick action goes to %s', async (name, to) => {
+  it('the Gasto quick action goes to /add-expense', async () => {
     fakeApi(routes())
     const user = userEvent.setup()
     render(renderWithQuery(<Home />).tree)
     await screen.findByText('Hola, Ana 👋')
 
     // Rendered twice: inline on desktop and docked on mobile.
-    const buttons = screen.getAllByRole('button', { name })
+    const buttons = screen.getAllByRole('button', { name: 'Gasto' })
     expect(buttons).toHaveLength(2)
     await user.click(buttons[0])
-    expect(navigate).toHaveBeenCalledWith({ to })
+    expect(navigate).toHaveBeenCalledWith({ to: '/add-expense' })
+  })
+
+  it('puts "Echar al frasco" on the jar itself, opening that jar', async () => {
+    fakeApi(routes())
+    const user = userEvent.setup()
+    render(renderWithQuery(<Home />).tree)
+
+    await screen.findByText('✈️ Vacaciones · frasco')
+    // One button, on the jar card: no longer docked next to "Gasto".
+    const buttons = screen.getAllByRole('button', { name: 'Echar al frasco' })
+    expect(buttons).toHaveLength(1)
+    await user.click(buttons[0])
+    expect(navigate).toHaveBeenCalledWith({ to: '/goals/$id', params: { id: GOAL } })
   })
 
   it('opens settings and panic mode from the app bar', async () => {

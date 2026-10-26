@@ -14,10 +14,11 @@ Objective: fewer bottom-of-screen buttons on mobile without hiding anything (ADH
 |----|-------|-------|--------|--------|
 | T1 | S1 | inline | done (RED 8/9 → GREEN 9/9) | see Log |
 | T2 | S2 | inline | done (RED missing module → GREEN 6/6) | see Log |
-| T3 | S3 | inline | pending | |
+| T3 | S3 | inline | done (RED 3/11 → GREEN 11/11) | see Log |
 
 ## Log
 
 - L1 (2026-10-26, user): "30min ponte a trabajar en el nuevo cambio, cuando acabes pasa code review. tienes que hacer tdd tests, trabajo y luego review y cuando acabes haces pr"
 - L2: "El nuevo cambio" = the canvas proposal agreed in conversation: before 2 CTAs + 5 tabs, after 1 CTA + 4 tabs; Dinero with summary tiles added after the user asked where Suscripciones was.
 - L3: PR #49 (open, restores "Suscrip." as a 6th mobile tab) conflicts with S1; this branch supersedes it. Closing #49 is the user's call.
+- L4: T1+T2 in c3c8923; T3 in the next commit. Web suite 46 files / 388 tests green, typecheck and eslint clean.

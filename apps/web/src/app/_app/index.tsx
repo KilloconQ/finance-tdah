@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
-import { LifeBuoy, PiggyBank, Plus, Settings } from 'lucide-react'
+import { ChevronRight, Flame, LifeBuoy, PiggyBank, Plus, Settings } from 'lucide-react'
 import { jarProgress } from '@finance-tdah/shared/domain'
 import {
   AppBar,
@@ -47,19 +47,17 @@ function Home() {
   const weekTargetCents = summary.data?.weekTargetCents ?? 0
   const weekLeftCents = Math.max(0, weekTargetCents - weekSpentCents)
   const activeChallenge = challenge.data
+  const challengePercent = activeChallenge
+    ? Math.min(100, (activeChallenge.doneDays / Math.max(1, activeChallenge.days)) * 100)
+    : 0
 
-  // Primary actions live inline on desktop; the docked bar is mobile-only.
+  // The one primary action lives inline on desktop; the docked bar is mobile-only.
+  // Saving into a jar sits on the jar card, so the bottom of the screen keeps a single button.
   const quickActions = (
-    <>
-      <Btn kind="primary" className="flex-1" onClick={() => navigate({ to: '/add-expense' })}>
-        <Plus size={16} strokeWidth={2.2} />
-        Gasto
-      </Btn>
-      <Btn kind="ghost" className="flex-1" onClick={() => navigate({ to: '/goals' })}>
-        <PiggyBank size={16} strokeWidth={2} />
-        Echar al frasco
-      </Btn>
-    </>
+    <Btn kind="primary" className="flex-1" onClick={() => navigate({ to: '/add-expense' })}>
+      <Plus size={16} strokeWidth={2.2} />
+      Gasto
+    </Btn>
   )
 
   return (
@@ -123,19 +121,29 @@ function Home() {
           <div className="mt-6 hidden gap-2 md:flex">{quickActions}</div>
         </div>
 
-        {/* Right: goal jar + mini stats */}
+        {/* Right: goal jar, mini stats and the challenge */}
         <div className="flex flex-col gap-4">
-          <Card className="flex items-center justify-center">
+          <Card className="flex flex-col items-center justify-center gap-3">
             {goal && goalProgress ? (
-              <JarWithStats
-                fraction={goalProgress.fraction}
-                label={`${goal.emoji} ${goal.name} · frasco`}
-                currentCents={goal.currentCents}
-                targetCents={goal.targetCents}
-                hidden={!showBalances}
-                width={150}
-                height={190}
-              />
+              <>
+                <JarWithStats
+                  fraction={goalProgress.fraction}
+                  label={`${goal.emoji} ${goal.name} · frasco`}
+                  currentCents={goal.currentCents}
+                  targetCents={goal.targetCents}
+                  hidden={!showBalances}
+                  width={150}
+                  height={190}
+                />
+                <Btn
+                  kind="ghost"
+                  className="w-full"
+                  onClick={() => navigate({ to: '/goals/$id', params: { id: goal.id } })}
+                >
+                  <PiggyBank size={16} strokeWidth={2} />
+                  Echar al frasco
+                </Btn>
+              </>
             ) : goals.isLoading ? (
               <Skeleton className="h-[190px] w-[150px] rounded-2xl" />
             ) : (
@@ -166,15 +174,38 @@ function Home() {
                 value={weekTargetCents / 100}
                 hidden={!showBalances}
               />
-              {activeChallenge ? (
-                <Mini
-                  compact
-                  label="reto"
-                  value={`${activeChallenge.doneDays}/${activeChallenge.days} 🔥`}
-                />
-              ) : null}
             </div>
           ) : null}
+
+          {challenge.isLoading ? null : (
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/challenge' })}
+              className="wf-tap flex w-full items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3.5 text-left shadow-card transition-colors hover:bg-bg-alt"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warn-bg text-warn">
+                <Flame size={20} strokeWidth={2} />
+              </span>
+              {activeChallenge ? (
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="truncate text-sm font-medium text-ink">{activeChallenge.name}</span>
+                  <span className="text-xs text-ink-mid">{`Día ${activeChallenge.doneDays} de ${activeChallenge.days}`}</span>
+                  <span className="flex h-1.5 overflow-hidden rounded-full bg-line-soft" aria-hidden>
+                    <span
+                      className="rounded-full bg-warn"
+                      style={{ width: `${challengePercent}%` }}
+                    />
+                  </span>
+                </span>
+              ) : (
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium text-ink">Empieza un reto</span>
+                  <span className="text-xs text-ink-mid">Un reto corto te ayuda a gastar menos.</span>
+                </span>
+              )}
+              <ChevronRight size={18} strokeWidth={2} className="shrink-0 text-ink-mid" aria-hidden />
+            </button>
+          )}
         </div>
       </div>
 
