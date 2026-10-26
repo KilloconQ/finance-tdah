@@ -2,15 +2,15 @@ import { useState } from 'react'
 import { centsToUnits, isEqualSplit, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { MAX_CENTS, type ExpenseGroupDTO, type GroupDetailDTO } from '@finance-tdah/shared/schemas'
 import { Btn } from '@/components'
+import { errorText } from '@/lib/api'
 import { todayLocalISO } from '@/lib/format'
-import { useAddMember, useAddSharedExpense, useUpdateSharedExpense } from '../api'
+import { useInviteToGroup, useAddSharedExpense, useUpdateSharedExpense } from '../api'
 import { Sheet } from './Sheet'
 import { useSavingLabel } from '@/lib/use-online'
 
 const FIELD_CLASS =
   'mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-base text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-bg'
 const LABEL_CLASS = 'block text-sm font-medium text-ink-mid'
-const errorText = (err: unknown, fallback: string) => (err instanceof Error ? err.message : fallback)
 
 function ErrorBox({ message }: { message: string | null }) {
   return message ? <div className="mt-3 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">{message}</div> : null
@@ -157,31 +157,38 @@ export function ExpenseSheet({
 }
 
 export function MemberSheet({ groupId, onClose }: { groupId: string; onClose: () => void }) {
-  const addMember = useAddMember(groupId)
+  const invite = useInviteToGroup(groupId)
   const [email, setEmail] = useState('')
-  const [error, setError] = useState<string | null>(null)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
-    addMember.mutate(email.trim(), {
-      onSuccess: onClose,
-      onError: (err) => setError(errorText(err, 'No pudimos agregar a esa persona')),
-    })
+    invite.mutate(email.trim())
   }
 
   return (
-    <Sheet title="Agregar miembro" onClose={onClose}>
-      <form onSubmit={submit} className="pt-2">
-        <label htmlFor="member-email" className={LABEL_CLASS}>
-          Email
-        </label>
-        <input id="member-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={FIELD_CLASS} />
-        <ErrorBox message={error} />
-        <Btn kind="primary" type="submit" className="mt-4 w-full" disabled={!email.trim() || addMember.isPending}>
-          Agregar miembro
-        </Btn>
-      </form>
+    <Sheet title="Invitar miembro" onClose={onClose}>
+      {invite.isSuccess ? (
+        <div className="pt-2">
+          {/* The API answers the same whether or not the address has an account, so this can't say which. */}
+          <p className="text-base text-ink-mid">
+            Si ese email tiene cuenta, le llegará la invitación. Entrará al grupo cuando la acepte.
+          </p>
+          <Btn kind="primary" className="mt-4 w-full" onClick={onClose}>
+            Listo
+          </Btn>
+        </div>
+      ) : (
+        <form onSubmit={submit} className="pt-2">
+          <label htmlFor="member-email" className={LABEL_CLASS}>
+            Email
+          </label>
+          <input id="member-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={FIELD_CLASS} />
+          <ErrorBox message={invite.isError ? errorText(invite.error, 'No pudimos enviar la invitación') : null} />
+          <Btn kind="primary" type="submit" className="mt-4 w-full" disabled={!email.trim() || invite.isPending}>
+            Enviar invitación
+          </Btn>
+        </form>
+      )}
     </Sheet>
   )
 }

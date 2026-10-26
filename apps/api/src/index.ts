@@ -14,6 +14,7 @@ import { envelopesRoute } from './routes/envelopes'
 import { expensesRoute } from './routes/expenses'
 import { goalsRoute } from './routes/goals'
 import { groupsRoute } from './routes/groups'
+import { invitationsRoute } from './routes/invitations'
 import { profileRoute } from './routes/profile'
 import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
@@ -56,6 +57,7 @@ const api = app
   .route('/envelopes', envelopesRoute)
   .route('/goals', goalsRoute)
   .route('/groups', groupsRoute)
+  .route('/invitations', invitationsRoute)
   .route('/expenses', expensesRoute)
   .route('/push', pushRoute)
   .route('/subscriptions', subscriptionsRoute)
@@ -95,7 +97,7 @@ if (env.ALLOWED_EMAILS.length === 0) {
 if (!features.passwordResetEmail) {
   logger.warn('feature_disabled', {
     feature: 'password_reset_email',
-    message: 'RESEND_API_KEY is not set — password reset emails will fail. Sign-in is unaffected.',
+    message: 'RESEND_API_KEY is not set — password reset and invitation emails will not be sent. Sign-in is unaffected.',
   })
 }
 if (!features.webPush) {

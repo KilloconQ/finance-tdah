@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getThemePreference, setThemePreference, THEME_KEY } from '@/lib/theme'
+import { fakeApi, json } from '@/test/fake-api'
 
 const { push, mutate, mutation } = vi.hoisted(() => ({
   mutation: { isSuccess: false, isPending: false },
@@ -165,5 +166,31 @@ describe('Settings › weekly budget', () => {
     mutation.isPending = true
     setup()
     expect(screen.getByRole('status').textContent).toBe('Guardando…')
+  })
+})
+
+describe('Settings › invite to Cada Quien', () => {
+  it('sends the invitation and confirms it without saying whether the address has an account', async () => {
+    const api = fakeApi({ 'POST /invitations/app': () => json({ ok: true }, 202) })
+    const user = setup()
+
+    await user.type(screen.getByLabelText('Correo de quien quieres invitar'), ' amiga@ejemplo.com ')
+    await user.click(screen.getByRole('button', { name: 'Enviar invitación' }))
+
+    expect(await screen.findByText(/Listo/)).toBeTruthy()
+    expect(api.writes()).toEqual([{ method: 'POST', path: '/invitations/app', body: { email: 'amiga@ejemplo.com' } }])
+    expect((screen.getByLabelText('Correo de quien quieres invitar') as HTMLInputElement).value).toBe('')
+  })
+
+  it('shows why the invitation was refused', async () => {
+    fakeApi({
+      'POST /invitations/app': () => json({ error: 'Llegaste al límite de invitaciones por hoy. Intenta mañana.' }, 429),
+    })
+    const user = setup()
+
+    await user.type(screen.getByLabelText('Correo de quien quieres invitar'), 'amiga@ejemplo.com')
+    await user.click(screen.getByRole('button', { name: 'Enviar invitación' }))
+
+    expect(await screen.findByText('Llegaste al límite de invitaciones por hoy. Intenta mañana.')).toBeTruthy()
   })
 })
