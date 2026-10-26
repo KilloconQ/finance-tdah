@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/KilloconQ/finance-tdah/compare/v0.1.1...v0.1.2) (2026-10-26)
+
+
+### Features
+
+* invitaciones a grupos con aceptación e invitaciones para registrarse ([5bc7afa](https://github.com/KilloconQ/finance-tdah/commit/5bc7afa2631475b760e82bb10959210c0445ac85))
+* require accepting group invitations and let users invite people to sign up ([ede0e3e](https://github.com/KilloconQ/finance-tdah/commit/ede0e3eddde42e1491ecd922db1ec80eda6219c9))
+
 ## [0.1.1](https://github.com/KilloconQ/finance-tdah/compare/v0.1.0...v0.1.1) (2026-10-26)
 
 
