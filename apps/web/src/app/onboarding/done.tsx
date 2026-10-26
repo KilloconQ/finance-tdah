@@ -4,6 +4,7 @@ import { Btn, Hello } from '@/components'
 import { mutations } from '@/lib/queries'
 import { authClient } from '@/lib/auth-client'
 import { clearOnboardingDraft, useOnboardingDraft } from '@/lib/onboarding-draft'
+import { errorText } from '@/lib/api'
 import { OnboardingLayout } from './-layout'
 
 export const Route = createFileRoute('/onboarding/done')({
@@ -42,7 +43,7 @@ function OnboardingDone() {
       clearOnboardingDraft()
       navigate({ to: '/', replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No pudimos guardar tu setup')
+      setError(errorText(err, 'No pudimos guardar tu setup'))
       inFlight.current = false
       setSubmitting(false)
     }

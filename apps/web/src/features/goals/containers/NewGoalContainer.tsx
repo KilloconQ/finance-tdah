@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, IconButton, PhoneShell } from '@/components'
+import { errorText } from '@/lib/api'
 import { useCreateGoal } from '../api'
 import { GoalForm, type GoalFormFields } from '../components/GoalForm'
 
@@ -30,7 +31,7 @@ export function NewGoalContainer() {
         onSuccess: () => navigate({ to: '/goals', replace: true }),
         onError: (err) => {
           inFlight.current = false
-          setError(err instanceof Error ? err.message : 'No pudimos crear el frasco')
+          setError(errorText(err, 'No pudimos crear el frasco'))
         },
       },
     )

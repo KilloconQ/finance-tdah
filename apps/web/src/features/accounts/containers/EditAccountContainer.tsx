@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { parseAmountToCents, signedBalanceForType } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
+import { errorText } from '@/lib/api'
 import { accountsQueryOptions, useUpdateAccount } from '../api'
 import { AccountForm, type AccountFormFields } from '../components/AccountForm'
 
@@ -80,7 +81,7 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
         onSuccess: () => navigate({ to: '/accounts', replace: true }),
         onError: (err) => {
           inFlight.current = false
-          setError(err instanceof Error ? err.message : 'No pudimos actualizar la cuenta')
+          setError(errorText(err, 'No pudimos actualizar la cuenta'))
         },
       },
     )

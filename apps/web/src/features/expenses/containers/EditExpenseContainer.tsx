@@ -6,6 +6,7 @@ import { amountFormatError, centsToUnits, parseAmountToCents } from '@finance-td
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
 import { envelopesQueryOptions } from '@/features/envelopes'
 import { accountsQuery } from '@/lib/queries'
+import { errorText } from '@/lib/api'
 import { expenseQueryOptions, useUpdateExpense } from '../api'
 import { ExpenseForm, type ExpenseFormFields } from '../components/ExpenseForm'
 
@@ -63,7 +64,7 @@ export function EditExpenseContainer({ expenseId }: EditExpenseContainerProps) {
         onSuccess: () => navigate({ to: '/transactions', replace: true }),
         onError: (err) => {
           inFlight.current = false
-          setError(err instanceof Error ? err.message : 'No pudimos actualizar el gasto')
+          setError(errorText(err, 'No pudimos actualizar el gasto'))
         },
       },
     )

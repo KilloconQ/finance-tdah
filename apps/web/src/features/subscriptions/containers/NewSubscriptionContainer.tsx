@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, IconButton, PhoneShell } from '@/components'
+import { errorText } from '@/lib/api'
 import { useCreateSubscription } from '../api'
 import { SubscriptionForm, type SubscriptionFormFields } from '../components/SubscriptionForm'
 
@@ -36,7 +37,7 @@ export function NewSubscriptionContainer() {
         onSuccess: () => navigate({ to: '/subscriptions', replace: true }),
         onError: (err) => {
           inFlight.current = false
-          setError(err instanceof Error ? err.message : 'No pudimos crear la suscripción')
+          setError(errorText(err, 'No pudimos crear la suscripción'))
         },
       },
     )

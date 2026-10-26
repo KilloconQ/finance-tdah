@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { amountFormatError, centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
+import { errorText } from '@/lib/api'
 import { goalQueryOptions, useUpdateGoal } from '../api'
 import { GoalForm, type GoalFormFields } from '../components/GoalForm'
 
@@ -51,7 +52,7 @@ export function EditGoalContainer({ goalId }: EditGoalContainerProps) {
         onSuccess: () => navigate({ to: '/goals/$id', params: { id: goalId }, replace: true }),
         onError: (err) => {
           inFlight.current = false
-          setError(err instanceof Error ? err.message : 'No pudimos actualizar el frasco')
+          setError(errorText(err, 'No pudimos actualizar el frasco'))
         },
       },
     )

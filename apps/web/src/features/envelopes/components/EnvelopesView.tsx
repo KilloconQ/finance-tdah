@@ -9,6 +9,7 @@ import {
   unassignedCents,
   type EnvelopeAdjustmentError,
 } from '@finance-tdah/shared/domain'
+import { errorText } from '@/lib/api'
 import { AppBar, Btn, Card, Chip, EmptyState, IconButton, Money, PhoneShell, SectionHeader } from '@/components'
 import { formatMoney } from '@/lib/format'
 import { useSavingLabel } from '@/lib/use-online'
@@ -44,7 +45,6 @@ function ruleMessage(code: EnvelopeAdjustmentError, unassigned: number, envelope
   }
 }
 
-const errorText = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback)
 
 export function EnvelopesView({
   account,
