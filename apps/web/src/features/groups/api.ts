@@ -1,6 +1,8 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { z } from 'zod'
 import {
   groupDetailSchema,
+  groupInvitationListSchema,
   groupListSchema,
   type CreateSharedExpenseInput,
 } from '@finance-tdah/shared/schemas'
@@ -26,6 +28,46 @@ export function useCreateGroup() {
   })
 }
 
+export const invitationsQueryOptions = () =>
+  queryOptions({
+    queryKey: ['invitations'],
+    queryFn: () => fetchValidated('/invitations', groupInvitationListSchema).then((r) => r.invitations),
+  })
+
+type GroupInvitation = z.infer<typeof groupInvitationListSchema>['invitations'][number]
+
+/**
+ * Accepting drops the card from the cache right away. The mutation stays pending until the groups
+ * refetch lands, so the screen can hold off its "no groups" state while the new group loads.
+ * Settled, not just successful: a failed answer usually means the invitation is gone, so the list
+ * is refetched either way (which also puts back a card that could still be answered).
+ */
+export function useAnswerInvitation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, answer }: { id: string; answer: 'accept' | 'decline' }) =>
+      api.post(`invitations/${id}/${answer}`).json(),
+    onMutate: async ({ id, answer }) => {
+      if (answer !== 'accept') return
+      await queryClient.cancelQueries({ queryKey: ['invitations'] })
+      queryClient.setQueryData<GroupInvitation[]>(['invitations'], (list) => list?.filter((inv) => inv.id !== id))
+    },
+    onSettled: async (_data, _err, { answer }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['invitations'] }),
+        answer === 'accept' ? queryClient.invalidateQueries({ queryKey: ['groups'] }) : null,
+      ])
+    },
+  })
+}
+
+/** Emails a sign-up link to someone not on Cada Quien yet. */
+export const useInviteToApp = () =>
+  useMutation({
+    mutationFn: (email: string) =>
+      fetchValidated('/invitations/app', z.object({ ok: z.literal(true) }), { method: 'POST', json: { email } }),
+  })
+
 /** Every write inside a group refreshes the group (members, expenses, balances). */
 function useGroupWrite<T>(send: (input: T) => Promise<unknown>) {
   const queryClient = useQueryClient()
@@ -35,8 +77,8 @@ function useGroupWrite<T>(send: (input: T) => Promise<unknown>) {
   })
 }
 
-export const useAddMember = (groupId: string) =>
-  useGroupWrite((email: string) => api.post(`groups/${groupId}/members`, { json: { email } }).json())
+export const useInviteToGroup = (groupId: string) =>
+  useGroupWrite((email: string) => api.post(`groups/${groupId}/invitations`, { json: { email } }).json())
 
 export const useAddSharedExpense = (groupId: string) =>
   useGroupWrite((input: CreateSharedExpenseInput) =>

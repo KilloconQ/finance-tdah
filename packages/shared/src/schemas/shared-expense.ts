@@ -98,3 +98,15 @@ export const groupDetailSchema = z.object({
   balances: groupBalancesSchema,
 })
 export type GroupDetailDTO = z.infer<typeof groupDetailSchema>
+
+/** A pending invitation to join a group, as the invitee sees it. */
+export const groupInvitationSchema = z.object({
+  id: z.uuid(),
+  groupId: z.uuid(),
+  groupName: z.string(),
+  invitedByName: z.string(),
+  createdAt: isoDateTime,
+})
+export type GroupInvitationDTO = z.infer<typeof groupInvitationSchema>
+
+export const groupInvitationListSchema = z.object({ invitations: z.array(groupInvitationSchema) })

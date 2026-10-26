@@ -6,6 +6,7 @@ import { AppBar, Btn, Dots, Hello, Money, PhoneShell } from '@/components'
 import { activeChallengeQuery, mutations } from '@/lib/queries'
 import { formatDays } from '@/lib/format'
 import { queryClient } from '@/lib/query-client'
+import { errorText } from '@/lib/api'
 
 export const Route = createFileRoute('/_app/challenge')({
   loader: () => queryClient.ensureQueryData(activeChallengeQuery()),
@@ -30,7 +31,7 @@ function Challenge() {
     mutationFn: (id: string) => mutations.checkChallengeDay(id),
     onMutate: () => setActionError(null),
     onError: (err) =>
-      setActionError(err instanceof Error ? err.message : 'No pudimos marcar el día'),
+      setActionError(errorText(err, 'No pudimos marcar el día')),
     onSuccess: playCheckSound,
     // refetch on failure too, so a 409 "already checked" locks the button
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
@@ -40,7 +41,7 @@ function Challenge() {
     mutationFn: (id: string) => mutations.resetChallenge(id),
     onMutate: () => setActionError(null),
     onError: (err) =>
-      setActionError(err instanceof Error ? err.message : 'No pudimos saltar el reto'),
+      setActionError(errorText(err, 'No pudimos saltar el reto')),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['challenges'] }),
   })
 
@@ -56,7 +57,7 @@ function Challenge() {
       void queryClient.invalidateQueries({ queryKey: ['challenges'] })
     },
     onError: (err) =>
-      setFormError(err instanceof Error ? err.message : 'No pudimos crear el reto'),
+      setFormError(errorText(err, 'No pudimos crear el reto')),
   })
 
   const handleCreateChallenge = () => {

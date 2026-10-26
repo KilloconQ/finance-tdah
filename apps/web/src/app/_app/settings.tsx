@@ -8,7 +8,8 @@ import { setThemePreference, useThemePreference, type ThemePreference } from '@/
 import { useSetTweak, useTweaks } from '@/lib/use-tweaks'
 import { usePushSubscription } from '@/lib/use-push-subscription'
 import { signOutAndClear } from '@/lib/session-reset'
-import { fetchValidated } from '@/lib/api'
+import { errorText, fetchValidated } from '@/lib/api'
+import { useInviteToApp } from '@/features/groups'
 import { z } from 'zod'
 
 export const Route = createFileRoute('/_app/settings')({
@@ -138,6 +139,10 @@ function Settings() {
           </Section>
         ) : null}
 
+        <Section label="Invita a alguien" hint="Le mandamos un correo con el enlace para crear su cuenta en Cada Quien.">
+          <InviteToApp />
+        </Section>
+
         <div className="border-t border-line pt-8 mt-8">
           <div className="flex gap-2">
             <Btn
@@ -185,6 +190,54 @@ function Settings() {
 
       <TabBar />
     </PhoneShell>
+  )
+}
+
+function InviteToApp() {
+  const [email, setEmail] = useState('')
+  const invite = useInviteToApp()
+  // The API answers the same whether or not the address has an account, so this can't say which.
+  const status = invite.isPending
+    ? 'Enviando…'
+    : invite.isSuccess
+      ? 'Listo. Si esa persona aún no tiene cuenta, le llegará la invitación.'
+      : ''
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        invite.mutate(email.trim(), { onSuccess: () => setEmail('') })
+      }}
+    >
+      <div className="flex gap-2">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value)
+            invite.reset()
+          }}
+          aria-label="Correo de quien quieres invitar"
+          placeholder="correo@ejemplo.com"
+          autoComplete="off"
+          className="min-h-11 w-full min-w-0 rounded-xl border border-line bg-surface px-4 text-base text-ink outline-none focus:border-accent"
+        />
+        <Btn kind="primary" type="submit" disabled={invite.isPending}>
+          Enviar invitación
+        </Btn>
+      </div>
+      {invite.isError ? (
+        <div className="mt-2 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+          {errorText(invite.error, 'No pudimos enviar la invitación')}
+        </div>
+      ) : (
+        <p aria-live="polite" className="mt-1.5 min-h-4 px-1 text-xs text-ink-soft">
+          {status}
+        </p>
+      )}
+    </form>
   )
 }
 

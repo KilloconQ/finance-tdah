@@ -167,14 +167,29 @@ describe('GroupDetail', () => {
     expect(screen.getAllByRole('button', { name: 'Editar gasto' })).toHaveLength(1)
   })
 
-  it('shows the API error when the email is not found', async () => {
-    fakeApi({ ...routes(), [`POST /groups/${G}/members`]: () => json({ error: 'No pudimos agregar a esa persona' }, 404) })
+  it('shows the API error when the invitation fails', async () => {
+    fakeApi({ ...routes(), [`POST /groups/${G}/invitations`]: () => json({ error: 'No pudimos invitar a esa persona' }, 404) })
     render(renderWithQuery(<GroupDetail groupId={G} />).tree)
-    await userEvent.click(await screen.findByRole('button', { name: 'Agregar miembro' }))
-    const sheet = within(screen.getByRole('dialog', { name: 'Agregar miembro' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Invitar miembro' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Invitar miembro' }))
     await userEvent.type(sheet.getByLabelText('Email'), 'zz@x.com')
-    await userEvent.click(sheet.getByRole('button', { name: 'Agregar miembro' }))
-    expect(await screen.findByText('No pudimos agregar a esa persona')).toBeTruthy()
+    await userEvent.click(sheet.getByRole('button', { name: 'Enviar invitación' }))
+    expect(await screen.findByText('No pudimos invitar a esa persona')).toBeTruthy()
+  })
+
+  it('tells the inviter an invitation went out, not that the person joined', async () => {
+    const api = fakeApi({ ...routes(), [`POST /groups/${G}/invitations`]: () => json({ members }, 201) })
+    render(renderWithQuery(<GroupDetail groupId={G} />).tree)
+    await userEvent.click(await screen.findByRole('button', { name: 'Invitar miembro' }))
+    const sheet = within(screen.getByRole('dialog', { name: 'Invitar miembro' }))
+    await userEvent.type(sheet.getByLabelText('Email'), ' Cam@X.com ')
+    await userEvent.click(sheet.getByRole('button', { name: 'Enviar invitación' }))
+
+    expect(await screen.findByText(/le llegará la invitación/)).toBeTruthy()
+    expect(screen.getByText(/entrará al grupo cuando la acepte/i)).toBeTruthy()
+    expect(api.writes().map((w) => w.body)).toEqual([{ email: 'Cam@X.com' }])
+    await userEvent.click(screen.getByRole('button', { name: 'Listo' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
   })
 
   it('asks before deleting an expense, and does nothing on cancel', async () => {

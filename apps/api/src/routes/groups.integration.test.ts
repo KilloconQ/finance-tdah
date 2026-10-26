@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { Hono } from 'hono'
+import { createCaller, dropUsers, seedUsers, testEmail, testUserIds } from '../test/integration'
 
 /**
  * Shared expense groups on a real, migrated Postgres (opt-in like the other
@@ -27,36 +28,24 @@ vi.mock('../middleware/session', () => ({
 describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async () => {
   const { db, schema } = await import('../db/client')
   const { groupsRoute } = await import('./groups')
-  const { inArray } = await import('drizzle-orm')
 
   const app = new Hono().route('/groups', groupsRoute)
-  const run = `g${Date.now()}`
-  const [ANA, BEN, CAM, OUT] = ['ana', 'ben', 'cam', 'out'].map((n) => `${run}-${n}`)
-  const email = (id: string) => `${id}@test.local`
-
-  async function call(as: string, method: string, path: string, body?: unknown) {
-    const res = await app.request(path, {
-      method,
-      headers: { 'x-test-user': as, 'Content-Type': 'application/json' },
-      body: body === undefined ? undefined : JSON.stringify(body),
-    })
-    return { status: res.status, body: (await res.json()) as Record<string, any> }
-  }
+  const [ANA, BEN, CAM, OUT] = testUserIds('g', ['ana', 'ben', 'cam', 'out'])
+  const email = testEmail
+  const call = createCaller(app)
 
   let groupId: string
 
   beforeAll(async () => {
-    await db
-      .insert(schema.user)
-      .values([ANA, BEN, CAM, OUT].map((id) => ({ id, name: id, email: email(id) })))
+    await seedUsers(db, schema, [ANA, BEN, CAM, OUT])
     const created = await call(ANA, 'POST', '/groups', { name: 'Viaje' })
     groupId = created.body.group.id
-    await call(ANA, 'POST', `/groups/${groupId}/members`, { email: email(BEN) })
-    await call(ANA, 'POST', `/groups/${groupId}/members`, { email: email(CAM) })
+    // Adding by email is now an invitation (see invitations.integration.test.ts), so seed the memberships directly.
+    await db.insert(schema.expenseGroupMember).values([BEN, CAM].map((userId) => ({ groupId, userId })))
   })
 
   afterAll(async () => {
-    await db.delete(schema.user).where(inArray(schema.user.id, [ANA, BEN, CAM, OUT]))
+    await dropUsers(db, schema, [ANA, BEN, CAM, OUT])
   })
 
   it('S1: creator is a member, members see the group, unknown email gets the same answer as a known one', async () => {
@@ -64,8 +53,8 @@ describe.skipIf(!TEST_DATABASE_URL)('shared expense groups (Postgres)', async ()
     expect(list.body.groups.map((g: { id: string }) => g.id)).toEqual([groupId])
     expect(list.body.groups[0].members).toHaveLength(3)
 
-    const missing = await call(ANA, 'POST', `/groups/${groupId}/members`, { email: 'nadie@test.local' })
-    const known = await call(ANA, 'POST', `/groups/${groupId}/members`, { email: email(BEN) })
+    const missing = await call(ANA, 'POST', `/groups/${groupId}/invitations`, { email: 'nadie@test.local' })
+    const known = await call(ANA, 'POST', `/groups/${groupId}/invitations`, { email: email(BEN) })
     expect(missing.status).toBe(201)
     expect(known.status).toBe(201)
     expect(missing.body).toEqual(known.body)

@@ -31,6 +31,8 @@ export const densityModeEnum = pgEnum('density_mode', ['simple', 'detailed'])
 
 export const expenseKindEnum = pgEnum('expense_kind', ['expense', 'income', 'transfer'])
 
+export const invitationStatusEnum = pgEnum('invitation_status', ['pending', 'declined'])
+
 export const userProfile = pgTable('user_profile', {
   userId: text('user_id')
     .primaryKey()
@@ -270,6 +272,54 @@ export const expenseGroupMember = pgTable(
   (t) => [
     uniqueIndex('expense_group_member_idx').on(t.groupId, t.userId),
     index('expense_group_member_user_idx').on(t.userId),
+  ],
+)
+
+/**
+ * A group member asking an existing account to join. Accepting deletes the row and
+ * inserts the membership; declining keeps it as 'declined' so the same group can't
+ * keep re-inviting (and re-emailing) someone who said no.
+ */
+export const expenseGroupInvitation = pgTable(
+  'expense_group_invitation',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    groupId: uuid('group_id')
+      .notNull()
+      .references(() => expenseGroup.id, { onDelete: 'cascade' }),
+    invitedBy: text('invited_by')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    inviteeId: text('invitee_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    status: invitationStatusEnum('status').default('pending').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex('expense_group_invitation_idx').on(t.groupId, t.inviteeId),
+    index('expense_group_invitation_invitee_idx').on(t.inviteeId),
+  ],
+)
+
+/**
+ * One row per counted "invite someone to Cada Quien" event, so the daily limits hold across
+ * restarts and API instances. `scope` is 'sender' (key = inviter's user id, every valid request)
+ * or 'address' (key = invited email, only when it has no account). Rows older than a day are
+ * swept by the route that writes them, so the table stays small. No FK: it is a ledger of
+ * events, not a relation.
+ */
+export const appInvitationLog = pgTable(
+  'app_invitation_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    scope: text('scope').notNull(),
+    key: text('key').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index('app_invitation_log_key_idx').on(t.scope, t.key, t.createdAt),
+    index('app_invitation_log_created_idx').on(t.createdAt),
   ],
 )
 

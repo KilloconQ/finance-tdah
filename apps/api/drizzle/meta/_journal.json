@@ -57,6 +57,20 @@
       "when": 1792199574213,
       "tag": "0007_dazzling_silhouette",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792956733000,
+      "tag": "0008_clean_spyke",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793044212697,
+      "tag": "0009_thin_lord_tyger",
+      "breakpoints": true
     }
   ]
 }

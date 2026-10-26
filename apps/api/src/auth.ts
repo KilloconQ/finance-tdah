@@ -1,14 +1,11 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { Resend } from 'resend'
 import { db } from './db/client'
 import { env } from './env'
-import { logger } from './lib/logger'
+import { deliver, emailEnabled } from './services/mailer'
 
-// Password-reset email is an optional feature: without a Resend key the reset
-// endpoint fails loudly, but sign-in/sign-up keep working.
-const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null
+// Without a Resend key the reset endpoint fails loudly, but sign-in/sign-up keep working.
 
 /**
  * better-auth renamed the endpoint to `/request-password-reset`; `/forget-password`
@@ -31,7 +28,7 @@ export const PASSWORD_RESET_UNAVAILABLE = 'PASSWORD_RESET_UNAVAILABLE'
  * response identical for every address.
  */
 function requirePasswordResetConfigured(path: string): void {
-  if (resend || !isPasswordResetPath(path)) return
+  if (emailEnabled || !isPasswordResetPath(path)) return
   throw new APIError('SERVICE_UNAVAILABLE', {
     code: PASSWORD_RESET_UNAVAILABLE,
     message: 'El reset por email no está configurado. Contacta al admin.',
@@ -54,29 +51,13 @@ export const auth = betterAuth({
     // failing out of it answers differently for a registered address than for an
     // unknown one — an account-existence oracle. It always resolves; delivery
     // problems are a server-side concern and go to the log.
-    sendResetPassword: async ({ user, url }) => {
-      if (!resend) {
-        // Unreachable: the before-hook rejects an unconfigured reset first.
-        logger.error('password_reset_unavailable', {
-          message: 'RESEND_API_KEY no está configurada — no se pudo enviar el email de reset',
-        })
-        return
-      }
-      try {
-        await resend.emails.send({
-          from: env.RESEND_FROM_EMAIL,
-          to: user.email,
-          subject: 'Restablece tu contraseña',
-          html: `<p>Haz clic para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignora este email.</p>`,
-        })
-      } catch (err) {
-        // Resend being down would otherwise turn every registered address into a
-        // 5xx while unknown ones keep getting the generic success.
-        logger.error('password_reset_send_failed', {
-          message: err instanceof Error ? err.message : String(err),
-        })
-      }
-    },
+    // An unconfigured key never gets here: the before-hook rejects the reset first.
+    sendResetPassword: ({ user, url }) =>
+      deliver('password_reset_send', {
+        to: user.email,
+        subject: 'Restablece tu contraseña',
+        html: `<p>Haz clic para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignora este email.</p>`,
+      }),
   },
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 días

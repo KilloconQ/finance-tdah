@@ -7,6 +7,7 @@ import { X } from 'lucide-react'
 import { AppBar, IconButton, PhoneShell } from '@/components'
 import { envelopesQueryOptions } from '@/features/envelopes'
 import { accountsQuery } from '@/lib/queries'
+import { errorText } from '@/lib/api'
 import { useCreateExpense, useParseVoice } from '../api'
 import { ExpenseForm, type ExpenseFormFields } from '../components/ExpenseForm'
 import { VoiceCapture } from '../components/VoiceCapture'
@@ -64,7 +65,7 @@ export function AddExpenseContainer() {
       onSuccess: goHome,
       onError: (err) => {
         inFlight.current = false
-        setError(err instanceof Error ? err.message : 'No pudimos guardar el gasto')
+        setError(errorText(err, 'No pudimos guardar el gasto'))
       },
     })
   }
@@ -121,7 +122,7 @@ export function AddExpenseContainer() {
       }
       parseVoice.mutate(transcript, {
         onSuccess: setParsed,
-        onError: (err) => setError(err instanceof Error ? err.message : 'No te entendí'),
+        onError: (err) => setError(errorText(err, 'No te entendí')),
       })
     }
     recognition.onerror = (event) => {

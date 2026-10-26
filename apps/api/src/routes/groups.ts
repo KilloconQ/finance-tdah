@@ -13,6 +13,7 @@ import { computeBalances, simplifyDebts, splitEqual } from '@finance-tdah/shared
 import { z } from 'zod'
 import { db, schema } from '../db/client'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
+import { sendGroupInvitationEmail } from '../services/invitation-email'
 
 const expenseParamSchema = z.object({ id: z.uuid(), expenseId: z.uuid() })
 
@@ -165,18 +166,29 @@ export const groupsRoute = new Hono<{ Variables: SessionVariables }>()
     })
   })
 
-  .post('/:id/members', zValidator('param', idParamSchema), zValidator('json', addMemberSchema), async (c) => {
+  // Adding someone is an invitation they accept or decline (see routes/invitations.ts); it never makes them a member.
+  .post('/:id/invitations', zValidator('param', idParamSchema), zValidator('json', addMemberSchema), async (c) => {
+    const user = c.get('user')
     const { id } = c.req.valid('param')
     const { email } = c.req.valid('json')
-    const target = await db.query.user.findFirst({ where: (u, { eq }) => eq(u.email, email) })
+    // The group is read up front, in parallel, so the reply takes as long whether or not an invitation goes out.
+    const [target, members, group] = await Promise.all([
+      db.query.user.findFirst({ where: (u, { eq }) => eq(u.email, email) }),
+      loadMembers(id),
+      db.query.expenseGroup.findFirst({ columns: { name: true }, where: (g, { eq }) => eq(g.id, id) }),
+    ])
     // Same answer (201 + members) whether or not the account exists, so emails can't be enumerated.
-    if (target) {
-      await db
-        .insert(schema.expenseGroupMember)
-        .values({ groupId: id, userId: target.id })
+    if (target && !members.some((m) => m.userId === target.id)) {
+      const [created] = await db
+        .insert(schema.expenseGroupInvitation)
+        .values({ groupId: id, invitedBy: user.id, inviteeId: target.id })
         .onConflictDoNothing()
+        .returning({ id: schema.expenseGroupInvitation.id })
+      // Only a new invitation sends mail: a pending or declined one stays quiet. Not awaited, so the
+      // response time doesn't give away whether the address has an account.
+      if (created && group) void sendGroupInvitationEmail({ to: target.email, inviterName: user.name, groupName: group.name })
     }
-    return c.json({ members: await loadMembers(id) }, 201)
+    return c.json({ members }, 201)
   })
 
   .delete('/:id/members/me', zValidator('param', idParamSchema), async (c) => {

@@ -79,3 +79,6 @@ export async function fetchValidated<S extends z.ZodType>(
   const data = await resp.json()
   return schema.parse(data)
 }
+
+/** The message to show for a failed request: the (already friendly) error message, or `fallback`. */
+export const errorText = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback)

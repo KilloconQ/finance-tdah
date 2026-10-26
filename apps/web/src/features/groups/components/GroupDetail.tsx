@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { GroupDetailDTO } from '@finance-tdah/shared/schemas'
 import { ChevronLeft, LogOut, Pencil, Plus, Trash2, UserPlus } from 'lucide-react'
 import { Btn, IconButton, Money, PhoneShell, Skeleton, TabBar } from '@/components'
+import { errorText } from '@/lib/api'
 import { todayLocalISO } from '@/lib/format'
 import { sessionQuery } from '@/lib/session'
 import { groupQueryOptions, useDeleteSharedExpense, useLeaveGroup, useSettle } from '../api'
@@ -49,7 +50,7 @@ export function GroupDetail({ groupId }: { groupId: string }) {
   const debtLabel = (from: string, to: string) =>
     from === me ? `Le debes a ${nameOf(to)}` : to === me ? `${nameOf(from)} te debe` : `${nameOf(from)} le debe a ${nameOf(to)}`
   const mine = group.myBalanceCents
-  const onError = (fallback: string) => (err: unknown) => setError(err instanceof Error ? err.message : fallback)
+  const onError = (fallback: string) => (err: unknown) => setError(errorText(err, fallback))
 
   return (
     <PhoneShell>
@@ -141,7 +142,7 @@ export function GroupDetail({ groupId }: { groupId: string }) {
               className="wf-tap flex w-full items-center gap-3 px-4 py-3 text-left text-base text-accent-strong"
             >
               <UserPlus size={20} strokeWidth={1.9} />
-              Agregar miembro
+              Invitar miembro
             </button>
             <button
               type="button"

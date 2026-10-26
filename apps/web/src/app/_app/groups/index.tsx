@@ -5,7 +5,13 @@ import { ChevronRight, Plus, Users } from 'lucide-react'
 import { Btn, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
 import { Avatar } from '@/features/groups/components/Avatar'
 import { Sheet } from '@/features/groups/components/Sheet'
-import { groupsQueryOptions, useCreateGroup } from '@/features/groups'
+import {
+  groupsQueryOptions,
+  invitationsQueryOptions,
+  useAnswerInvitation,
+  useCreateGroup,
+} from '@/features/groups'
+import { errorText } from '@/lib/api'
 import { queryClient } from '@/lib/query-client'
 
 export const Route = createFileRoute('/_app/groups/')({
@@ -16,10 +22,16 @@ export const Route = createFileRoute('/_app/groups/')({
 function Groups() {
   const navigate = useNavigate()
   const { data: groups = [] } = useQuery(groupsQueryOptions())
+  // Not in the route loader: a slow or failing invitations request shouldn't hold the groups back.
+  const { data: invitations = [] } = useQuery(invitationsQueryOptions())
+  const answerInvitation = useAnswerInvitation()
   const createGroup = useCreateGroup()
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [error, setError] = useState<string | null>(null)
+
+  // While an accepted invitation's group is still loading, say nothing rather than "no groups".
+  const joining = answerInvitation.isPending && answerInvitation.variables?.answer === 'accept'
 
   const owed = groups.reduce((n, g) => n + Math.max(g.myBalanceCents, 0), 0)
   const owe = groups.reduce((n, g) => n + Math.max(-g.myBalanceCents, 0), 0)
@@ -35,7 +47,7 @@ function Groups() {
     setError(null)
     createGroup.mutate(name.trim(), {
       onSuccess: close,
-      onError: (err) => setError(err instanceof Error ? err.message : 'No pudimos crear el grupo'),
+      onError: (err) => setError(errorText(err, 'No pudimos crear el grupo')),
     })
   }
 
@@ -49,8 +61,47 @@ function Groups() {
       </div>
 
       <div className="max-w-2xl flex-1 space-y-6 pb-4">
+        {invitations.length > 0 ? (
+          <section>
+            <div className="px-4 pb-2 text-xs font-medium uppercase tracking-wide text-ink-mid">Invitaciones</div>
+            <div className="divide-y divide-line-soft overflow-hidden rounded-2xl border border-line bg-surface">
+              {invitations.map((inv) => (
+                <div key={inv.id} className="px-4 py-3">
+                  <div className="truncate text-base text-ink">{inv.groupName}</div>
+                  <div className="truncate text-sm text-ink-mid">{inv.invitedByName} te invitó</div>
+                  <div className="mt-3 flex gap-2">
+                    <Btn
+                      kind="ghost"
+                      className="flex-1"
+                      aria-label={`Declinar invitación a ${inv.groupName}`}
+                      disabled={answerInvitation.isPending}
+                      onClick={() => answerInvitation.mutate({ id: inv.id, answer: 'decline' })}
+                    >
+                      Declinar
+                    </Btn>
+                    <Btn
+                      kind="primary"
+                      className="flex-1"
+                      aria-label={`Aceptar invitación a ${inv.groupName}`}
+                      disabled={answerInvitation.isPending}
+                      onClick={() => answerInvitation.mutate({ id: inv.id, answer: 'accept' })}
+                    >
+                      Aceptar
+                    </Btn>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {answerInvitation.isError ? (
+              <div className="mt-3 rounded-xl bg-danger-bg px-3 py-2 text-sm text-danger">
+                No pudimos responder la invitación
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
         {groups.length === 0 ? (
-          <EmptyState
+          joining ? null : <EmptyState
             icon={<Users size={22} strokeWidth={1.8} />}
             title="Aún no tienes grupos"
             hint="Crea uno para dividir gastos y saber quién le debe a quién."

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { amountFormatError, centsToUnits, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
+import { errorText } from '@/lib/api'
 import { subscriptionQueryOptions, useUpdateSubscription } from '../api'
 import { SubscriptionForm, type SubscriptionFormFields } from '../components/SubscriptionForm'
 
@@ -58,7 +59,7 @@ export function EditSubscriptionContainer({ subscriptionId }: EditSubscriptionCo
           navigate({ to: '/subscriptions/$id', params: { id: subscriptionId }, replace: true }),
         onError: (err) => {
           inFlight.current = false
-          setError(err instanceof Error ? err.message : 'No pudimos actualizar la suscripción')
+          setError(errorText(err, 'No pudimos actualizar la suscripción'))
         },
       },
     )
