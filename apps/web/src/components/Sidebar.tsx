@@ -1,7 +1,7 @@
 import { Link, useRouterState } from '@tanstack/react-router'
 import { Settings } from 'lucide-react'
 import { cn } from '@/lib/cn'
-import { TABS } from './tabs'
+import { TABS, isTabActive } from './tabs'
 
 /**
  * Desktop / tablet navigation. Hidden on phones (the bottom TabBar takes over).
@@ -17,9 +17,8 @@ export function Sidebar() {
         <span className="text-base font-semibold tracking-tight text-ink">Cada Quien</span>
       </div>
       <nav className="flex flex-col gap-1">
-        {TABS.map((tab) => {
-          const isActive =
-            tab.to === '/' ? pathname === '/' : pathname.startsWith(tab.to)
+        {TABS.filter((tab) => !tab.mobileOnly).map((tab) => {
+          const isActive = isTabActive(tab, pathname)
           const Icon = tab.icon
           return (
             <Link

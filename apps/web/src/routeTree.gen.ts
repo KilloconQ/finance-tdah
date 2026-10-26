@@ -22,6 +22,7 @@ import { Route as AuthForgotPasswordRouteImport } from './app/auth/forgot-passwo
 import { Route as AppTransactionsRouteImport } from './app/_app/transactions'
 import { Route as AppSettingsRouteImport } from './app/_app/settings'
 import { Route as AppPanicRouteImport } from './app/_app/panic'
+import { Route as AppMoneyRouteImport } from './app/_app/money'
 import { Route as AppChallengeRouteImport } from './app/_app/challenge'
 import { Route as AppAddExpenseRouteImport } from './app/_app/add-expense'
 import { Route as AppSubscriptionsIndexRouteImport } from './app/_app/subscriptions/index'
@@ -102,6 +103,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppPanicRoute = AppPanicRouteImport.update({
   id: '/panic',
   path: '/panic',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMoneyRoute = AppMoneyRouteImport.update({
+  id: '/money',
+  path: '/money',
   getParentRoute: () => AppRoute,
 } as any)
 const AppChallengeRoute = AppChallengeRouteImport.update({
@@ -194,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/add-expense': typeof AppAddExpenseRoute
   '/challenge': typeof AppChallengeRoute
+  '/money': typeof AppMoneyRoute
   '/panic': typeof AppPanicRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/add-expense': typeof AppAddExpenseRoute
   '/challenge': typeof AppChallengeRoute
+  '/money': typeof AppMoneyRoute
   '/panic': typeof AppPanicRoute
   '/settings': typeof AppSettingsRoute
   '/transactions': typeof AppTransactionsRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_app/add-expense': typeof AppAddExpenseRoute
   '/_app/challenge': typeof AppChallengeRoute
+  '/_app/money': typeof AppMoneyRoute
   '/_app/panic': typeof AppPanicRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/transactions': typeof AppTransactionsRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/'
     | '/add-expense'
     | '/challenge'
+    | '/money'
     | '/panic'
     | '/settings'
     | '/transactions'
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
   to:
     | '/add-expense'
     | '/challenge'
+    | '/money'
     | '/panic'
     | '/settings'
     | '/transactions'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/_app'
     | '/_app/add-expense'
     | '/_app/challenge'
+    | '/_app/money'
     | '/_app/panic'
     | '/_app/settings'
     | '/_app/transactions'
@@ -487,6 +499,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPanicRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/money': {
+      id: '/_app/money'
+      path: '/money'
+      fullPath: '/money'
+      preLoaderRoute: typeof AppMoneyRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/challenge': {
       id: '/_app/challenge'
       path: '/challenge'
@@ -612,6 +631,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAddExpenseRoute: typeof AppAddExpenseRoute
   AppChallengeRoute: typeof AppChallengeRoute
+  AppMoneyRoute: typeof AppMoneyRoute
   AppPanicRoute: typeof AppPanicRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppTransactionsRoute: typeof AppTransactionsRoute
@@ -636,6 +656,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAddExpenseRoute: AppAddExpenseRoute,
   AppChallengeRoute: AppChallengeRoute,
+  AppMoneyRoute: AppMoneyRoute,
   AppPanicRoute: AppPanicRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppTransactionsRoute: AppTransactionsRoute,
