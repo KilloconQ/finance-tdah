@@ -104,6 +104,18 @@ describe('Home', () => {
     expect(screen.queryByText(/Laptop/)).toBeNull()
   })
 
+  it('keeps the jar small, beside its amount, so it does not take over the screen', async () => {
+    fakeApi(routes())
+    render(renderWithQuery(<Home />).tree)
+
+    const label = await screen.findByText('✈️ Vacaciones · frasco')
+    const card = label.closest('[data-testid="home-jar"]') as HTMLElement
+    const jar = card.querySelector('svg') as SVGElement
+    expect(Number(jar.getAttribute('width'))).toBeLessThanOrEqual(64)
+    expect(within(card).getByText('$4,000.00 / $10,000.00')).toBeTruthy()
+    expect(within(card).getByRole('button', { name: 'Echar al frasco' })).toBeTruthy()
+  })
+
   it('invites the user to create a goal when there is none', async () => {
     fakeApi(routes({ goals: [] }))
     const user = userEvent.setup()
