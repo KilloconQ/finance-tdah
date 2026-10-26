@@ -50,7 +50,8 @@ describe('Money (Dinero)', () => {
 
     // A credit card's debt is not money you have: only positive balances count.
     await waitFor(() => expect(within(tile(/^Cuentas/)).getByText('$10,000.00')).toBeTruthy())
-    expect(within(tile(/^Cuentas/)).getByText('2 cuentas')).toBeTruthy()
+    // ...and the debt is said right there, like on the accounts screen.
+    expect(within(tile(/^Cuentas/)).getByText('debes $500.00')).toBeTruthy()
     expect(within(tile(/^Frascos/)).getByText('$4,000.00')).toBeTruthy()
     expect(within(tile(/^Frascos/)).getByText('1 frasco')).toBeTruthy()
     // A yearly plan counts a twelfth per month: $269 + $1,200 / 12.
@@ -58,16 +59,47 @@ describe('Money (Dinero)', () => {
     expect(within(tile(/^Suscripciones/)).getByText('al mes · 2')).toBeTruthy()
   })
 
-  it('jumps to a section when its tile is tapped', async () => {
-    const scrollIntoView = vi.fn()
-    Element.prototype.scrollIntoView = scrollIntoView
-    fakeApi(routes())
+  it('counts the accounts when nothing is owed', async () => {
+    fakeApi(routes({ accounts: [account()] }))
     render(renderWithQuery(<Money />).tree)
 
-    await userEvent.click(await screen.findByRole('button', { name: /^Suscripciones/ }))
+    await waitFor(() => expect(within(tile(/^Cuentas/)).getByText('1 cuenta')).toBeTruthy())
+  })
 
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
-    expect(scrollIntoView.mock.contexts[0]).toBe(section('Suscripciones'))
+  it('jumps to a section when its tile is tapped', async () => {
+    // jsdom has no scrollIntoView; stub it for this test only.
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    try {
+      fakeApi(routes())
+      render(renderWithQuery(<Money />).tree)
+
+      await userEvent.click(await screen.findByRole('button', { name: /^Suscripciones/ }))
+
+      expect(scrollIntoView).toHaveBeenCalledTimes(1)
+      expect(scrollIntoView.mock.contexts[0]).toBe(section('Suscripciones'))
+    } finally {
+      delete (Element.prototype as Partial<Element>).scrollIntoView
+    }
+  })
+
+  it('says a section failed to load instead of showing it empty, and retries', async () => {
+    let fail = true
+    fakeApi({
+      ...routes(),
+      'GET /accounts': () => (fail ? json({ error: 'boom' }, 500) : json({ accounts: [account()] })),
+    })
+    render(renderWithQuery(<Money />).tree)
+
+    expect(await screen.findByText('No pudimos cargar tus cuentas.')).toBeTruthy()
+    // Never "you have none": that would push the user to create duplicates.
+    expect(screen.queryByText('Aún no tienes cuentas')).toBeNull()
+    expect(within(tile(/^Cuentas/)).queryByText(/\$\d/)).toBeNull()
+    expect(within(tile(/^Cuentas/)).queryByText(/cuenta/)).toBeNull()
+
+    fail = false
+    await userEvent.click(within(section('Cuentas')).getByRole('button', { name: 'Reintentar' }))
+    expect(await screen.findByText('Débito BBVA')).toBeTruthy()
   })
 
   it('lists every account, jar and subscription, each opening its own screen', async () => {

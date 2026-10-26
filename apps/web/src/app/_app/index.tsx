@@ -177,7 +177,8 @@ function Home() {
             </div>
           ) : null}
 
-          {challenge.isLoading ? null : (
+          {/* Only once loaded: on an error, "start one" could hide a running challenge. */}
+          {challenge.isSuccess ? (
             <button
               type="button"
               onClick={() => navigate({ to: '/challenge' })}
@@ -205,7 +206,7 @@ function Home() {
               )}
               <ChevronRight size={18} strokeWidth={2} className="shrink-0 text-ink-mid" aria-hidden />
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 

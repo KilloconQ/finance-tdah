@@ -31,4 +31,4 @@ export const TABS: ReadonlyArray<Tab> = [
 export const isTabActive = (tab: Tab, pathname: string) =>
   tab.to === '/'
     ? pathname === '/'
-    : [tab.to, ...(tab.alsoActiveOn ?? [])].some((p) => pathname.startsWith(p))
+    : [tab.to, ...(tab.alsoActiveOn ?? [])].some((p) => pathname === p || pathname.startsWith(`${p}/`))

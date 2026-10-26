@@ -3,12 +3,12 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { PiggyBank, Repeat, Wallet } from 'lucide-react'
 import { jarProgress, monthlyCostCents, netWorth } from '@finance-tdah/shared/domain'
-import { AppBar, EmptyState, Money, PhoneShell, Skeleton, TabBar } from '@/components'
+import { AppBar, Btn, EmptyState, Money, PhoneShell, Skeleton, TabBar } from '@/components'
 import { goalsQueryOptions } from '@/features/goals'
 import { subscriptionsQueryOptions } from '@/features/subscriptions'
 import { accountsQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
-import { cn } from '@/lib/cn'
+import { formatMoney } from '@/lib/format'
 import { useTweaks } from '@/lib/use-tweaks'
 
 export const Route = createFileRoute('/_app/money')({
@@ -27,6 +27,8 @@ const SECTION = {
 } as const
 
 const ROW = 'flex min-h-13 items-center justify-between gap-3 px-4 py-3 text-ink transition-colors hover:bg-bg-alt'
+// `cn` only joins classes, so the jar row spells its own layout instead of overriding ROW's.
+const GOAL_ROW = 'flex flex-col gap-2 px-4 py-3 text-ink transition-colors hover:bg-bg-alt'
 const PRIMARY_LINK =
   'wf-tap inline-flex h-11 items-center justify-center rounded-xl border border-accent bg-accent px-4 text-sm font-medium text-surface shadow-card hover:bg-accent-strong'
 
@@ -49,9 +51,12 @@ function MoneyHub() {
   const subList = subs.data ?? []
 
   // Same rule as the accounts screen: a card's debt is not money you have.
-  const { liquidCents } = netWorth(accountList)
+  const { liquidCents, debtCents } = netWorth(accountList)
   const savedCents = goalList.reduce((sum, g) => sum + g.currentCents, 0)
   const monthlyCents = subList.reduce((sum, s) => sum + monthlyCostCents(s.amountCents, s.cadence), 0)
+
+  // A failed load must never read as "you have none": that would push the user to create duplicates.
+  const failed = (q: { isError: boolean; data?: unknown }) => q.isError && !q.data
 
   const jump = (id: string) =>
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -65,8 +70,15 @@ function MoneyHub() {
           <Tile
             label="Cuentas"
             cents={liquidCents}
-            detail={plural(accountList.length, 'cuenta', 'cuentas')}
+            detail={
+              debtCents > 0 ? (
+                <span className="text-danger">{`debes ${formatMoney(debtCents / 100, hidden)}`}</span>
+              ) : (
+                plural(accountList.length, 'cuenta', 'cuentas')
+              )
+            }
             loading={accounts.isLoading}
+            failed={failed(accounts)}
             hidden={hidden}
             onClick={() => jump(SECTION.accounts)}
           />
@@ -75,6 +87,7 @@ function MoneyHub() {
             cents={savedCents}
             detail={plural(goalList.length, 'frasco', 'frascos')}
             loading={goals.isLoading}
+            failed={failed(goals)}
             hidden={hidden}
             onClick={() => jump(SECTION.goals)}
           />
@@ -83,6 +96,7 @@ function MoneyHub() {
             cents={monthlyCents}
             detail={`al mes · ${subList.length}`}
             loading={subs.isLoading}
+            failed={failed(subs)}
             hidden={hidden}
             onClick={() => jump(SECTION.subscriptions)}
           />
@@ -91,6 +105,8 @@ function MoneyHub() {
         <Section id={SECTION.accounts} title="Cuentas" to="/accounts">
           {accounts.isLoading ? (
             <Skeleton className="h-28 w-full rounded-2xl" />
+          ) : failed(accounts) ? (
+            <LoadError what="tus cuentas" onRetry={() => void accounts.refetch()} />
           ) : accountList.length === 0 ? (
             <EmptyState
               icon={<Wallet size={22} strokeWidth={1.8} />}
@@ -123,6 +139,8 @@ function MoneyHub() {
         <Section id={SECTION.goals} title="Frascos" to="/goals">
           {goals.isLoading ? (
             <Skeleton className="h-28 w-full rounded-2xl" />
+          ) : failed(goals) ? (
+            <LoadError what="tus frascos" onRetry={() => void goals.refetch()} />
           ) : goalList.length === 0 ? (
             <EmptyState
               icon={<PiggyBank size={22} strokeWidth={1.8} />}
@@ -138,7 +156,7 @@ function MoneyHub() {
             <List>
               {goalList.map((g) => (
                 <li key={g.id}>
-                  <Link to="/goals/$id" params={{ id: g.id }} className={cn(ROW, 'flex-col items-stretch gap-2')}>
+                  <Link to="/goals/$id" params={{ id: g.id }} className={GOAL_ROW}>
                     <span className="flex items-baseline justify-between gap-3">
                       <span className="min-w-0 truncate">{`${g.emoji} ${g.name}`}</span>
                       <span className="shrink-0 text-sm text-ink-mid">
@@ -162,6 +180,8 @@ function MoneyHub() {
         <Section id={SECTION.subscriptions} title="Suscripciones" to="/subscriptions">
           {subs.isLoading ? (
             <Skeleton className="h-28 w-full rounded-2xl" />
+          ) : failed(subs) ? (
+            <LoadError what="tus suscripciones" onRetry={() => void subs.refetch()} />
           ) : subList.length === 0 ? (
             <EmptyState
               icon={<Repeat size={22} strokeWidth={1.8} />}
@@ -208,13 +228,15 @@ function Tile({
   cents,
   detail,
   loading,
+  failed,
   hidden,
   onClick,
 }: {
   label: string
   cents: number
-  detail: string
+  detail: ReactNode
   loading: boolean
+  failed: boolean
   hidden: boolean
   onClick: () => void
 }) {
@@ -227,10 +249,18 @@ function Tile({
       <span className="max-w-full truncate text-xs text-ink-mid">{label}</span>
       {loading ? (
         <Skeleton className="my-0.5 h-5 w-16" />
+      ) : failed ? (
+        <span className="text-sm font-semibold text-ink-mid">—</span>
       ) : (
-        <Money value={cents / 100} hidden={hidden} weight="semibold" className="text-sm text-ink min-[360px]:text-base" />
+        // Wraps instead of spilling into the next tile: a 3-column grid is ~66px wide per tile at 320px.
+        <Money
+          value={cents / 100}
+          hidden={hidden}
+          weight="semibold"
+          className="max-w-full text-sm leading-tight text-ink [overflow-wrap:anywhere] min-[360px]:text-base"
+        />
       )}
-      <span className="max-w-full truncate text-xs text-ink-mid">{loading ? '…' : detail}</span>
+      <span className="max-w-full truncate text-xs text-ink-mid">{loading ? '…' : failed ? 'No cargó' : detail}</span>
     </button>
   )
 }
@@ -258,6 +288,17 @@ function Section({
       </div>
       {children}
     </section>
+  )
+}
+
+function LoadError({ what, onRetry }: { what: string; onRetry: () => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-card">
+      <p className="text-sm text-ink-mid">{`No pudimos cargar ${what}.`}</p>
+      <Btn kind="ghost" onClick={onRetry}>
+        Reintentar
+      </Btn>
+    </div>
   )
 }
 

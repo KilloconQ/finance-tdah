@@ -136,6 +136,16 @@ describe('Home', () => {
     expect(navigate).toHaveBeenCalledWith({ to: '/challenge' })
   })
 
+  it('shows no challenge card when the challenge cannot be loaded', async () => {
+    fakeApi({ ...routes(), 'GET /challenges/active': () => json({ error: 'boom' }, 500) })
+    const { client, tree } = renderWithQuery(<Home />)
+    render(tree)
+
+    await waitFor(() => expect(client.getQueryState(['challenges', 'active'])?.status).toBe('error'))
+    // Inviting to start one could make a user with a running challenge start another.
+    expect(screen.queryByRole('button', { name: /Empieza un reto/ })).toBeNull()
+  })
+
   it('masks every amount when the user chose to hide balances', async () => {
     fakeApi(routes({ profile: hiddenProfile }))
     render(renderWithQuery(<Home />).tree)

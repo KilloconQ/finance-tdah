@@ -46,6 +46,11 @@ describe('TabBar (mobile)', () => {
     expect(current().map((a) => a.textContent)).toEqual(['Grupos'])
   })
 
+  it('does not mark a tab for a path that only shares its prefix', () => {
+    renderAt('/groupsettings', <TabBar />)
+    expect(current()).toEqual([])
+  })
+
   it('keeps inactive labels readable (ink-mid, not ink-soft)', () => {
     renderAt('/', <TabBar />)
     const inactive = screen.getByRole('link', { name: 'Grupos' })
