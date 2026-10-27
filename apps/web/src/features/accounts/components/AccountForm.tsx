@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import type { AccountType } from '@finance-tdah/shared/domain'
 import { Btn } from '@/components'
@@ -106,12 +107,10 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
         </label>
         <div className="mt-1.5 flex items-baseline gap-1.5 border-b border-line pb-2 focus-within:border-accent">
           <span className="money text-2xl font-medium text-ink">$</span>
-          <input
+          <AmountInput
             id="balance"
-            inputMode="decimal"
-            autoComplete="off"
             value={balance}
-            onChange={(e) => setBalance(e.target.value)}
+            onChange={setBalance}
             placeholder="0"
             className="money money-lg w-full bg-transparent text-3xl font-semibold leading-none tracking-tight text-ink caret-accent outline-none placeholder:font-normal placeholder:text-ink-soft"
           />

@@ -148,7 +148,7 @@ describe('Settings › weekly budget', () => {
   it('saves on blur and confirms with an accessible status', async () => {
     const user = setup()
     expect(screen.getByRole('status').textContent).toBe('')
-    const input = screen.getByDisplayValue('2200')
+    const input = screen.getByDisplayValue('2,200')
     await user.clear(input)
     await user.type(input, '3000')
     await user.tab()

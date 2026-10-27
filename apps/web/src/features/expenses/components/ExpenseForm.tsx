@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
 import { Btn, Chip } from '@/components'
@@ -192,13 +193,11 @@ export function ExpenseForm({
           <span className={`money text-4xl font-light ${hasAmount ? 'text-ink' : 'text-ink-soft'}`}>
             $
           </span>
-          <input
+          <AmountInput
             id="amount"
-            inputMode="decimal"
-            autoComplete="off"
             autoFocus
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={setAmount}
             placeholder="0"
             className="money money-lg w-full bg-transparent text-5xl font-light leading-none tracking-[-0.02em] text-ink outline-none placeholder:text-ink-soft"
           />

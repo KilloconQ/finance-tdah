@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useRef, useState } from 'react'
 import { parseAmountToCents } from '@finance-tdah/shared/domain'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -288,12 +289,10 @@ function BudgetInput({ valueCents, onCommit, onEdit, saving, saved }: BudgetInpu
     <div>
     <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-3 transition-colors focus-within:border-accent">
       <span className="text-[15px] text-ink-soft">$</span>
-      <input
-        type="text"
-        inputMode="decimal"
+      <AmountInput
         value={draft}
-        onChange={(e) => {
-          setDraft(e.target.value)
+        onChange={(v) => {
+          setDraft(v)
           onEdit?.()
         }}
         onBlur={() => {

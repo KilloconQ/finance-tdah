@@ -26,7 +26,7 @@ describe('EditGoalContainer', () => {
     render(renderWithQuery(<EditGoalContainer goalId={GOAL} />).tree)
 
     expect(((await screen.findByLabelText('Nombre')) as HTMLInputElement).value).toBe('Vacaciones')
-    expect(target().value).toBe('10000')
+    expect(target().value).toBe('10,000')
   })
 
   it('sends the new target in cents and goes back to the goal', async () => {

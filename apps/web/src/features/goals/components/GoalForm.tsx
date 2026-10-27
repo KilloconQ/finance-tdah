@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { Btn, Chip } from '@/components'
 import { cn } from '@/lib/cn'
@@ -47,13 +48,11 @@ export function GoalForm({ submitting, error, onSubmit, initial, submitLabel }: 
         </label>
         <div className="mt-1.5 flex items-baseline gap-1.5 border-b border-line pb-2 focus-within:border-accent">
           <span className="money text-2xl font-medium text-ink">$</span>
-          <input
+          <AmountInput
             id="target"
-            inputMode="decimal"
-            autoComplete="off"
             autoFocus
             value={target}
-            onChange={(e) => setTarget(e.target.value)}
+            onChange={setTarget}
             placeholder="0"
             className="money money-lg w-full bg-transparent text-3xl font-semibold leading-none tracking-tight text-ink caret-accent outline-none placeholder:font-normal placeholder:text-ink-soft"
           />

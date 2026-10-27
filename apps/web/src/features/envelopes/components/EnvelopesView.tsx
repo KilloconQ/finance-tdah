@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { Package, Pencil, Plus, Trash2 } from 'lucide-react'
 import type { EnvelopeDTO, FinancialAccountDTO } from '@finance-tdah/shared/schemas'
@@ -173,12 +174,10 @@ function AmountField({ id, label, value, onChange }: { id: string; label: string
       <label htmlFor={id} className="text-sm font-medium text-ink-mid">
         {label}
       </label>
-      <input
+      <AmountInput
         id={id}
-        inputMode="decimal"
-        autoComplete="off"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         placeholder="0"
         className="mt-1.5 w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-soft focus:border-accent"
       />
