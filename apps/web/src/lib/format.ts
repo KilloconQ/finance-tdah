@@ -39,3 +39,28 @@ export function formatDateOnly(
   const [y, m, d] = date.slice(0, 10).split('-').map(Number)
   return new Date(y, m - 1, d).toLocaleDateString('es-MX', options)
 }
+
+/**
+ * Live formatting for money inputs: groups the integer part by thousands with
+ * commas ("1234567.5" → "1,234,567.5") while the user types. The dot is the
+ * decimal separator. A lone comma with 1-2 digits after it is a decimal comma
+ * ("12,5" → "12.5"), unless the user is deleting, when it is still a thousands
+ * comma we inserted ("1,23" came from "1,234"). Anything that is not a plain
+ * number (letters, "1.2.3", 3+ decimals) is returned untouched so the form
+ * validation can still explain what is wrong. The output round-trips through
+ * `parseAmountToCents`.
+ */
+export function formatAmountInput(raw: string, deleting = false): string {
+  let s = raw.replace(/[\s$]/g, '')
+  const commas = s.split(',').length - 1
+  if (!s.includes('.') && commas === 1 && !deleting) {
+    const after = s.length - s.indexOf(',') - 1
+    if (after <= 2) s = s.replace(',', '.')
+  }
+  s = s.replace(/,/g, '')
+  if (!/^\d*(\.\d*)?$/.test(s)) return raw
+  const dot = s.indexOf('.')
+  const intRaw = dot >= 0 ? s.slice(0, dot) : s
+  const int = intRaw.replace(/^0+(?=\d)/, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return dot >= 0 ? `${int === '' ? '0' : int}.${s.slice(dot + 1)}` : int
+}

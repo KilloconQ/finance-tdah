@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { Pencil } from 'lucide-react'
 import type { GoalDTO } from '@finance-tdah/shared/schemas'
 import type { JarPace, JarProgress } from '@finance-tdah/shared/domain'
@@ -149,12 +150,10 @@ export function GoalDetailView({
             {isCustom ? (
               <div className="flex items-baseline gap-1.5 border-b border-line pb-2 focus-within:border-accent">
                 <span className="money text-2xl font-medium text-ink">$</span>
-                <input
-                  inputMode="decimal"
-                  autoComplete="off"
+                <AmountInput
                   autoFocus
                   value={customAmount}
-                  onChange={(e) => onCustomAmountChange(e.target.value)}
+                  onChange={onCustomAmountChange}
                   placeholder="0"
                   className="money money-lg w-full bg-transparent text-3xl font-semibold leading-none tracking-tight text-ink caret-accent outline-none placeholder:font-normal placeholder:text-ink-soft"
                 />

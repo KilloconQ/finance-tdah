@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { amountFormatError, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -114,11 +115,9 @@ function Challenge() {
             </Field>
 
             <Field label="Ahorro esperado (en pesos)">
-              <input
-                type="text"
-                inputMode="decimal"
+              <AmountInput
                 value={savings}
-                onChange={(e) => setSavings(e.target.value)}
+                onChange={setSavings}
                 placeholder="0"
                 className={INPUT_CLASS}
               />

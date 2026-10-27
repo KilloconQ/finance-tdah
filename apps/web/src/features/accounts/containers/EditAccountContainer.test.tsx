@@ -28,7 +28,7 @@ describe('EditAccountContainer', () => {
 
     expect(((await screen.findByLabelText('Nombre')) as HTMLInputElement).value).toBe('Nu')
     expect(screen.getByLabelText('¿Cuánto debes?')).toBeTruthy()
-    expect(balance().value).toBe('2890.5')
+    expect(balance().value).toBe('2,890.5')
   })
 
   it('sends the new balance in cents and goes back to the accounts', async () => {

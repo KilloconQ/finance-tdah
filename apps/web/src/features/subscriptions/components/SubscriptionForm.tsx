@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { Btn, Chip } from '@/components'
 import { useSavingLabel } from '@/lib/use-online'
@@ -87,12 +88,10 @@ export function SubscriptionForm({
           <label htmlFor="amount" className={LABEL_CLASS}>
             Monto (en pesos)
           </label>
-          <input
+          <AmountInput
             id="amount"
-            type="text"
-            inputMode="decimal"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={setAmount}
             placeholder="0"
             className={FIELD_CLASS}
           />

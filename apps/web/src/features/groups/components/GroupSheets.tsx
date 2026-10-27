@@ -1,3 +1,4 @@
+import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { centsToUnits, isEqualSplit, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { MAX_CENTS, type ExpenseGroupDTO, type GroupDetailDTO } from '@finance-tdah/shared/schemas'
@@ -96,7 +97,7 @@ export function ExpenseSheet({
           <label htmlFor="amount" className={LABEL_CLASS}>
             Monto (en pesos)
           </label>
-          <input id="amount" type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className={FIELD_CLASS} />
+          <AmountInput id="amount" value={amount} onChange={setAmount} className={FIELD_CLASS} />
         </div>
         <div>
           <label htmlFor="paidBy" className={LABEL_CLASS}>
@@ -129,13 +130,10 @@ export function ExpenseSheet({
                   {m.userId === me ? 'Tú' : nameOf(m.userId)}
                 </label>
                 {custom && participantIds.includes(m.userId) ? (
-                  <input
+                  <AmountInput
                     aria-label={`Parte de ${m.userId === me ? 'Tú' : nameOf(m.userId)}`}
-                    type="number"
-                    min="0"
-                    step="0.01"
                     value={shares[m.userId] ?? ''}
-                    onChange={(e) => setShares((cur) => ({ ...cur, [m.userId]: e.target.value }))}
+                    onChange={(v) => setShares((cur) => ({ ...cur, [m.userId]: v }))}
                     className="w-28 rounded-lg border border-line bg-surface px-3 py-1.5 text-right text-base text-ink"
                   />
                 ) : null}
