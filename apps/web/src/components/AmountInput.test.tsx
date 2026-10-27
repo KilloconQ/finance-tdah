@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { AmountInput } from './AmountInput'
 
 function Harness({ initial = '' }: { initial?: string }) {
@@ -10,6 +10,8 @@ function Harness({ initial = '' }: { initial?: string }) {
 }
 
 describe('AmountInput', () => {
+  afterEach(cleanup)
+
   it('inserts thousands commas while typing', async () => {
     render(<Harness />)
     const input = screen.getByLabelText('Monto') as HTMLInputElement
