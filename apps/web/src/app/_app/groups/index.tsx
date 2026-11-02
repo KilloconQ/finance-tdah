@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronRight, Plus, Users } from 'lucide-react'
 import { Btn, EmptyState, IconButton, Money, PhoneShell, TabBar } from '@/components'
 import { Avatar } from '@/features/groups/components/Avatar'
-import { Sheet } from '@/features/groups/components/Sheet'
+import { Sheet } from '@/components'
 import {
   groupsQueryOptions,
   invitationsQueryOptions,

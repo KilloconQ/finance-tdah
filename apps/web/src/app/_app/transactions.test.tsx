@@ -151,7 +151,7 @@ describe('Transactions', () => {
 
     expect(await screen.findByText('Aún no registraste nada')).toBeTruthy()
     // The app bar action and the empty-state button share the same label.
-    await user.click(screen.getAllByRole('button', { name: 'Registrar gasto' }).at(-1)!)
+    await user.click(screen.getAllByRole('button', { name: 'Registrar movimiento' }).at(-1)!)
     expect(navigate).toHaveBeenCalledWith({ to: '/add-expense' })
   })
 
@@ -161,7 +161,7 @@ describe('Transactions', () => {
     render(renderWithQuery(<Transactions />).tree)
 
     await screen.findByText('Latte')
-    await user.click(screen.getByRole('button', { name: 'Registrar gasto' }))
+    await user.click(screen.getByRole('button', { name: 'Registrar movimiento' }))
     expect(navigate).toHaveBeenCalledWith({ to: '/add-expense' })
   })
 
@@ -278,5 +278,37 @@ describe('Transactions', () => {
     expect(await screen.findByText('✓ Gasto borrado')).toBeTruthy()
     await waitFor(() => expect(screen.queryByText('Latte')).toBeNull())
     expect(screen.getByText('¿Estás seguro?')).toBeTruthy()
+  })
+
+  describe('on mobile', () => {
+    beforeEach(() => vi.stubGlobal('matchMedia', () => ({ matches: true })))
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('the app-bar + opens the add sheet without navigating, and Escape closes it', async () => {
+      fakeApi(expensesRoute([expense()]))
+      const user = userEvent.setup()
+      render(renderWithQuery(<Transactions />).tree)
+      await screen.findByText('Latte')
+
+      await user.click(screen.getByRole('button', { name: 'Registrar movimiento' }))
+      const dialog = await screen.findByRole('dialog', { name: 'Registrar' })
+      expect(within(dialog).getByLabelText('Cuánto')).toBeTruthy()
+      expect(navigate).not.toHaveBeenCalled()
+
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('the empty-state button opens the same sheet', async () => {
+      fakeApi(expensesRoute([]))
+      const user = userEvent.setup()
+      render(renderWithQuery(<Transactions />).tree)
+      await screen.findByText('Aún no registraste nada')
+
+      const buttons = screen.getAllByRole('button', { name: 'Registrar movimiento' })
+      await user.click(buttons[buttons.length - 1])
+      await screen.findByRole('dialog', { name: 'Registrar' })
+      expect(navigate).not.toHaveBeenCalled()
+    })
   })
 })

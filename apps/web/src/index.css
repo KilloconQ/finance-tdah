@@ -20,6 +20,17 @@
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* Bottom sheets slide up from the edge (use as `motion-safe:animate-sheet-up`). */
+  --animate-sheet-up: sheet-up 280ms cubic-bezier(0.32, 0.72, 0, 1);
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
   /* Warm-neutral + sage palette. Light values; dark overrides follow the @theme block. */
   --color-bg: #fafaf9;
   --color-bg-alt: #f4f4f2;
@@ -181,3 +192,4 @@ button {
     opacity: 0;
   }
 }
+

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { CreateExpenseInput, ParsedVoiceExpense } from '@finance-tdah/shared/schemas'
@@ -33,8 +33,12 @@ function speechErrorMessage(code: string, trace: string): string {
   }
 }
 
-export function AddExpenseContainer() {
-  const navigate = useNavigate()
+/** The add-movement form and its logic, without page chrome; `onSaved` runs after a successful save. */
+export function AddExpenseForm({
+  onSaved,
+  onBusyChange,
+  onDirtyChange,
+}: { onSaved: () => void; onBusyChange?: (busy: boolean) => void; onDirtyChange?: (dirty: boolean) => void }) {
   // Voice capture is frozen until the native apps: iOS web apps have no working speech recognition.
   // Nothing reaches the 'voice' mode now (no onUseVoice below); the code is kept for later.
   const [mode, setMode] = useState<Mode>('manual')
@@ -55,14 +59,14 @@ export function AddExpenseContainer() {
   const { data: envelopes = [] } = useQuery(envelopesQueryOptions())
   const createExpense = useCreateExpense()
   const parseVoice = useParseVoice()
-
-  const goHome = () => navigate({ to: '/', replace: true })
+  const saving = createExpense.isPending
+  useEffect(() => onBusyChange?.(saving), [saving, onBusyChange])
 
   const save = (input: CreateExpenseInput) => {
     if (inFlight.current) return
     inFlight.current = true
     createExpense.mutate(input, {
-      onSuccess: goHome,
+      onSuccess: onSaved,
       onError: (err) => {
         inFlight.current = false
         setError(errorText(err, 'No pudimos guardar el gasto'))
@@ -148,16 +152,7 @@ export function AddExpenseContainer() {
   }
 
   return (
-    <PhoneShell variant="narrow">
-      <AppBar
-        title="Registrar"
-        left={
-          <IconButton onClick={goHome} label="Cerrar">
-            <X size={20} strokeWidth={2} />
-          </IconButton>
-        }
-      />
-
+    <>
       {mode === 'manual' ? (
         <ExpenseForm
           accounts={accounts.map((a) => ({ id: a.id, name: a.name, type: a.type, balanceCents: a.balanceCents }))}
@@ -165,6 +160,7 @@ export function AddExpenseContainer() {
           submitting={createExpense.isPending}
           error={error}
           onSubmit={handleManualSubmit}
+          onDirtyChange={onDirtyChange}
         />
       ) : (
         <VoiceCapture
@@ -186,6 +182,25 @@ export function AddExpenseContainer() {
           }}
         />
       )}
+    </>
+  )
+}
+
+/** The /add-expense page: the form inside the phone shell, back home after saving. */
+export function AddExpenseContainer() {
+  const navigate = useNavigate()
+  const goHome = () => navigate({ to: '/', replace: true })
+  return (
+    <PhoneShell variant="narrow">
+      <AppBar
+        title="Registrar"
+        left={
+          <IconButton onClick={goHome} label="Cerrar">
+            <X size={20} strokeWidth={2} />
+          </IconButton>
+        }
+      />
+      <AddExpenseForm onSaved={goHome} />
     </PhoneShell>
   )
 }
