@@ -1,5 +1,5 @@
 import { AmountInput } from '@/components/AmountInput'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { allocatedCents, unassignedCents } from '@finance-tdah/shared/domain'
 import { Btn, Chip } from '@/components'
 import { formatMoney } from '@/lib/format'
@@ -74,6 +74,7 @@ interface ExpenseFormProps {
   error: string | null
   onSubmit: (fields: ExpenseFormFields) => void
   onUseVoice?: () => void
+  onDirtyChange?: (dirty: boolean) => void
   initial?: Partial<ExpenseFormFields>
   submitLabel?: string
 }
@@ -85,6 +86,7 @@ export function ExpenseForm({
   error,
   onSubmit,
   onUseVoice,
+  onDirtyChange,
   initial,
   submitLabel,
 }: ExpenseFormProps) {
@@ -98,6 +100,8 @@ export function ExpenseForm({
   const [envelopeId, setEnvelopeId] = useState<string>(initial?.envelopeId ?? '')
 
   const hasAmount = amount.trim() !== ''
+  const dirty = hasAmount || description.trim() !== ''
+  useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange])
   const isTransfer = kind === 'transfer'
   const isIncome = kind === 'income'
 

@@ -2,11 +2,10 @@ import { AmountInput } from '@/components/AmountInput'
 import { useState } from 'react'
 import { centsToUnits, isEqualSplit, parseAmountToCents } from '@finance-tdah/shared/domain'
 import { MAX_CENTS, type ExpenseGroupDTO, type GroupDetailDTO } from '@finance-tdah/shared/schemas'
-import { Btn } from '@/components'
+import { Btn, Sheet } from '@/components'
 import { errorText } from '@/lib/api'
 import { todayLocalISO } from '@/lib/format'
 import { useInviteToGroup, useAddSharedExpense, useUpdateSharedExpense } from '../api'
-import { Sheet } from './Sheet'
 import { useSavingLabel } from '@/lib/use-online'
 
 const FIELD_CLASS =

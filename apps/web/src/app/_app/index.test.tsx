@@ -176,17 +176,110 @@ describe('Home', () => {
     expect(api.writes()).toEqual([])
   })
 
-  it('the Gasto quick action goes to /add-expense', async () => {
+  it('the Movimiento quick action goes to /add-expense', async () => {
     fakeApi(routes())
     const user = userEvent.setup()
     render(renderWithQuery(<Home />).tree)
     await screen.findByText('Hola, Ana 👋')
 
     // Rendered twice: inline on desktop and docked on mobile.
-    const buttons = screen.getAllByRole('button', { name: 'Gasto' })
+    const buttons = screen.getAllByRole('button', { name: 'Movimiento' })
     expect(buttons).toHaveLength(2)
     await user.click(buttons[0])
     expect(navigate).toHaveBeenCalledWith({ to: '/add-expense' })
+  })
+
+  it('on mobile the Movimiento action opens the form in a sheet instead of navigating', async () => {
+    fakeApi(routes())
+    vi.stubGlobal('matchMedia', () => ({ matches: true }))
+    try {
+      const user = userEvent.setup()
+      render(renderWithQuery(<Home />).tree)
+      await screen.findByText('Hola, Ana 👋')
+
+      await user.click(screen.getAllByRole('button', { name: 'Movimiento' })[0])
+      const dialog = await screen.findByRole('dialog', { name: 'Registrar' })
+      expect(within(dialog).getByLabelText('Cuánto')).toBeTruthy()
+      expect(navigate).not.toHaveBeenCalled()
+
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).toBeNull()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  describe('mobile add sheet guards', () => {
+    const BANK = '11111111-1111-4111-8111-111111111111'
+    const sheetRoutes = (extra = {}) => ({
+      ...routes(),
+      'GET /accounts': () =>
+        json({
+          accounts: [
+            { id: BANK, userId: 'u', name: 'Débito BBVA', type: 'debito', institution: null, last4: null, balanceCents: 1_000_000, createdAt: NOW, updatedAt: NOW },
+          ],
+        }),
+      'GET /envelopes': () => json({ envelopes: [] }),
+      ...extra,
+    })
+    const openSheet = async () => {
+      const user = userEvent.setup()
+      render(renderWithQuery(<Home />).tree)
+      await screen.findByText('Hola, Ana 👋')
+      await user.click(screen.getAllByRole('button', { name: 'Movimiento' })[0])
+      const dialog = await screen.findByRole('dialog', { name: 'Registrar' })
+      return { user, dialog }
+    }
+    beforeEach(() => vi.stubGlobal('matchMedia', () => ({ matches: true })))
+    afterEach(() => vi.unstubAllGlobals())
+
+    it('closes on Escape or the backdrop while the form is clean', async () => {
+      fakeApi(sheetRoutes())
+      const { user, dialog } = await openSheet()
+      await user.click(dialog.parentElement as HTMLElement)
+      expect(screen.queryByRole('dialog')).toBeNull()
+
+      await user.click(screen.getAllByRole('button', { name: 'Movimiento' })[0])
+      await screen.findByRole('dialog', { name: 'Registrar' })
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('keeps typed data: Escape and the backdrop are ignored when dirty, the X still closes', async () => {
+      fakeApi(sheetRoutes())
+      const { user, dialog } = await openSheet()
+      await user.type(within(dialog).getByLabelText('Cuánto'), '50')
+
+      await user.keyboard('{Escape}')
+      await user.click(dialog.parentElement as HTMLElement)
+      expect(screen.getByRole('dialog', { name: 'Registrar' })).toBeTruthy()
+
+      await user.click(within(dialog).getByRole('button', { name: 'Cerrar' }))
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+
+    it('cannot be closed while the expense is saving, so a failure still shows', async () => {
+      let fail: (() => void) | undefined
+      fakeApi(
+        sheetRoutes({
+          'POST /expenses': () => new Promise<Response>((resolve) => (fail = () => resolve(json({ error: 'Sin red' }, 500)))),
+        }),
+      )
+      const { user, dialog } = await openSheet()
+      await user.type(within(dialog).getByLabelText('Cuánto'), '50')
+      await user.type(within(dialog).getByLabelText('Nota'), 'Taxi')
+      await user.click(within(dialog).getByRole('button', { name: /Transporte|Taxi|Uber/ }))
+      await user.click(within(dialog).getByRole('button', { name: 'Guardar gasto' }))
+      await waitFor(() => expect(fail).toBeDefined())
+
+      await user.keyboard('{Escape}')
+      await user.click(dialog.parentElement as HTMLElement)
+      await user.click(within(dialog).getByRole('button', { name: 'Cerrar' }))
+      expect(screen.getByRole('dialog', { name: 'Registrar' })).toBeTruthy()
+
+      fail?.()
+      expect(await screen.findByText('Sin red')).toBeTruthy()
+    })
   })
 
   it('puts "Echar al frasco" on the jar itself, opening that jar', async () => {
@@ -195,7 +288,7 @@ describe('Home', () => {
     render(renderWithQuery(<Home />).tree)
 
     await screen.findByText('✈️ Vacaciones · frasco')
-    // One button, on the jar card: no longer docked next to "Gasto".
+    // One button, on the jar card: no longer docked next to "Movimiento".
     const buttons = screen.getAllByRole('button', { name: 'Echar al frasco' })
     expect(buttons).toHaveLength(1)
     await user.click(buttons[0])

@@ -14,7 +14,7 @@ import {
   Skeleton,
   TabBar,
 } from '@/components'
-import { useDeleteExpense } from '@/features/expenses'
+import { useAddMovement, useDeleteExpense } from '@/features/expenses'
 import { formatMoney } from '@/lib/format'
 import { expensesQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
@@ -61,14 +61,15 @@ function Transactions() {
     return acc
   }, {})
 
-  const goAdd = () => navigate({ to: '/add-expense' })
+  const addMovement = useAddMovement()
 
   return (
     <PhoneShell>
+      {addMovement.sheet}
       <AppBar
         title="Movimientos"
         right={
-          <IconButton onClick={goAdd} label="Registrar gasto">
+          <IconButton onClick={addMovement.open} label="Registrar movimiento">
             <Plus size={20} strokeWidth={2} />
           </IconButton>
         }
@@ -89,8 +90,8 @@ function Transactions() {
           title="Aún no registraste nada"
           hint="Cada gasto que anotes aparecerá aquí, agrupado por día."
           action={
-            <Btn kind="primary" onClick={goAdd}>
-              Registrar gasto
+            <Btn kind="primary" onClick={addMovement.open}>
+              Registrar movimiento
             </Btn>
           }
         />

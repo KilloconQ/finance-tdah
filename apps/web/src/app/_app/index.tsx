@@ -16,6 +16,7 @@ import {
   Skeleton,
   TabBar,
 } from '@/components'
+import { useAddMovement } from '@/features/expenses'
 import { Jar, goalsQueryOptions } from '@/features/goals'
 import { activeChallengeQuery, homeSummaryQuery } from '@/lib/queries'
 import { queryClient } from '@/lib/query-client'
@@ -34,6 +35,7 @@ export const Route = createFileRoute('/_app/')({
 function Home() {
   const navigate = useNavigate()
   const { showBalances } = useTweaks()
+  const addMovement = useAddMovement()
 
   const summary = useQuery(homeSummaryQuery())
   const goals = useQuery(goalsQueryOptions())
@@ -55,14 +57,15 @@ function Home() {
   // The one primary action lives inline on desktop; the docked bar is mobile-only.
   // Saving into a jar sits on the jar card, so the bottom of the screen keeps a single button.
   const quickActions = (
-    <Btn kind="primary" className="flex-1" onClick={() => navigate({ to: '/add-expense' })}>
+    <Btn kind="primary" className="flex-1" onClick={addMovement.open}>
       <Plus size={16} strokeWidth={2.2} />
-      Gasto
+      Movimiento
     </Btn>
   )
 
   return (
     <PhoneShell>
+      {addMovement.sheet}
       <AppBar
         title="Hoy"
         left={
