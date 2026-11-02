@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.2](https://github.com/KilloconQ/finance-tdah/compare/v0.1.1...v0.1.2) (2026-11-02)
+
+
+### Features
+
+* invitaciones a grupos con aceptación e invitaciones para registrarse ([5bc7afa](https://github.com/KilloconQ/finance-tdah/commit/5bc7afa2631475b760e82bb10959210c0445ac85))
+* require accepting group invitations and let users invite people to sign up ([ede0e3e](https://github.com/KilloconQ/finance-tdah/commit/ede0e3eddde42e1491ecd922db1ec80eda6219c9))
+* **web:** add thousands commas to money inputs as you type ([56996f2](https://github.com/KilloconQ/finance-tdah/commit/56996f254785fc5f1f6b767befaafea1185be37e))
+* **web:** add-movement bottom sheet on mobile ([c698f3b](https://github.com/KilloconQ/finance-tdah/commit/c698f3bbdd5faf4ee3e81a4c06f6436a5def128c))
+* **web:** open the add-movement form as a bottom sheet on mobile ([2b81e3d](https://github.com/KilloconQ/finance-tdah/commit/2b81e3d98c0940125114b0d97346cf930ec491bd))
+
 ## [0.1.1](https://github.com/KilloconQ/finance-tdah/compare/v0.1.0...v0.1.1) (2026-10-26)
 
 
