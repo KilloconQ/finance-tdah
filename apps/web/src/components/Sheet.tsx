@@ -89,8 +89,28 @@ export function Sheet({
     if (close) onClose()
   }
 
+  // On iOS the keyboard only shrinks the visual viewport and Safari scrolls the page to reveal the input,
+  // dragging fixed elements up. Pin the overlay to the visual viewport so the sheet sits above the keyboard.
+  const [viewport, setViewport] = useState<{ top: number; height: number } | null>(null)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const sync = () => setViewport({ top: vv.offsetTop, height: vv.height })
+    sync()
+    vv.addEventListener('resize', sync)
+    vv.addEventListener('scroll', sync)
+    return () => {
+      vv.removeEventListener('resize', sync)
+      vv.removeEventListener('scroll', sync)
+    }
+  }, [])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 md:items-center" onClick={() => !guarded && onClose()}>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 md:items-center"
+      style={viewport ? { top: viewport.top, height: viewport.height, bottom: 'auto' } : undefined}
+      onClick={() => !guarded && onClose()}
+    >
       <div
         ref={dialogRef}
         tabIndex={-1}
@@ -100,7 +120,7 @@ export function Sheet({
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
         style={dragY ? { transform: `translateY(${dragY}px)` } : undefined}
-        className={`motion-safe:animate-sheet-up max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-bg outline-none px-4 pb-8 pt-2 md:rounded-3xl ${dragging ? '' : 'transition-transform duration-200'}`}
+        className={`motion-safe:animate-sheet-up max-h-[90%] w-full max-w-md overflow-y-auto rounded-t-3xl bg-bg outline-none px-4 pb-8 pt-2 md:rounded-3xl ${dragging ? '' : 'transition-transform duration-200'}`}
       >
         <div
           className="touch-none"
