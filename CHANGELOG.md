@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3](https://github.com/KilloconQ/finance-tdah/compare/v0.1.2...v0.1.3) (2026-11-03)
+
+
+### Bug Fixes
+
+* **web:** keep the bottom sheet above the keyboard on iOS ([38303f9](https://github.com/KilloconQ/finance-tdah/commit/38303f9245b82770c471aafd9e98ed85704278d9))
+* **web:** keep the bottom sheet above the keyboard on iOS ([b806df0](https://github.com/KilloconQ/finance-tdah/commit/b806df03a6517347f17ea3c448a665cf71f3fcd7))
+
 ## [0.1.2](https://github.com/KilloconQ/finance-tdah/compare/v0.1.1...v0.1.2) (2026-11-02)
 
 
