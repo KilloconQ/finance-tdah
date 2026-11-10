@@ -12,8 +12,9 @@ POSTGRES_DB=finance_tdah
 # 32+ chars. Generá uno con: openssl rand -base64 48
 BETTER_AUTH_SECRET=cambiame-por-uno-de-al-menos-32-caracteres
 
-# Emails habilitados a registrarse, separados por coma. Si queda vacío, el
-# registro queda ABIERTO a cualquiera (la API loguea un warning al arrancar).
+# Emails admin que siempre pueden registrarse, separados por coma. Cualquier
+# otra persona necesita una invitación de un usuario existente (vale 7 días).
+# Vacío = solo por invitación; ya no hay registro abierto.
 ALLOWED_EMAILS=vos@ejemplo.com,tu-novia@ejemplo.com
 
 # --- Public URL ---

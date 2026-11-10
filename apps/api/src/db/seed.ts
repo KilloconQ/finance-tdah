@@ -10,6 +10,12 @@ async function main() {
 
   let userId: string
 
+  // Sign-up is invite-only, so the demo address needs an invite like anyone else.
+  await db.insert(schema.signupInvite).values({ email: DEMO_EMAIL }).onConflictDoUpdate({
+    target: schema.signupInvite.email,
+    set: { createdAt: new Date() },
+  })
+
   try {
     const signup = await auth.api.signUpEmail({
       body: {

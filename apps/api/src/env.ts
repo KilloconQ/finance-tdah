@@ -29,9 +29,8 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: optionalSecret,
   VAPID_PRIVATE_KEY: optionalSecret,
   VAPID_SUBJECT: z.string().default('mailto:soporte@finance-tdah.local'),
-  // Comma-separated allowlist of emails permitted to register. When empty, sign-up
-  // is open to anyone (a warning is logged at startup). Set it to lock registration
-  // down to the known users.
+  // Comma-separated emails that may always register (admins). Anyone else needs an
+  // invitation from an existing user (see auth.ts).
   ALLOWED_EMAILS: z
     .string()
     .optional()

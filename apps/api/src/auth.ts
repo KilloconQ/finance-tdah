@@ -1,7 +1,8 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { db } from './db/client'
+import { and, eq, gt, sql } from 'drizzle-orm'
+import { db, schema } from './db/client'
 import { env } from './env'
 import { deliver, emailEnabled } from './services/mailer'
 
@@ -16,6 +17,9 @@ const PASSWORD_RESET_PATHS = new Set(['/request-password-reset', '/forget-passwo
 export function isPasswordResetPath(path: string): boolean {
   return PASSWORD_RESET_PATHS.has(path)
 }
+
+/** How long an invitation to sign up stays valid. */
+export const SIGNUP_INVITE_DAYS = 7
 
 export const PASSWORD_RESET_UNAVAILABLE = 'PASSWORD_RESET_UNAVAILABLE'
 
@@ -90,11 +94,25 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
-          const allowlist = env.ALLOWED_EMAILS
-          if (allowlist.length > 0 && !allowlist.includes(user.email.toLowerCase())) {
-            throw new APIError('FORBIDDEN', {
-              message: 'Este email no está habilitado para registrarse.',
-            })
+          // Registration is invite-only: the address is on the admin allowlist, or someone
+          // invited it in the last SIGNUP_INVITE_DAYS. Deleting claims the invite, so it
+          // works once even if two sign-ups race.
+          const email = user.email.toLowerCase()
+          if (!env.ALLOWED_EMAILS.includes(email)) {
+            const [claimed] = await db
+              .delete(schema.signupInvite)
+              .where(
+                and(
+                  eq(schema.signupInvite.email, email),
+                  gt(schema.signupInvite.createdAt, sql`now() - make_interval(days => ${SIGNUP_INVITE_DAYS})`),
+                ),
+              )
+              .returning({ email: schema.signupInvite.email })
+            if (!claimed) {
+              throw new APIError('FORBIDDEN', {
+                message: 'El registro es solo por invitación. Pídele a alguien que ya use la app que te invite.',
+              })
+            }
           }
           return { data: user }
         },

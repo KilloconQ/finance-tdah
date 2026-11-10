@@ -74,6 +74,13 @@ export const invitationsRoute = new Hono<{ Variables: SessionVariables }>()
       allow('address', email, 1),
     ])
     // Not awaited, for the same reason.
+    // The invite is what lets that address register (see auth.ts); inviting again renews it.
+    if (!existing) {
+      await db
+        .insert(schema.signupInvite)
+        .values({ email: email.toLowerCase() })
+        .onConflictDoUpdate({ target: schema.signupInvite.email, set: { createdAt: sql`now()` } })
+    }
     if (!existing && firstToday) void sendAppInvitationEmail({ to: email, inviterName: user.name })
     return c.json({ ok: true }, 202)
   })
