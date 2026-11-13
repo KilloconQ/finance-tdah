@@ -281,6 +281,26 @@ describe.skipIf(!TEST_DATABASE_URL)('group invitations (Postgres)', async () => 
       expect(sendAppEmail).toHaveBeenCalledWith({ to: addr('nueva'), inviterName: `Name of ${ANA}` })
     })
 
+    it('S15: inviting an address with no account lets it sign up (lowercased, renewed on re-invite); an existing account gets no invite', async () => {
+      const invites = schema.signupInvite
+      const inviteFor = (e: string) => db.select().from(invites).where(eq(invites.email, e))
+      afterAll(async () => {
+        await db.delete(invites).where(sql`${invites.email} like ${'%-' + run + '@%'}`)
+      })
+
+      await call(ANA, 'POST', '/invitations/app', { email: addr('Nueva') })
+      const [first] = await inviteFor(addr('nueva'))
+      expect(first).toBeDefined()
+
+      await db.update(invites).set({ createdAt: new Date(Date.now() - 86_400_000) }).where(eq(invites.email, addr('nueva')))
+      await call(BEN, 'POST', '/invitations/app', { email: addr('nueva') })
+      const [renewed] = await inviteFor(addr('nueva'))
+      expect(renewed.createdAt.getTime()).toBeGreaterThan(Date.now() - 60_000)
+
+      await call(ANA, 'POST', '/invitations/app', { email: email(BEN) })
+      expect(await inviteFor(email(BEN))).toHaveLength(0)
+    })
+
     it('S12: an invalid address is rejected and sends nothing', async () => {
       const res = await call(ANA, 'POST', '/invitations/app', { email: 'no-es-correo' })
 

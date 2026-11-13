@@ -38,8 +38,8 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET requerido}
       BETTER_AUTH_URL: ${PUBLIC_URL:-https://finance.local}
       WEB_ORIGIN: ${PUBLIC_URL:-https://finance.local}
-      # Registration allowlist. Empty = open signup (the api warns at startup).
-      # Set to a comma-separated list of emails to lock signup to you two.
+      # Sign-up is invite-only: an address can register if it's listed here (admins)
+      # or an existing user invited it in the last 7 days. Comma-separated emails.
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
       # Optional features. Leaving these empty disables password-reset emails /
       # web push, but never blocks sign-in (the api warns at startup instead).

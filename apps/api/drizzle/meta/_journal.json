@@ -71,6 +71,13 @@
       "when": 1793044212697,
       "tag": "0009_thin_lord_tyger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794345659945,
+      "tag": "0010_signup_invite",
+      "breakpoints": true
     }
   ]
 }

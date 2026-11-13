@@ -323,6 +323,12 @@ export const appInvitationLog = pgTable(
   ],
 )
 
+/** An address someone invited to sign up. Registration is invite-only; a row is valid for SIGNUP_INVITE_DAYS. */
+export const signupInvite = pgTable('signup_invite', {
+  email: text('email').primaryKey(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
 export const sharedExpense = pgTable(
   'shared_expense',
   {
