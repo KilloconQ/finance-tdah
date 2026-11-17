@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/KilloconQ/finance-tdah/compare/v0.1.3...v0.1.4) (2026-11-17)
+
+
+### Features
+
+* **api:** make sign-up invite-only ([b4562b8](https://github.com/KilloconQ/finance-tdah/commit/b4562b80f68990df5e62fb89bd1138b8b30259b1))
+* credit card statement days and subscription charge alerts ([#64](https://github.com/KilloconQ/finance-tdah/issues/64)) ([87cd165](https://github.com/KilloconQ/finance-tdah/commit/87cd16544fc9eb43a6b46e6eb387b7baa3902d86))
+
 ## [0.1.3](https://github.com/KilloconQ/finance-tdah/compare/v0.1.2...v0.1.3) (2026-11-03)
 
 
