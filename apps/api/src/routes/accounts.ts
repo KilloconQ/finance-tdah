@@ -1,12 +1,19 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, gte, or } from 'drizzle-orm'
 import {
   createFinancialAccountSchema,
   idParamSchema,
   updateFinancialAccountSchema,
 } from '@finance-tdah/shared/schemas'
-import { allocatedCents, signedBalanceForType, spendsLockedMoney } from '@finance-tdah/shared/domain'
+import {
+  allocatedCents,
+  cardStatement,
+  type CardMovement,
+  localClock,
+  signedBalanceForType,
+  spendsLockedMoney,
+} from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
 import { money } from '../lib/money'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
@@ -23,6 +30,61 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
     return c.json({ accounts })
   })
 
+  // What a credit card asks for on its next payment date (see domain/card-statement.ts).
+  .get('/:id/statement', zValidator('param', idParamSchema), async (c) => {
+    const user = c.get('user')
+    const { id } = c.req.valid('param')
+
+    const account = await db.query.financialAccount.findFirst({
+      where: (a, { and, eq }) => and(eq(a.id, id), eq(a.userId, user.id)),
+    })
+    if (!account) return c.json({ error: 'Cuenta no encontrada' }, 404)
+    if (account.type !== 'credito' || account.cutoffDay === null || account.paymentDay === null) {
+      return c.json({ error: 'Esta tarjeta no tiene fecha de corte y de pago.' }, 422)
+    }
+
+    const profile = await db.query.userProfile.findFirst({ where: (p, { eq }) => eq(p.userId, user.id) })
+    const timeZone = profile?.timeZone ?? 'America/Mexico_City'
+
+    // Two statement periods back is the furthest the calculation looks.
+    const since = new Date(Date.now() - 75 * 24 * 60 * 60 * 1000)
+    const rows = await db
+      .select({
+        kind: schema.expense.kind,
+        accountId: schema.expense.accountId,
+        amountCents: schema.expense.amountCents,
+        occurredAt: schema.expense.occurredAt,
+      })
+      .from(schema.expense)
+      .where(
+        and(
+          eq(schema.expense.userId, user.id),
+          gte(schema.expense.occurredAt, since),
+          or(eq(schema.expense.accountId, id), eq(schema.expense.toAccountId, id)),
+        ),
+      )
+
+    // Money leaving the card (expenses, transfers out) is a purchase; money arriving
+    // (income, transfers in) is a payment.
+    const purchases: CardMovement[] = []
+    const payments: CardMovement[] = []
+    for (const r of rows) {
+      const movement = { date: localClock(r.occurredAt, timeZone).date, cents: r.amountCents }
+      const leaves = r.accountId === id && r.kind !== 'income'
+      ;(leaves ? purchases : payments).push(movement)
+    }
+
+    const today = localClock(new Date(), timeZone).date
+    const statement = cardStatement({
+      cutoffDay: account.cutoffDay,
+      paymentDay: account.paymentDay,
+      today,
+      purchases,
+      payments,
+    })
+    return c.json({ statement: { ...statement, today } })
+  })
+
   .post('/', zValidator('json', createFinancialAccountSchema), async (c) => {
     const user = c.get('user')
     const input = c.req.valid('json')
@@ -35,6 +97,8 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
         type: input.type,
         institution: input.institution ?? null,
         last4: input.last4 ?? null,
+        cutoffDay: input.type === 'credito' ? (input.cutoffDay ?? null) : null,
+        paymentDay: input.type === 'credito' ? (input.paymentDay ?? null) : null,
         balanceCents: signedBalanceForType(input.type, input.balanceCents),
       })
       .returning()
@@ -55,6 +119,8 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
         .select({
           type: schema.financialAccount.type,
           balanceCents: schema.financialAccount.balanceCents,
+          cutoffDay: schema.financialAccount.cutoffDay,
+          paymentDay: schema.financialAccount.paymentDay,
         })
         .from(schema.financialAccount)
         .where(and(eq(schema.financialAccount.id, id), eq(schema.financialAccount.userId, user.id)))
@@ -73,6 +139,19 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
       }
 
       const set: typeof patch = { ...patch }
+      // Statement days only make sense on a credit card, and only as a pair.
+      if ((patch.type ?? current.type) !== 'credito') {
+        if (patch.type || patch.cutoffDay !== undefined || patch.paymentDay !== undefined) {
+          set.cutoffDay = null
+          set.paymentDay = null
+        }
+      } else {
+        const cutoff = patch.cutoffDay === undefined ? current.cutoffDay : patch.cutoffDay
+        const payment = patch.paymentDay === undefined ? current.paymentDay : patch.paymentDay
+        if ((cutoff === null) !== (payment === null)) {
+          return { error: 'Pon el día de corte y el de pago, o deja los dos vacíos.', status: 422 as const }
+        }
+      }
       if (patch.balanceCents !== undefined) {
         if ((patch.type ?? current.type) === 'credito') {
           set.balanceCents = signedBalanceForType('credito', patch.balanceCents)

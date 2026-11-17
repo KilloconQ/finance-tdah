@@ -12,6 +12,8 @@ const account = (patch: Partial<FinancialAccountDTO> = {}): FinancialAccountDTO 
   type: 'debito',
   institution: null,
   last4: null,
+  cutoffDay: null,
+  paymentDay: null,
   balanceCents: 1_000_000,
   createdAt: NOW,
   updatedAt: NOW,

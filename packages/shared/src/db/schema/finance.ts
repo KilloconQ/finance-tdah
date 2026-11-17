@@ -65,6 +65,9 @@ export const financialAccount = pgTable(
     type: accountTypeEnum('type').notNull(),
     institution: text('institution'),
     last4: text('last4'),
+    // Credit cards: day of the month the statement closes and the day it is due.
+    cutoffDay: integer('cutoff_day'),
+    paymentDay: integer('payment_day'),
     balanceCents: integer('balance_cents').default(0).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -141,6 +144,8 @@ export const subscription = pgTable('subscription', {
   amountCents: integer('amount_cents').notNull(),
   cadence: subscriptionCadenceEnum('cadence').default('monthly').notNull(),
   nextChargeAt: date('next_charge_at').notNull(),
+  // The charge date the heads-up push already went out for, so each charge alerts once.
+  lastAlertedFor: date('last_alerted_for'),
   lastOpenedAt: date('last_opened_at'),
   unused: boolean('unused').default(false).notNull(),
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),

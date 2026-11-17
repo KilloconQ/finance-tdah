@@ -5,6 +5,7 @@ import { parseAmountToCents, signedBalanceForType } from '@finance-tdah/shared/d
 import { AppBar, IconButton, PhoneShell } from '@/components'
 import { errorText } from '@/lib/api'
 import { useCreateAccount } from '../api'
+import { parseStatementDays } from './statement-days'
 import { AccountForm, type AccountFormFields } from '../components/AccountForm'
 
 export function NewAccountContainer() {
@@ -24,6 +25,12 @@ export function NewAccountContainer() {
       return
     }
 
+    const days = parseStatementDays(fields.type, fields.cutoffDay, fields.paymentDay)
+    if (!days.ok) {
+      setError(days.error)
+      return
+    }
+
     if (inFlight.current) return
     inFlight.current = true
     createAccount.mutate(
@@ -33,6 +40,8 @@ export function NewAccountContainer() {
         balanceCents: signedBalanceForType(fields.type, magnitudeCents),
         institution: fields.institution,
         last4: fields.last4,
+        cutoffDay: days.cutoffDay ?? undefined,
+        paymentDay: days.paymentDay ?? undefined,
       },
       {
         onSuccess: () => navigate({ to: '/accounts', replace: true }),

@@ -5,6 +5,7 @@ import { secureHeaders } from 'hono/secure-headers'
 import { auth } from './auth'
 import { env, features } from './env'
 import { logger } from './lib/logger'
+import { redactPath } from './lib/redact-path'
 import { mapErrorToResponse } from './shared/http/error-mapper'
 import { DomainError } from './shared/errors/domain-error'
 import { accountsRoute } from './routes/accounts'
@@ -30,7 +31,7 @@ app.use('*', async (c, next) => {
   logger.info('request', {
     requestId: c.get('requestId'),
     method: c.req.method,
-    path: c.req.path,
+    path: redactPath(c.req.path),
     status: c.res.status,
     durationMs,
   })
@@ -78,7 +79,7 @@ app.onError((err, c) => {
   logger.error('unhandled', {
     requestId: c.get('requestId'),
     method: c.req.method,
-    path: c.req.path,
+    path: redactPath(c.req.path),
     message: err instanceof Error ? err.message : String(err),
     stack: env.NODE_ENV === 'production' ? undefined : err instanceof Error ? err.stack : undefined,
   })

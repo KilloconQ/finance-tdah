@@ -48,7 +48,9 @@ export const subscriptionsRoute = new Hono<{ Variables: SessionVariables }>()
 
     const [updated] = await db
       .update(schema.subscription)
-      .set({ ...patch, updatedAt: new Date() })
+      // A new charge date is a new charge to be warned about, even if it falls before the
+      // date already alerted.
+      .set({ ...patch, ...(patch.nextChargeAt ? { lastAlertedFor: null } : {}), updatedAt: new Date() })
       .where(
         and(
           eq(schema.subscription.id, id),

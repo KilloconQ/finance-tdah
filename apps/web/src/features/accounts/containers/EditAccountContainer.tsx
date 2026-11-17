@@ -5,8 +5,10 @@ import { X } from 'lucide-react'
 import { parseAmountToCents, signedBalanceForType } from '@finance-tdah/shared/domain'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
 import { errorText } from '@/lib/api'
-import { accountsQueryOptions, useUpdateAccount } from '../api'
+import { accountsQueryOptions, accountStatementQueryOptions, useUpdateAccount } from '../api'
 import { AccountForm, type AccountFormFields } from '../components/AccountForm'
+import { CardStatementSummary } from '../components/CardStatementSummary'
+import { parseStatementDays } from './statement-days'
 
 interface EditAccountContainerProps {
   accountId: string
@@ -20,6 +22,8 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
   const { data: accounts, isLoading } = useQuery(accountsQueryOptions())
   const account = accounts?.find((a) => a.id === accountId)
   const updateAccount = useUpdateAccount(accountId)
+  const hasStatementDays = account?.type === 'credito' && account.cutoffDay !== null && account.paymentDay !== null
+  const { data: statement } = useQuery({ ...accountStatementQueryOptions(accountId), enabled: hasStatementDays })
 
   if (isLoading) {
     return (
@@ -67,6 +71,12 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
           : magnitudeCents
         : signedBalanceForType(fields.type, magnitudeCents)
 
+    const days = parseStatementDays(fields.type, fields.cutoffDay, fields.paymentDay)
+    if (!days.ok) {
+      setError(days.error)
+      return
+    }
+
     if (inFlight.current) return
     inFlight.current = true
     updateAccount.mutate(
@@ -76,6 +86,8 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
         balanceCents,
         institution: fields.institution,
         last4: fields.last4,
+        // A credit card sends null to clear its days; the API clears them on any other type.
+        ...(fields.type === 'credito' ? { cutoffDay: days.cutoffDay, paymentDay: days.paymentDay } : {}),
       },
       {
         onSuccess: () => navigate({ to: '/accounts', replace: true }),
@@ -97,6 +109,7 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
           </IconButton>
         }
       />
+      {statement && hasStatementDays ? <CardStatementSummary statement={statement} /> : null}
       <AccountForm
         submitting={updateAccount.isPending}
         error={error}
@@ -107,6 +120,8 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
           balance: String(Math.abs(account.balanceCents) / 100),
           institution: account.institution ?? undefined,
           last4: account.last4 ?? undefined,
+          cutoffDay: account.cutoffDay?.toString(),
+          paymentDay: account.paymentDay?.toString(),
         }}
         submitLabel="Guardar cambios"
       />

@@ -216,7 +216,7 @@ describe('Home', () => {
       'GET /accounts': () =>
         json({
           accounts: [
-            { id: BANK, userId: 'u', name: 'Débito BBVA', type: 'debito', institution: null, last4: null, balanceCents: 1_000_000, createdAt: NOW, updatedAt: NOW },
+            { id: BANK, userId: 'u', name: 'Débito BBVA', type: 'debito', institution: null, last4: null, cutoffDay: null, paymentDay: null, balanceCents: 1_000_000, createdAt: NOW, updatedAt: NOW },
           ],
         }),
       'GET /envelopes': () => json({ envelopes: [] }),
