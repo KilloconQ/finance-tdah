@@ -42,6 +42,15 @@ export const updateFinancialAccountSchema = createFinancialAccountSchema
   .extend({ balanceCents: signedCents, cutoffDay: dayOfMonth.nullable(), paymentDay: dayOfMonth.nullable() })
   .partial()
 
+// Response of GET /accounts/:id/statement (see domain/card-statement.ts).
+export const cardStatementSchema = z.object({
+  cutoffDate: z.string(),
+  paymentDate: z.string(),
+  dueCents: z.number().int(),
+  openPeriodCents: z.number().int(),
+  nextCutoffDate: z.string(),
+})
+
 export type FinancialAccountDTO = z.infer<typeof financialAccountSchema>
 export type CreateFinancialAccountInput = z.infer<typeof createFinancialAccountSchema>
 export type UpdateFinancialAccountInput = z.infer<typeof updateFinancialAccountSchema>

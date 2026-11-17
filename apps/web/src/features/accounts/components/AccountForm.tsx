@@ -11,6 +11,9 @@ export interface AccountFormFields {
   balance: string
   institution?: string
   last4?: string
+  /** Credit cards only: day of the month the statement closes / is due. */
+  cutoffDay?: string
+  paymentDay?: string
 }
 
 interface AccountTypeOption {
@@ -46,6 +49,8 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
   const [balance, setBalance] = useState(initial?.balance ?? '')
   const [institution, setInstitution] = useState(initial?.institution ?? '')
   const [last4, setLast4] = useState(initial?.last4 ?? '')
+  const [cutoffDay, setCutoffDay] = useState(initial?.cutoffDay ?? '')
+  const [paymentDay, setPaymentDay] = useState(initial?.paymentDay ?? '')
 
   const isCard = type === 'debito' || type === 'credito'
   const canSubmit = name.trim() !== '' && !submitting
@@ -59,6 +64,8 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
       balance,
       institution: institution.trim() || undefined,
       last4: last4.trim() || undefined,
+      cutoffDay: type === 'credito' ? cutoffDay.trim() : undefined,
+      paymentDay: type === 'credito' ? paymentDay.trim() : undefined,
     })
   }
 
@@ -143,6 +150,37 @@ export function AccountForm({ submitting, error, onSubmit, initial, submitLabel 
               onChange={(e) => setLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
               placeholder="4521"
               className={cn(INPUT_CLASS, 'money tracking-wide')}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {type === 'credito' ? (
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label htmlFor="cutoffDay" className={LABEL_CLASS}>
+              Día de corte
+            </label>
+            <input
+              id="cutoffDay"
+              inputMode="numeric"
+              value={cutoffDay}
+              onChange={(e) => setCutoffDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              placeholder="10"
+              className={cn(INPUT_CLASS, 'money')}
+            />
+          </div>
+          <div className="flex-1">
+            <label htmlFor="paymentDay" className={LABEL_CLASS}>
+              Día de pago
+            </label>
+            <input
+              id="paymentDay"
+              inputMode="numeric"
+              value={paymentDay}
+              onChange={(e) => setPaymentDay(e.target.value.replace(/\D/g, '').slice(0, 2))}
+              placeholder="25"
+              className={cn(INPUT_CLASS, 'money')}
             />
           </div>
         </div>
