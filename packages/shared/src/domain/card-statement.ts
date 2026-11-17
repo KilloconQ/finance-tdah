@@ -61,8 +61,10 @@ export function cardStatement(input: CardStatementInput): CardStatement {
   const cutoffDate = dayOf(ly, lm, cutoffDay)
   const previousCutoff = dayOf(ly, lm - 1, cutoffDay)
   const nextCutoffDate = dayOf(ly, lm + 1, cutoffDay)
-  // Same month as the cutoff when the payment day comes after it, otherwise the next one.
-  const paymentDate = dayOf(ly, paymentDay > cutoffDay ? lm : lm + 1, paymentDay)
+  // Same month as the cutoff when the payment day comes after it, otherwise the next one. Compared
+  // on the clamped dates: with cutoff 28 and payment 29, February clamps both to the 28th.
+  const sameMonth = dayOf(ly, lm, paymentDay)
+  const paymentDate = sameMonth > cutoffDate ? sameMonth : dayOf(ly, lm + 1, paymentDay)
 
   const statementCents = sum(purchases, (d) => d > previousCutoff && d <= cutoffDate)
   const paidSince = sum(payments, (d) => d > cutoffDate)

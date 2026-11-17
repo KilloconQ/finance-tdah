@@ -1,6 +1,7 @@
 import { and, eq, isNull, lt, or } from 'drizzle-orm'
 import { chargeAlertDue, DEFAULT_TIME_ZONE, localClock, nextChargeOnOrAfter } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
+import { logger } from '../lib/logger'
 import { money } from '../lib/money'
 import { sendPushToUser } from './push-sender'
 
@@ -45,12 +46,17 @@ export async function runSubscriptionAlerts(now: Date = new Date()): Promise<{ s
         .returning({ id: schema.subscription.id })
       if (claimed) {
         const when = sub.nextChargeAt === clock.date ? 'Hoy' : 'Mañana'
-        await sendPushToUser(sub.userId, {
-          title: `${when} se cobra ${sub.name} 💸`,
-          body: `Te van a cobrar ${money(sub.amountCents)}.`,
-          url: `/subscriptions/${sub.id}`,
-        })
-        sent++
+        // One failed push must not stop everyone else's alerts or the date roll below.
+        try {
+          await sendPushToUser(sub.userId, {
+            title: `${when} se cobra ${sub.name} 💸`,
+            body: `Te van a cobrar ${money(sub.amountCents)}.`,
+            url: `/subscriptions/${sub.id}`,
+          })
+          sent++
+        } catch (err) {
+          logger.error('subscription_alert_failed', { message: err instanceof Error ? err.message : String(err) })
+        }
       }
     }
 

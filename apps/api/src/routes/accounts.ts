@@ -118,6 +118,8 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
         .select({
           type: schema.financialAccount.type,
           balanceCents: schema.financialAccount.balanceCents,
+          cutoffDay: schema.financialAccount.cutoffDay,
+          paymentDay: schema.financialAccount.paymentDay,
         })
         .from(schema.financialAccount)
         .where(and(eq(schema.financialAccount.id, id), eq(schema.financialAccount.userId, user.id)))
@@ -136,10 +138,18 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
       }
 
       const set: typeof patch = { ...patch }
-      // Statement days only make sense on a credit card.
-      if (patch.type && patch.type !== 'credito') {
-        set.cutoffDay = null
-        set.paymentDay = null
+      // Statement days only make sense on a credit card, and only as a pair.
+      if ((patch.type ?? current.type) !== 'credito') {
+        if (patch.type || patch.cutoffDay !== undefined || patch.paymentDay !== undefined) {
+          set.cutoffDay = null
+          set.paymentDay = null
+        }
+      } else {
+        const cutoff = patch.cutoffDay === undefined ? current.cutoffDay : patch.cutoffDay
+        const payment = patch.paymentDay === undefined ? current.paymentDay : patch.paymentDay
+        if ((cutoff === null) !== (payment === null)) {
+          return { error: 'Pon el día de corte y el de pago, o deja los dos vacíos.', status: 422 as const }
+        }
       }
       if (patch.balanceCents !== undefined) {
         if ((patch.type ?? current.type) === 'credito') {
