@@ -144,6 +144,8 @@ export const subscription = pgTable('subscription', {
   amountCents: integer('amount_cents').notNull(),
   cadence: subscriptionCadenceEnum('cadence').default('monthly').notNull(),
   nextChargeAt: date('next_charge_at').notNull(),
+  // The charge date the heads-up push already went out for, so each charge alerts once.
+  lastAlertedFor: date('last_alerted_for'),
   lastOpenedAt: date('last_opened_at'),
   unused: boolean('unused').default(false).notNull(),
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),

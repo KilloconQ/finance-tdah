@@ -85,6 +85,13 @@
       "when": 1794922189411,
       "tag": "0011_card_statement_days",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794922630441,
+      "tag": "0012_subscription_charge_alert",
+      "breakpoints": true
     }
   ]
 }

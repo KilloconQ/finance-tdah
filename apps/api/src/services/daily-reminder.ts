@@ -3,6 +3,7 @@ import { dailyReminderDue, localClock } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
 import { logger } from '../lib/logger'
 import { sendPushToUser } from './push-sender'
+import { runSubscriptionAlerts } from './subscription-alerts'
 
 const CHECK_EVERY_MS = 5 * 60 * 1000
 
@@ -80,14 +81,21 @@ export async function runDailyReminders(now: Date = new Date()): Promise<{ sent:
 }
 
 export function startDailyReminders(): void {
-  const tick = () =>
-    runDailyReminders()
+  const tick = () => {
+    const failed = (event: string) => (err: unknown) =>
+      logger.error(event, { message: err instanceof Error ? err.message : String(err) })
+    void runDailyReminders()
       .then(({ sent }) => {
         if (sent > 0) logger.info('daily_reminders_sent', { sent })
       })
-      .catch((err) =>
-        logger.error('daily_reminders_failed', { message: err instanceof Error ? err.message : String(err) }),
-      )
+      .catch(failed('daily_reminders_failed'))
+    // ponytail: rides the reminder timer, so it only runs while web push is configured.
+    void runSubscriptionAlerts()
+      .then(({ sent }) => {
+        if (sent > 0) logger.info('subscription_alerts_sent', { sent })
+      })
+      .catch(failed('subscription_alerts_failed'))
+  }
   // `bun --hot` re-runs this module on every save: replace the timer, don't stack them.
   const g = globalThis as { __dailyReminderTimer?: ReturnType<typeof setInterval> }
   clearInterval(g.__dailyReminderTimer)
