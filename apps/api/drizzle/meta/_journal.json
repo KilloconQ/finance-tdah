@@ -78,6 +78,13 @@
       "when": 1794345659945,
       "tag": "0010_signup_invite",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794922189411,
+      "tag": "0011_card_statement_days",
+      "breakpoints": true
     }
   ]
 }

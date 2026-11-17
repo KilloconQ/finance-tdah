@@ -65,6 +65,9 @@ export const financialAccount = pgTable(
     type: accountTypeEnum('type').notNull(),
     institution: text('institution'),
     last4: text('last4'),
+    // Credit cards: day of the month the statement closes and the day it is due.
+    cutoffDay: integer('cutoff_day'),
+    paymentDay: integer('payment_day'),
     balanceCents: integer('balance_cents').default(0).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

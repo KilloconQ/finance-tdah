@@ -35,6 +35,8 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
         type: input.type,
         institution: input.institution ?? null,
         last4: input.last4 ?? null,
+        cutoffDay: input.type === 'credito' ? (input.cutoffDay ?? null) : null,
+        paymentDay: input.type === 'credito' ? (input.paymentDay ?? null) : null,
         balanceCents: signedBalanceForType(input.type, input.balanceCents),
       })
       .returning()
@@ -73,6 +75,11 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
       }
 
       const set: typeof patch = { ...patch }
+      // Statement days only make sense on a credit card.
+      if (patch.type && patch.type !== 'credito') {
+        set.cutoffDay = null
+        set.paymentDay = null
+      }
       if (patch.balanceCents !== undefined) {
         if ((patch.type ?? current.type) === 'credito') {
           set.balanceCents = signedBalanceForType('credito', patch.balanceCents)

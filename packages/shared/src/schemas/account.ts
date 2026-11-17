@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import { accountTypeSchema, signedCents, trimmedText } from './common'
 
+// Day of the month a credit card closes its statement / is due. Days 29-31 clamp to short months.
+const dayOfMonth = z.number().int().min(1).max(31)
+
 export const financialAccountSchema = z.object({
   id: z.uuid(),
   userId: z.string(),
@@ -11,6 +14,8 @@ export const financialAccountSchema = z.object({
     .string()
     .regex(/^\d{4}$/, { error: 'Solo 4 dígitos' })
     .nullable(),
+  cutoffDay: dayOfMonth.nullable(),
+  paymentDay: dayOfMonth.nullable(),
   balanceCents: signedCents,
   createdAt: z.iso.datetime({ offset: true }),
   updatedAt: z.iso.datetime({ offset: true }),
@@ -26,13 +31,15 @@ export const createFinancialAccountSchema = financialAccountSchema
       .string()
       .regex(/^\d{4}$/, { error: 'Solo 4 dígitos' })
       .optional(),
+    cutoffDay: dayOfMonth.optional(),
+    paymentDay: dayOfMonth.optional(),
   })
 
 // `balanceCents` is redeclared without the create schema's `.default(0)`: Zod 4 applies a
 // default even under `.partial()`, so a patch that only renames an account would have
 // set its balance to $0.
 export const updateFinancialAccountSchema = createFinancialAccountSchema
-  .extend({ balanceCents: signedCents })
+  .extend({ balanceCents: signedCents, cutoffDay: dayOfMonth.nullable(), paymentDay: dayOfMonth.nullable() })
   .partial()
 
 export type FinancialAccountDTO = z.infer<typeof financialAccountSchema>
