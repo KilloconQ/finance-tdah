@@ -74,14 +74,15 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
       ;(leaves ? purchases : payments).push(movement)
     }
 
+    const today = localClock(new Date(), timeZone).date
     const statement = cardStatement({
       cutoffDay: account.cutoffDay,
       paymentDay: account.paymentDay,
-      today: localClock(new Date(), timeZone).date,
+      today,
       purchases,
       payments,
     })
-    return c.json({ statement })
+    return c.json({ statement: { ...statement, today } })
   })
 
   .post('/', zValidator('json', createFinancialAccountSchema), async (c) => {

@@ -88,9 +88,13 @@ describe.skipIf(!TEST_DATABASE_URL)('credit card statement (Postgres)', async ()
     ])
     const res = await get(c.id)
     expect(res.status).toBe(200)
-    const { statement } = (await res.json()) as { statement: { dueCents: number; openPeriodCents: number } }
+    const { statement } = (await res.json()) as {
+      statement: { dueCents: number; openPeriodCents: number; today: string }
+    }
     // The 200-day-old purchase is outside the window and never counts.
     expect(statement.dueCents + statement.openPeriodCents).toBe(70_000)
+    // The day it was calculated for comes with it, so the web does not guess from its own clock.
+    expect(statement.today).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 
   it('rejects an account without statement days and one from another user', async () => {

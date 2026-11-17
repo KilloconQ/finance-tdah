@@ -14,8 +14,10 @@ export const financialAccountSchema = z.object({
     .string()
     .regex(/^\d{4}$/, { error: 'Solo 4 dígitos' })
     .nullable(),
-  cutoffDay: dayOfMonth.nullable(),
-  paymentDay: dayOfMonth.nullable(),
+  // Defaults to null so the web keeps working against an API that predates these fields
+  // (web and API do not switch over at the same instant during a deploy).
+  cutoffDay: dayOfMonth.nullable().default(null),
+  paymentDay: dayOfMonth.nullable().default(null),
   balanceCents: signedCents,
   createdAt: z.iso.datetime({ offset: true }),
   updatedAt: z.iso.datetime({ offset: true }),
@@ -44,6 +46,8 @@ export const updateFinancialAccountSchema = createFinancialAccountSchema
 
 // Response of GET /accounts/:id/statement (see domain/card-statement.ts).
 export const cardStatementSchema = z.object({
+  /** The local day the statement was calculated for (in the owner's time zone). */
+  today: z.string(),
   cutoffDate: z.string(),
   paymentDate: z.string(),
   dueCents: z.number().int(),

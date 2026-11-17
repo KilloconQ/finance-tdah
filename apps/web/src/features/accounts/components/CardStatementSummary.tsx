@@ -7,13 +7,13 @@ type CardStatement = z.infer<typeof cardStatementSchema>
 
 interface CardStatementSummaryProps {
   statement: CardStatement
-  /** Today as a local 'YYYY-MM-DD', to tell a past payment date from an upcoming one. */
-  today: string
 }
 
 /** What the card asks for on its payment date, and what already rolls into the next statement. */
-export function CardStatementSummary({ statement, today }: CardStatementSummaryProps) {
-  const { dueCents, paymentDate, openPeriodCents, nextCutoffDate } = statement
+// `today` comes from the API, in the profile's time zone, so a traveller's device clock does not
+// change whether the payment date has passed.
+export function CardStatementSummary({ statement }: CardStatementSummaryProps) {
+  const { dueCents, paymentDate, openPeriodCents, nextCutoffDate, today } = statement
   const overdue = dueCents > 0 && paymentDate < today
 
   return (

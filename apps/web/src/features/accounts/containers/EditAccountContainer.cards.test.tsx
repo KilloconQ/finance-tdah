@@ -16,6 +16,7 @@ const nu = (patch = {}) =>
   account({ id: CARD, name: 'Nu', type: 'credito', balanceCents: -100_000, cutoffDay: 10, paymentDay: 25, ...patch })
 
 const statement = {
+  today: '2026-11-15',
   cutoffDate: '2026-11-10',
   paymentDate: '2026-11-25',
   dueCents: 150_000,

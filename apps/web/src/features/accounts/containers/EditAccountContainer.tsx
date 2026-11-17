@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { parseAmountToCents, signedBalanceForType } from '@finance-tdah/shared/domain'
-import { todayLocalISO } from '@/lib/format'
 import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
 import { errorText } from '@/lib/api'
 import { accountsQueryOptions, accountStatementQueryOptions, useUpdateAccount } from '../api'
@@ -110,7 +109,7 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
           </IconButton>
         }
       />
-      {statement && hasStatementDays ? <CardStatementSummary statement={statement} today={todayLocalISO()} /> : null}
+      {statement && hasStatementDays ? <CardStatementSummary statement={statement} /> : null}
       <AccountForm
         submitting={updateAccount.isPending}
         error={error}
