@@ -29,7 +29,7 @@ vi.mock('../services/push-sender', () => ({ sendPushToUser: vi.fn() }))
 describe.skipIf(!TEST_DATABASE_URL)('credit card statement (Postgres)', async () => {
   const { db, schema } = await import('../db/client')
   const { accountsRoute } = await import('./accounts')
-  const { inArray } = await import('drizzle-orm')
+  const { eq, inArray } = await import('drizzle-orm')
 
   const app = new Hono().route('/accounts', accountsRoute)
   const run = `s${Date.now()}`
@@ -113,5 +113,75 @@ describe.skipIf(!TEST_DATABASE_URL)('credit card statement (Postgres)', async ()
     ])
     const { statement } = (await (await get(c.id)).json()) as { statement: { openPeriodCents: number } }
     expect(statement.openPeriodCents).toBe(30_000)
+  })
+
+  describe('adversarial', () => {
+    type Stmt = { statement: { dueCents: number; openPeriodCents: number } }
+    const stmt = async (id: string, user = ANA) => (await (await get(id, user)).json()) as Stmt
+
+    // A purchase at 23:30 UTC, ten days ago, on the day a card closes: it is still that day in
+    // Mexico City (UTC-6) but already the next one in Kiritimati (UTC+14).
+    const lateUtc = () => {
+      const d = daysAgo(10)
+      d.setUTCHours(23, 30, 0, 0)
+      return d
+    }
+
+    it('decides which statement a purchase belongs to by the owner time zone', async () => {
+      const KIRI = `${run}-kiri`
+      await db.insert(schema.user).values({ id: KIRI, name: 'Kiri', email: `${KIRI}@test.local` })
+      await db.insert(schema.userProfile).values({ userId: KIRI, displayName: 'Kiri', timeZone: 'Pacific/Kiritimati' })
+
+      const when = lateUtc()
+      const mexico = await card({ cutoffDay: when.getUTCDate() })
+      const [kiriCard] = await db
+        .insert(schema.financialAccount)
+        .values({ userId: KIRI, name: 'k', type: 'credito', cutoffDay: when.getUTCDate(), paymentDay: 28 })
+        .returning()
+      for (const [uid, accountId] of [[ANA, mexico.id], [KIRI, kiriCard!.id]] as const) {
+        await db.insert(schema.expense).values({ ...move(accountId, 'expense', 90_000, when), userId: uid })
+      }
+
+      const inMexico = (await stmt(mexico.id)).statement
+      expect([inMexico.dueCents, inMexico.openPeriodCents]).toEqual([90_000, 0])
+      const inKiri = (await stmt(kiriCard!.id, KIRI)).statement
+      expect([inKiri.dueCents, inKiri.openPeriodCents]).toEqual([0, 90_000])
+      await db.delete(schema.user).where(eq(schema.user.id, KIRI))
+    })
+
+    it('counts a transfer out of the card as a purchase and one into it as a payment', async () => {
+      const c = await card()
+      const [bank] = await db
+        .insert(schema.financialAccount)
+        .values({ userId: ANA, name: `bank-${Math.random()}`, type: 'debito' })
+        .returning()
+      await db.insert(schema.expense).values([
+        { ...move(c.id, 'expense', 0, daysAgo(0)), kind: 'transfer', amountCents: 20_000, toAccountId: bank!.id },
+        { ...move(bank!.id, 'expense', 0, daysAgo(0)), kind: 'transfer', amountCents: 5_000, toAccountId: c.id },
+      ])
+      // 20,000 out of the card is spending; 5,000 into it is a payment, which only reduces what
+      // is due, so the open period shows the spending untouched.
+      expect((await stmt(c.id)).statement.openPeriodCents).toBe(20_000)
+    })
+
+    it('ignores movements on other accounts and forgets a deleted purchase', async () => {
+      const c = await card()
+      const other = await card()
+      const [kept] = await db.insert(schema.expense).values(move(other.id, 'expense', 1_000, daysAgo(0))).returning()
+      await db.insert(schema.expense).values(move(c.id, 'expense', 3_000, daysAgo(0)))
+      const [gone] = await db.insert(schema.expense).values(move(c.id, 'expense', 7_000, daysAgo(0))).returning()
+      expect((await stmt(c.id)).statement.openPeriodCents).toBe(10_000)
+      await db.delete(schema.expense).where(eq(schema.expense.id, gone!.id))
+      expect((await stmt(c.id)).statement.openPeriodCents).toBe(3_000)
+      expect(kept).toBeTruthy()
+    })
+
+    it.each(['not-a-uuid', '00000000-0000-0000-0000-000000000000', "1'; drop table expense;--"])(
+      'answers %s without leaking or crashing',
+      async (id) => {
+        const res = await app.request(`/accounts/${encodeURIComponent(id)}/statement`, { headers: { 'x-test-user': ANA } })
+        expect([400, 404]).toContain(res.status)
+      },
+    )
   })
 })
