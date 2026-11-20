@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { APIError, createAuthMiddleware } from 'better-auth/api'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { bearer } from 'better-auth/plugins'
 import { and, eq, gt, sql } from 'drizzle-orm'
 import { db, schema } from './db/client'
 import { env } from './env'
@@ -46,6 +47,9 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
   trustedOrigins: [env.WEB_ORIGIN],
+  // Native apps (iOS) can't rely on the cookie: sign-in returns the session token in the
+  // `set-auth-token` header and the app sends it back as `Authorization: Bearer`.
+  plugins: [bearer()],
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
