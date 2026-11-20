@@ -24,6 +24,13 @@ extension NetworkedTests {
       #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer tok-123")
     }
 
+    @Test func theDefaultSessionNeverStoresOrSendsCookies() {
+        let configuration = APIClient.defaultSession.configuration
+        #expect(configuration.httpShouldSetCookies == false)
+        #expect(configuration.httpCookieAcceptPolicy == .never)
+        #expect(configuration.httpCookieStorage == nil)
+    }
+
     @Test func omitsTheAuthorizationHeaderWithoutAToken() async throws {
       StubURLProtocol.handler = StubURLProtocol.reply(json: #"{"ok":true}"#)
       let client = APIClient(

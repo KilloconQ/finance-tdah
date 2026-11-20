@@ -6,7 +6,17 @@ public struct APIClient: Sendable {
     let tokens: any TokenStore
     private let session: URLSession
 
-    public init(environment: APIEnvironment, tokens: any TokenStore, session: URLSession = .shared) {
+    /// Bearer-only: no cookie is stored or sent. better-auth also sets a session cookie on sign-in, and
+    /// with one present it demands an `Origin` header on every POST, which breaks sign-out and the next sign-in.
+    public static let defaultSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieAcceptPolicy = .never
+        configuration.httpCookieStorage = nil
+        return URLSession(configuration: configuration)
+    }()
+
+    public init(environment: APIEnvironment, tokens: any TokenStore, session: URLSession = APIClient.defaultSession) {
         self.environment = environment
         self.tokens = tokens
         self.session = session
