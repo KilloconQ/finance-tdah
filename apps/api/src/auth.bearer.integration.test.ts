@@ -55,6 +55,20 @@ describe.skipIf(!TEST_DATABASE_URL)('bearer token sign-in (Postgres)', async () 
     expect(session?.user.email).toBe(email)
   })
 
+  it('revokes the token on sign-out, using only the bearer token', async () => {
+    const token = (await post('sign-in/email', { email, password })).headers.get('set-auth-token')
+    const bearer = { authorization: `Bearer ${token}` }
+
+    expect((await post('sign-out', {}, bearer)).status).toBe(200)
+    expect(await auth.api.getSession({ headers: new Headers(bearer) })).toBeNull()
+  })
+
+  it('still sets the session cookie, so the web sign-in is unchanged', async () => {
+    const res = await post('sign-in/email', { email, password }, { Origin: 'http://localhost:5173' })
+    expect(res.status).toBe(200)
+    expect(res.headers.get('set-cookie')).toContain('finance-tdah.session_token=')
+  })
+
   it('rejects a garbage bearer token', async () => {
     const session = await auth.api.getSession({ headers: new Headers({ authorization: 'Bearer nope' }) })
     expect(session).toBeNull()
