@@ -1,8 +1,8 @@
 import Foundation
 
 public struct SharedExpense: Codable, Sendable, Hashable, Identifiable {
-    public let id: UUID
-    public let groupId: UUID
+    public let id: EntityID
+    public let groupId: EntityID
     public let paidBy: String
     public let description: String
     public let amountCents: Int

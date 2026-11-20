@@ -1,11 +1,11 @@
 import Foundation
 
 public struct Expense: Codable, Sendable, Hashable, Identifiable {
-    public let id: UUID
+    public let id: EntityID
     public let userId: String
-    public let accountId: UUID?
-    public let toAccountId: UUID?
-    public let envelopeId: UUID?
+    public let accountId: EntityID?
+    public let toAccountId: EntityID?
+    public let envelopeId: EntityID?
     public let kind: ExpenseKind
     public let amountCents: Int
     public let category: String

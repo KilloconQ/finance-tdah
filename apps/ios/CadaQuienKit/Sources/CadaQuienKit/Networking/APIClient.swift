@@ -24,20 +24,25 @@ public struct APIClient: Sendable {
 
     // MARK: Typed helpers
 
-    public func get<Response: Decodable>(_ path: String, query: [URLQueryItem] = []) async throws -> Response {
-        try decode(try await perform(.get, path, query: query).data)
+    /// `key` names the top-level field to read (`{"accounts": [...]}` -> "accounts"); nil decodes the whole body.
+    public func get<Response: Decodable>(_ path: String, key: String? = nil, query: [URLQueryItem] = []) async throws -> Response {
+        try decode(try await perform(.get, path, query: query).data, key: key)
     }
 
-    public func post<Response: Decodable>(_ path: String, body: some Encodable) async throws -> Response {
-        try decode(try await perform(.post, path, body: body).data)
+    public func post<Response: Decodable>(_ path: String, key: String? = nil, body: some Encodable) async throws -> Response {
+        try decode(try await perform(.post, path, body: body).data, key: key)
     }
 
-    public func patch<Response: Decodable>(_ path: String, body: some Encodable) async throws -> Response {
-        try decode(try await perform(.patch, path, body: body).data)
+    public func post<Response: Decodable>(_ path: String, key: String? = nil) async throws -> Response {
+        try decode(try await perform(.post, path, body: Optional<Never>.none).data, key: key)
     }
 
-    public func put<Response: Decodable>(_ path: String, body: some Encodable) async throws -> Response {
-        try decode(try await perform(.put, path, body: body).data)
+    public func patch<Response: Decodable>(_ path: String, key: String? = nil, body: some Encodable) async throws -> Response {
+        try decode(try await perform(.patch, path, body: body).data, key: key)
+    }
+
+    public func put<Response: Decodable>(_ path: String, key: String? = nil, body: some Encodable) async throws -> Response {
+        try decode(try await perform(.put, path, body: body).data, key: key)
     }
 
     /// For endpoints that answer `{ok: true}` and carry no data worth reading.
@@ -96,9 +101,12 @@ public struct APIClient: Sendable {
         }
     }
 
-    private func decode<Response: Decodable>(_ data: Data) throws -> Response {
+    private func decode<Response: Decodable>(_ data: Data, key: String?) throws -> Response {
         do {
-            return try JSONCoding.makeDecoder().decode(Response.self, from: data)
+            let decoder = JSONCoding.makeDecoder()
+            guard let key else { return try decoder.decode(Response.self, from: data) }
+            decoder.userInfo[KeyedResponse<Response>.keyInfo] = key
+            return try decoder.decode(KeyedResponse<Response>.self, from: data).value
         } catch {
             throw APIError.invalidResponse
         }

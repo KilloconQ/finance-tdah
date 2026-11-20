@@ -1,7 +1,7 @@
 import Foundation
 
 public struct ExpenseGroup: Codable, Sendable, Hashable, Identifiable {
-    public let id: UUID
+    public let id: EntityID
     public let name: String
     public let createdBy: String
     public let createdAt: Date

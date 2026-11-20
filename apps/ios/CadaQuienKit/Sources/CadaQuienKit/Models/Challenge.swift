@@ -1,7 +1,7 @@
 import Foundation
 
 public struct Challenge: Codable, Sendable, Hashable, Identifiable {
-    public let id: UUID
+    public let id: EntityID
     public let userId: String
     public let name: String
     public let description: String
