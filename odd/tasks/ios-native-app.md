@@ -13,7 +13,7 @@ Branch: feat/ios-app. Delivery strategy: ask-on-risk. Test runner: XCTest / Swif
 ## Tasks
 - [x] T1 (S2,S3) API: native login path (better-auth bearer plugin, Keychain token) — route: inline — RED/GREEN observed, api suite 210/210 — commit: feat(api): accept bearer tokens for native clients — Risk: item 2 (auth)
 - [ ] T2 (S1) Xcode project scaffold in apps/ios (app + widget extension + App Group) — inline — files written, xcodegen OK; xcodebuild blocked until the iOS 26.5 simulator runtime finishes downloading (10.6 GB) — commit: pending
-- [x] T3 (S2,S5) Core: API client, Codable models, bearer auth, token store — inline — swift test 39/39 incl. real-API contract test (3 runs) — commits: de8b10f, 13802b3 — Risk: none (new package, no shared code)
+- [x] T3 (S2,S5) Core: API client, Codable models, bearer auth, token store — inline — swift test 52/52 + real-API contract test over every service (auth, profile, accounts, envelopes, expenses, goals, subscriptions, challenges, dashboard, groups) — commits: de8b10f, 13802b3, be31928 — Risk: none (new package, no shared code)
 - [ ] T4 (S4,S6) Design system: tokens, components (Btn, Card, Chip, Sheet, AmountInput, Money) — inline — -
 - [ ] T5 (S2) Auth + onboarding — inline — -
 - [ ] T6 (S2) Hoy, Movimientos, add/edit expense — inline — -
@@ -32,3 +32,5 @@ Branch: feat/ios-app. Delivery strategy: ask-on-risk. Test runner: XCTest / Swif
 - 2026-11-20 Finding (real API, contract test): URLSession.shared stored better-auth's session cookie; with a cookie present the API demands `Origin` on every POST (403 "Missing or null Origin"), which broke sign-out and the next sign-in and left the token alive on the server. Fix: APIClient.defaultSession never stores/sends cookies (13802b3). Bearer-only sign-out returns 200 and revokes.
 - 2026-11-20 Env: Xcode 26.5 only accepts iOS 26.5 simulator destinations; downloading the runtime with `xcodebuild -downloadPlatform iOS` (installed xcodegen via brew for the project file). Throwaway Postgres: docker container `ft-test-pg` on :54329 (db ft_test); remove when done.
 - Decisions taken by default (user said "lo que sea"): bearer plugin, SF system font, min iOS 17, push last. swiftui-pro skill installed (user choice).
+- 2026-11-20 Finding #2 (contract test): Swift's UUID encodes UPPERCASE and the API compares ids as text, so an expense with envelopeId was rejected ("Esa cajita es de otra cuenta"). Fix: ids are `EntityID` (always lowercase), covered by EntityIDTests + the contract test (be31928).
+- 2026-11-20 Env: the first `xcodebuild -downloadPlatform iOS` died at 29.5% (3.12/10.6 GB) when its shell exited; relaunched as a tracked background task. T2 and every SwiftUI task (T4-T9) are blocked on that runtime for build/test; Kit work (T3) needs no simulator.
