@@ -91,6 +91,11 @@ struct ExpenseForm: View {
         VStack(alignment: .leading, spacing: Layout.spacingSmall) {
             Text(title).font(.subheadline).foregroundStyle(Palette.inkMid)
             Picker(title, selection: selection) {
+                // The form picks a default account right after it appears (and after switching to a transfer), so for
+                // one frame nothing is selected. A Picker whose selection has no tag misbehaves: "nothing" gets a row.
+                if selection.wrappedValue == nil {
+                    Text("Elige una cuenta").tag(EntityID?.none)
+                }
                 ForEach(accounts) { account in
                     Text(account.name).tag(Optional(account.id))
                 }
