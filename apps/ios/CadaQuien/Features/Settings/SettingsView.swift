@@ -26,6 +26,10 @@ struct SettingsView: View {
 
                 NotificationsSection()
 
+                if app.push.isRegistered {
+                    CalendarAlertsSection()
+                }
+
                 if let errorMessage {
                     InlineMessage(.error, errorMessage)
                 }

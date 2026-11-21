@@ -84,6 +84,10 @@ registers (payroll or other payments, once or weekly, every 14 days, semimonthly
 (`GET /api/calendar?from&to`), so the web and the app always show the same days; the income itself lives at `/api/incomes`.
 Income only reminds: it never creates a movement. On iOS 26 the tab bar shrinks to a small pill while scrolling down.
 
+The server also sends a push before each event (Ajustes → Avisos del calendario, shown once notifications are on). Per kind you can turn
+it off and pick how many days before and the hour. Defaults: income the same day at 19:00, card cutoff 2 days before, card payment
+4 days before, monthly subscriptions 1 day before, yearly ones 7 days before (09:00 for all but income). Each event notifies once.
+
 ## Widget, Siri and Shortcuts
 
 - **Widget** (small, medium, lock screen): shows what you can spend today and, in the medium size, logs a preset expense

@@ -16,7 +16,7 @@ Branch: feat/payment-calendar. Delivery strategy: ask-on-risk. Test runners: Vit
 - [x] T1 (S3-S7) shared: alert rule defaults + `dueAlerts` domain + zod schemas — shared 175 (alerts.test.ts 12 new; one load-flaky timeout in card-subscription.adversarial passes alone and on the base) — commit: see git log
 - [x] T2 (S1,S8) API: migration (rules, sent log), rules routes, calendar-alerts service replacing the subscription push, ticking — api 266 with Postgres (calendar-alerts + rules integration, 16 in the two touched files; 2 auth tests timed out under load and pass alone) — commit: see git log
 - [x] T3 (S2) web: Ajustes section — web calendar+settings 29 tests, tsc and eslint clean — commit: see git log
-- [ ] T4 (S2) iOS: Kit model/service + Ajustes section
+- [x] T4 (S2) iOS: Kit model/service + Ajustes section — Kit 149 tests (service by kind, choices), app builds; Ajustes screen not seen in the simulator — commit: see git log
 
 ## Log
 - L1 (2026-11-21, user): "que mande notificaciones por favor, que haya opciones de cuando se tienen que mandar las notificaciones pero por defecto para día de pago el mismo día en la tarde a las 19:00. el día de corte 2 días antes, el día de pago 4 días antes, el día de la suscripción 1 día antes por si lo quiere cancelar si es mensual y si es anual 1 semana antes de renovar."

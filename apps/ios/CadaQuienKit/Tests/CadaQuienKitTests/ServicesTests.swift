@@ -19,6 +19,34 @@ extension NetworkedTests {
       return try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
     }
 
+    @Test func notificationRulesReadAndSaveByKind() async throws {
+      StubURLProtocol.handler = StubURLProtocol.reply(
+        json: """
+          {"rules":[{"kind":"card_cutoff","enabled":true,"daysBefore":2,"hour":9},{"kind":"income","enabled":false,"daysBefore":0,"hour":19}]}
+          """)
+      let service = NotificationRulesService(client: client())
+      let rules = try await service.list()
+      #expect(rules.map(\.kind) == [.cardCutoff, .income])
+      #expect(rules[1] == NotificationRule(kind: .income, enabled: false, daysBefore: 0, hour: 19))
+
+      StubURLProtocol.handler = StubURLProtocol.reply(
+        json: #"{"rule":{"kind":"card_payment","enabled":true,"daysBefore":3,"hour":8}}"#)
+      try await service.save(NotificationRule(kind: .cardPayment, enabled: true, daysBefore: 3, hour: 8))
+      #expect(StubURLProtocol.lastRequest?.httpMethod == "PUT")
+      #expect(StubURLProtocol.lastRequest?.url?.path() == "/api/notification-rules/card_payment")
+      let json = try sentJSON()
+      #expect(json.keys.sorted() == ["daysBefore", "enabled", "hour"])
+      #expect(json["daysBefore"] as? Int == 3)
+    }
+
+    @Test func daysChoicesKeepAStoredValueThatIsNotOffered() {
+      #expect(NotificationRule(kind: .income, enabled: true, daysBefore: 4, hour: 9).daysChoices().count == 17)
+      #expect(NotificationRule(kind: .income, enabled: true, daysBefore: 17, hour: 9).daysChoices().contains(17))
+      #expect(NotificationRule.daysLabel(0) == "El mismo día")
+      #expect(NotificationRule.daysLabel(1) == "1 día antes")
+      #expect(NotificationRule.daysLabel(7) == "7 días antes")
+    }
+
     @Test func idsGoInThePathInLowercase() async throws {
       StubURLProtocol.handler = StubURLProtocol.reply(204)
       try await AccountsService(client: client()).delete(id)
