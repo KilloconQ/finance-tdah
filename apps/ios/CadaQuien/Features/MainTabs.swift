@@ -32,6 +32,7 @@ struct MainTabs: View {
             .tabItem { Label("Grupos", systemImage: "person.2") }
             .tag(MainTab.groups)
         }
+        .compactTabBar()
         .safeAreaInset(edge: .top, spacing: 0) {
             OfflineBanner(connectivity: app.connectivity)
         }
