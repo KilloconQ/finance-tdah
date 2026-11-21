@@ -101,7 +101,15 @@ if (!features.webPush) {
     feature: 'web_push',
     message: `${features.webPushProblem} Push notifications are disabled; sign-in is unaffected.`,
   })
-} else if (env.NODE_ENV !== 'test') {
+}
+if (features.apnsConfigured && !features.apns) {
+  logger.warn('feature_disabled', {
+    feature: 'apns',
+    message: `${features.apnsProblem} iPhone notifications are disabled; sign-in is unaffected.`,
+  })
+}
+// The reminders go out over whichever channel is set up.
+if ((features.webPush || features.apns) && env.NODE_ENV !== 'test') {
   startDailyReminders()
 }
 export default {

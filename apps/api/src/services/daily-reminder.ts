@@ -31,11 +31,20 @@ export async function runDailyReminders(now: Date = new Date()): Promise<{ sent:
     .where(
       and(
         eq(schema.userProfile.dailyReminderEnabled, true),
-        exists(
-          db
-            .select({ one: sql`1` })
-            .from(schema.pushSubscription)
-            .where(eq(schema.pushSubscription.userId, schema.userProfile.userId)),
+        // Someone can be reached through a browser, an iPhone, or both.
+        or(
+          exists(
+            db
+              .select({ one: sql`1` })
+              .from(schema.pushSubscription)
+              .where(eq(schema.pushSubscription.userId, schema.userProfile.userId)),
+          ),
+          exists(
+            db
+              .select({ one: sql`1` })
+              .from(schema.deviceToken)
+              .where(eq(schema.deviceToken.userId, schema.userProfile.userId)),
+          ),
         ),
       ),
     )
@@ -89,7 +98,7 @@ export function startDailyReminders(): void {
         if (sent > 0) logger.info('daily_reminders_sent', { sent })
       })
       .catch(failed('daily_reminders_failed'))
-    // ponytail: rides the reminder timer, so it only runs while web push is configured.
+    // ponytail: rides the reminder timer, so it only runs while web push or native push is configured.
     void runSubscriptionAlerts()
       .then(({ sent }) => {
         if (sent > 0) logger.info('subscription_alerts_sent', { sent })

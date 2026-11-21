@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm'
 import { db, schema } from '../db/client'
 import { env, features } from '../env'
 import { logger } from '../lib/logger'
+import { sendApnsToUser } from './apns-sender'
 
 // Web push is optional: without VAPID keys we skip sending instead of throwing at
 // import time, which would otherwise crash the API on startup and block sign-in.
@@ -17,11 +18,19 @@ export type PushPayload = {
 }
 
 export async function sendPushToUser(userId: string, payload: PushPayload): Promise<void> {
-  if (!features.webPush) {
+  if (!features.webPush && !features.apns) {
     logger.warn('push_skipped', { userId, message: 'VAPID keys no configuradas' })
     return
   }
 
+  // Each channel is independent: a user can have a browser, an iPhone, or both, and one failing never blocks the other.
+  await Promise.allSettled([
+    features.webPush ? sendWebPush(userId, payload) : undefined,
+    features.apns ? sendApnsToUser(userId, payload) : undefined,
+  ])
+}
+
+async function sendWebPush(userId: string, payload: PushPayload): Promise<void> {
   const subscriptions = await db.query.pushSubscription.findMany({
     where: (s, { eq }) => eq(s.userId, userId),
   })

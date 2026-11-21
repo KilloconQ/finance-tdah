@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { apnsStatus } from './lib/apns'
 import { vapidStatus } from './lib/vapid'
 
 // docker compose passes unset vars through as empty strings (`${FOO:-}`), so an
@@ -29,6 +30,12 @@ const envSchema = z.object({
   VAPID_PUBLIC_KEY: optionalSecret,
   VAPID_PRIVATE_KEY: optionalSecret,
   VAPID_SUBJECT: z.string().default('mailto:soporte@finance-tdah.local'),
+  // Native (iPhone) push through APNs. All optional, like web push: without them the iOS app still works and just
+  // gets no notifications. APNS_PRIVATE_KEY is the contents of the .p8 file from Apple.
+  APNS_KEY_ID: optionalSecret,
+  APNS_TEAM_ID: optionalSecret,
+  APNS_BUNDLE_ID: z.string().trim().min(1).default('app.cadaquien.ios'),
+  APNS_PRIVATE_KEY: optionalSecret,
   // Comma-separated emails that may always register (admins). Anyone else needs an
   // invitation from an existing user (see auth.ts).
   ALLOWED_EMAILS: z
@@ -56,6 +63,12 @@ export const env = parsed.data
 export type Env = typeof env
 
 const webPush = vapidStatus(env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY)
+const apns = apnsStatus({
+  keyId: env.APNS_KEY_ID,
+  teamId: env.APNS_TEAM_ID,
+  bundleId: env.APNS_BUNDLE_ID,
+  privateKey: env.APNS_PRIVATE_KEY,
+})
 
 export const features = {
   passwordResetEmail: Boolean(env.RESEND_API_KEY),
@@ -63,4 +76,9 @@ export const features = {
   // the API loads. `webPushProblem` says why it's off, for the startup log.
   webPush: webPush.enabled,
   webPushProblem: webPush.enabled ? null : webPush.problem,
+  // Native push: on only for a usable key, like web push.
+  apns: apns.enabled,
+  apnsProblem: apns.enabled ? null : apns.problem,
+  // True when someone started setting APNs up: a half-done setup is worth a startup warning, an unset one is not.
+  apnsConfigured: apns.enabled || apns.configured,
 } as const

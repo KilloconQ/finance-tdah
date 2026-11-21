@@ -196,6 +196,26 @@ export const pushSubscription = pgTable(
   (t) => [uniqueIndex('push_subscription_endpoint_idx').on(t.endpoint)],
 )
 
+/**
+ * An iPhone or iPad that can receive native (APNs) notifications. The web has its own table
+ * (`push_subscription`): the two are different protocols with different credentials.
+ */
+export const deviceToken = pgTable(
+  'device_token',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    /** The APNs device token, as the hex string the app sends. */
+    token: text('token').notNull(),
+    /** Which APNs host this token belongs to: debug builds register against the sandbox. */
+    environment: text('environment').$type<'sandbox' | 'production'>().notNull().default('production'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('device_token_token_idx').on(t.token), index('device_token_user_idx').on(t.userId)],
+)
+
 export const userRelations = relations(user, ({ one, many }) => ({
   profile: one(userProfile, {
     fields: [user.id],
@@ -209,10 +229,15 @@ export const userRelations = relations(user, ({ one, many }) => ({
   challenges: many(challenge),
   budgets: many(dailyBudget),
   pushSubscriptions: many(pushSubscription),
+  deviceTokens: many(deviceToken),
 }))
 
 export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) => ({
   user: one(user, { fields: [pushSubscription.userId], references: [user.id] }),
+}))
+
+export const deviceTokenRelations = relations(deviceToken, ({ one }) => ({
+  user: one(user, { fields: [deviceToken.userId], references: [user.id] }),
 }))
 
 export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({

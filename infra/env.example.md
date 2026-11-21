@@ -43,6 +43,14 @@ RESEND_FROM_EMAIL=onboarding@resend.dev
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
 VAPID_SUBJECT=mailto:soporte@finance-tdah.local
+
+# --- Push nativo del iPhone (APNs) --- OPCIONAL
+# Hace falta una cuenta de Apple Developer. Si quedan vacías, la app de iOS funciona igual pero sin notificaciones.
+# En developer.apple.com > Keys, creá una clave con "Apple Push Notifications service (APNs)" y descargá el .p8.
+APNS_KEY_ID=
+APNS_TEAM_ID=
+APNS_BUNDLE_ID=app.cadaquien.ios
+APNS_PRIVATE_KEY=
 ```
 
 ## Notas
@@ -55,7 +63,13 @@ VAPID_SUBJECT=mailto:soporte@finance-tdah.local
   (`docker compose logs api | grep web_push`); la web, si trae una pública inválida, lo avisa en Ajustes.
   Cambiar la pública obliga a recompilar la web (`up -d --build`) y a reactivar las notificaciones en
   cada celular.
-- `RESEND_*` y `VAPID_*` son **opcionales**: vacías sólo apagan reset-por-email y push.
+- `APNS_KEY_ID` y `APNS_TEAM_ID`: 10 letras y números cada uno (el key id está en el nombre del `.p8`, el team id en
+  tu cuenta de Apple Developer). `APNS_PRIVATE_KEY` es el **contenido** del `.p8`; si tu hosting no admite varias
+  líneas, pegalo en una sola con `\n` literal. Si están mal, la API arranca igual con las notificaciones del iPhone
+  apagadas y el log dice qué revisar (`docker compose logs api | grep apns`). `APNS_BUNDLE_ID` tiene que ser el
+  bundle id de la app. Cada iPhone se registra solo contra el servidor correcto: las builds de Xcode usan el
+  sandbox de Apple y las de TestFlight / App Store, producción.
+- `RESEND_*`, `VAPID_*` y `APNS_*` son **opcionales**: vacías sólo apagan reset-por-email y push.
   `docker-compose.yml` ya las pasa al contenedor `api`, y `VAPID_PUBLIC_KEY` también entra
   al build del web como `VITE_VAPID_PUBLIC_KEY` (hay que rebuildear el web si la cambiás).
 - En dev sin docker, sumá un Postgres local (`brew install postgresql@17 && brew services start postgresql@17`) o levantá solo `postgres` con `docker compose up -d postgres`.
