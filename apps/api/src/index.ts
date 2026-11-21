@@ -21,6 +21,7 @@ import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
 import { calendarRoute } from './routes/calendar'
 import { incomesRoute } from './routes/incomes'
+import { notificationRulesRoute } from './routes/notification-rules'
 import { startDailyReminders } from './services/daily-reminder'
 
 const app = new Hono<{ Variables: { requestId: string } }>()
@@ -58,6 +59,7 @@ const api = app
   .route('/profile', profileRoute)
   .route('/calendar', calendarRoute)
   .route('/incomes', incomesRoute)
+  .route('/notification-rules', notificationRulesRoute)
   .route('/accounts', accountsRoute)
   .route('/envelopes', envelopesRoute)
   .route('/goals', goalsRoute)

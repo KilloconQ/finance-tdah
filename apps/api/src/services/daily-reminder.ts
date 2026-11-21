@@ -4,7 +4,8 @@ import { db, schema } from '../db/client'
 import { features } from '../env'
 import { logger } from '../lib/logger'
 import { sendPushToUser } from './push-sender'
-import { runSubscriptionAlerts } from './subscription-alerts'
+import { runCalendarAlerts } from './calendar-alerts'
+import { rollSubscriptionDates } from './subscription-alerts'
 
 const CHECK_EVERY_MS = 5 * 60 * 1000
 
@@ -102,11 +103,13 @@ export function startDailyReminders(): void {
       })
       .catch(failed('daily_reminders_failed'))
     // ponytail: rides the reminder timer, so it only runs while web push or native push is configured.
-    void runSubscriptionAlerts()
+    // The date roll goes first so the notifications look at the dates ahead, not at ones that have passed.
+    void rollSubscriptionDates()
+      .then(() => runCalendarAlerts())
       .then(({ sent }) => {
-        if (sent > 0) logger.info('subscription_alerts_sent', { sent })
+        if (sent > 0) logger.info('calendar_alerts_sent', { sent })
       })
-      .catch(failed('subscription_alerts_failed'))
+      .catch(failed('calendar_alerts_failed'))
   }
   // `bun --hot` re-runs this module on every save: replace the timer, don't stack them.
   const g = globalThis as { __dailyReminderTimer?: ReturnType<typeof setInterval> }

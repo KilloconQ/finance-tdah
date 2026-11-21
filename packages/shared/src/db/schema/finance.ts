@@ -8,6 +8,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -463,3 +464,33 @@ export const scheduledIncome = pgTable('scheduled_income', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
+
+// How the user wants each kind of calendar notification. A kind without a row uses the defaults in `domain/alerts`.
+export const notificationRule = pgTable(
+  'notification_rule',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    kind: text('kind').$type<'income' | 'card_cutoff' | 'card_payment' | 'subscription_monthly' | 'subscription_yearly'>().notNull(),
+    enabled: boolean('enabled').notNull(),
+    daysBefore: integer('days_before').notNull(),
+    hour: integer('hour').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind] })],
+)
+
+// What was already notified, so a calendar event never produces a second notification.
+export const calendarAlert = pgTable(
+  'calendar_alert',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    sourceId: text('source_id').notNull(),
+    eventDate: date('event_date').notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.sourceId, t.eventDate] })],
+)
