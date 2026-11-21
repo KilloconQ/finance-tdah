@@ -11,7 +11,7 @@ Branch: feat/payment-calendar (stacked on feat/ios-app). Delivery strategy: ask-
 
 ## Tasks
 - [x] T1 (S1,S2,S5) API: shared domain for calendar events, `scheduled_income` table + migration, `/incomes` CRUD, `GET /calendar` — route: inline — Risk: item 1 (additive migration) — domain 15 tests (RED then GREEN), schemas, migration 0014, routes; api integration 5/5, api suite + shared 163 — commit: see log
-- [ ] T2 (S1,S2,S3) Web: calendar page, income forms, navigation — route: inline
+- [x] T2 (S1,S2,S3) Web: calendar page, income forms, navigation — route: inline — month helper 3 tests, container 7 tests, TabBar tests updated (5 tabs); web 459/459, tsc + eslint clean; not seen in a browser
 - [ ] T3 (S1,S2,S3) iOS: Kit models/services/rules, calendar screen, income forms, new tab — route: inline
 - [ ] T4 (S4) iOS: compact tab bar — route: inline
 - [ ] T5 Close: full test pass, README/docs, cleanup — route: inline

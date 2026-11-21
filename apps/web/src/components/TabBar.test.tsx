@@ -24,9 +24,9 @@ const labels = (nav: HTMLElement) =>
 const current = () => screen.getAllByRole('link').filter((a) => a.getAttribute('aria-current') === 'page')
 
 describe('TabBar (mobile)', () => {
-  it('shows four tabs: Hoy, Movimientos, Dinero, Grupos', () => {
+  it('shows five tabs: Hoy, Movimientos, Dinero, Calendario, Grupos', () => {
     renderAt('/', <TabBar />)
-    expect(labels(screen.getByRole('navigation'))).toEqual(['Hoy', 'Movimientos', 'Dinero', 'Grupos'])
+    expect(labels(screen.getByRole('navigation'))).toEqual(['Hoy', 'Movimientos', 'Dinero', 'Calendario', 'Grupos'])
     expect(screen.getByRole('link', { name: 'Dinero' }).getAttribute('href')).toBe('/money')
   })
 
@@ -67,6 +67,7 @@ describe('Sidebar (desktop)', () => {
       'Movimientos',
       'Suscrip.',
       'Cuentas',
+      'Calendario',
       'Grupos',
       'Retos',
     ])
