@@ -109,10 +109,10 @@ private struct MonthContent: View {
         VStack(alignment: .leading, spacing: Layout.spacingSection) {
             VStack(alignment: .leading, spacing: Layout.spacingSmall) {
                 LazyVGrid(columns: columns, spacing: 0) {
-                    ForEach(Array(["L", "M", "M", "J", "V", "S", "D"].enumerated()), id: \.offset) { _, letter in
-                        Text(letter).font(.caption.weight(.medium)).foregroundStyle(Palette.inkSoft).accessibilityHidden(true)
+                    ForEach(["L", "M", "M", "J", "V", "S", "D"].enumerated().map { "w\($0.offset)=\($0.element)" }, id: \.self) { tag in
+                        Text(tag.split(separator: "=").last.map(String.init) ?? "").font(.caption.weight(.medium)).foregroundStyle(Palette.inkSoft).accessibilityHidden(true)
                     }
-                    ForEach(0..<month.leadingBlanks, id: \.self) { _ in Color.clear.frame(height: 1) }
+                    ForEach((0..<month.leadingBlanks).map { "b\($0)" }, id: \.self) { _ in Color.clear.frame(height: 1) }
                     ForEach(month.days(), id: \.self) { date in
                         DayCell(
                             date: date, kinds: kinds(on: date), isToday: date == response.today, isSelected: date == day
