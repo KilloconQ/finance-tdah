@@ -123,11 +123,6 @@ function Settings() {
                         </select>
                       </label>
                     ) : null}
-                    <div className="pt-2 text-sm font-medium text-ink">Avisos del calendario</div>
-                    <p className="-mt-2 text-xs text-ink-soft">
-                      Cobros, cortes y pagos de tarjeta y suscripciones. Elige cuándo te avisamos de cada uno.
-                    </p>
-                    <NotificationRulesContainer />
                   </>
                 ) : null}
               </div>
@@ -145,6 +140,13 @@ function Settings() {
             ) : null}
           </Section>
         ) : null}
+
+        <Section
+          label="Avisos del calendario"
+          hint="Cobros, cortes y pagos de tarjeta y suscripciones. Elige cuándo te avisamos de cada uno."
+        >
+          <NotificationRulesContainer />
+        </Section>
 
         <Section label="Invita a alguien" hint="Le mandamos un correo con el enlace para crear su cuenta en Cada Quien.">
           <InviteToApp />
