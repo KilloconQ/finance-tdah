@@ -27,6 +27,12 @@ final class Resource<Value: Sendable & Equatable> {
         await load()
     }
 
+    /// After a mutation: refresh what a screen already shows, and leave unvisited screens to load when they appear.
+    func reloadIfLoaded() async {
+        guard value != nil else { return }
+        await load()
+    }
+
     func load() async {
         guard !isLoading else { return }
         isLoading = true

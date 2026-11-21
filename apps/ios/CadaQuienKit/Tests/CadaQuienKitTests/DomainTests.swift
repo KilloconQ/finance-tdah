@@ -100,3 +100,20 @@ struct APIMessagesTests {
     #expect(APIClient.message(in: Data(), status: 429) == APIMessages.rateLimited)
   }
 }
+
+struct ValidationTests {
+  @Test(arguments: ["a@b.co", "  nombre@correo.com  ", "x.y+z@sub.dominio.mx"])
+  func acceptsRealEmails(value: String) {
+    #expect(Validation.isValidEmail(value))
+  }
+
+  @Test(arguments: ["", "abc", "a@b", "a @b.co", "@b.co", "a@.co "])
+  func rejectsMalformedEmails(value: String) {
+    #expect(Validation.isValidEmail(value) == false)
+  }
+
+  @Test func passwordsNeedEightCharacters() {
+    #expect(Validation.isValidPassword("1234567") == false)
+    #expect(Validation.isValidPassword("12345678"))
+  }
+}
