@@ -7,17 +7,18 @@ struct JarView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            RoundedRectangle(cornerRadius: Layout.radiusCard)
-                .fill(Palette.bgAlt)
-            Rectangle()
-                .fill(Palette.sageMuted)
-                .frame(maxHeight: .infinity, alignment: .bottom)
-                .containerRelativeFrame(.vertical) { length, _ in length * fraction.clamped(to: 0...1) }
-                .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: fraction)
+        let level = fraction.clamped(to: 0...1)
+        ZStack {
+            Palette.bgAlt
+            GeometryReader { proxy in
+                Rectangle()
+                    .fill(Palette.sageMuted)
+                    .frame(height: proxy.size.height * level)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.6), value: level)
+            }
             Text(emoji)
                 .font(.largeTitle)
-                .frame(maxHeight: .infinity)
                 .accessibilityHidden(true)
         }
         .clipShape(.rect(cornerRadius: Layout.radiusCard))
@@ -26,7 +27,7 @@ struct JarView: View {
         }
         .accessibilityElement()
         .accessibilityLabel("Frasco")
-        .accessibilityValue("\(Int((fraction.clamped(to: 0...1) * 100).rounded())) por ciento lleno")
+        .accessibilityValue("\(Int((level * 100).rounded())) por ciento lleno")
     }
 }
 
@@ -37,5 +38,10 @@ extension Comparable {
 }
 
 #Preview {
-    JarView(fraction: 0.4).frame(width: 96, height: 120)
+    HStack {
+        JarView(fraction: 0.2).frame(width: 56, height: 76)
+        JarView(fraction: 0.6).frame(width: 96, height: 128)
+        JarView(fraction: 1).frame(width: 96, height: 128)
+    }
+    .padding()
 }

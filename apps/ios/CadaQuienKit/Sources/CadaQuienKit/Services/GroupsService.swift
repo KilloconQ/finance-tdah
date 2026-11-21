@@ -45,7 +45,7 @@ public struct GroupsService: Sendable {
     }
 
     /// Omit `splits` to divide equally among `participantIds`; send `splits` for custom amounts that add up to the total.
-    public struct SharedExpenseInput: Encodable, Sendable {
+    public struct SharedExpenseInput: Encodable, Sendable, Equatable {
         public var paidBy: String
         public var description: String
         public var amountCents: Int

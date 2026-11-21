@@ -27,7 +27,7 @@ struct MainTabs: View {
             .tag(MainTab.money)
 
             NavigationStack(path: $navigator.groupsPath) {
-                PlaceholderScreen(title: "Grupos").routeDestinations()
+                GroupsView().routeDestinations()
             }
             .tabItem { Label("Grupos", systemImage: "person.2") }
             .tag(MainTab.groups)
@@ -42,14 +42,5 @@ struct MainTabs: View {
         .fullScreenCover(isPresented: $navigator.isShowingPanic) {
             PanicView()
         }
-    }
-}
-
-private struct PlaceholderScreen: View {
-    let title: String
-
-    var body: some View {
-        ContentUnavailableView(title, systemImage: "hammer", description: Text("Próximamente"))
-            .navigationTitle(title)
     }
 }

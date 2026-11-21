@@ -271,3 +271,107 @@ struct GoalAndSubscriptionDraftTests {
     #expect((0..<1).contains(Avatar.hue("x")))
   }
 }
+
+struct GroupRulesTests {
+  private func group(balance: Int) -> ExpenseGroup {
+    try! JSONCoding.makeDecoder().decode(
+      ExpenseGroup.self,
+      from: Data(
+        """
+        {"id":"g\(balance)","name":"G","createdBy":"u1","createdAt":"2026-01-01T00:00:00.000Z",
+        "members":[{"userId":"u1","name":"Ana","email":"a@b.co"},{"userId":"u2","name":"Luis","email":"l@b.co"}],
+        "myBalanceCents":\(balance)}
+        """.utf8))
+  }
+
+  private func members() -> [GroupMember] {
+    [GroupMember(userId: "u1", name: "Ana", email: "a"), GroupMember(userId: "u2", name: "Luis", email: "l"), GroupMember(userId: "u3", name: "Eva", email: "e")]
+  }
+
+  @Test func totalsSplitWhatYouAreOwedFromWhatYouOwe() {
+    let totals = GroupRules.totals([group(balance: 5_000), group(balance: -2_000), group(balance: 300), group(balance: 0)])
+    #expect(totals == GroupRules.Totals(owedToYou: 5_300, youOwe: 2_000))
+  }
+
+  @Test func debtLabelsReadFromYourPointOfView() {
+    let names = ["u1": "Ana", "u2": "Luis"]
+    #expect(GroupRules.debtLabel(GroupDebt(from: "u1", to: "u2", amountCents: 1), me: "u1", names: names) == "Le debes a Luis")
+    #expect(GroupRules.debtLabel(GroupDebt(from: "u2", to: "u1", amountCents: 1), me: "u1", names: names) == "Luis te debe")
+    #expect(GroupRules.debtLabel(GroupDebt(from: "u2", to: "u3", amountCents: 1), me: "u1", names: names) == "Luis le debe a Alguien")
+    #expect(GroupRules.otherParty(GroupDebt(from: "u1", to: "u2", amountCents: 1), me: "u1") == "u2")
+  }
+
+  @Test func balanceTitles() {
+    #expect(GroupRules.balanceTitle(10) == "Te deben")
+    #expect(GroupRules.balanceTitle(-10) == "Debes")
+    #expect(GroupRules.balanceTitle(0) == "Estás al día")
+  }
+
+  @Test func equalSharesOpenInEqualMode() throws {
+    let expense = try JSONCoding.makeDecoder().decode(
+      SharedExpense.self,
+      from: Data(
+        """
+        {"id":"x","groupId":"g","paidBy":"u1","description":"Super","amountCents":10000,"date":"2026-11-10","createdBy":"u1",
+        "createdAt":"2026-11-10T10:00:00.000Z","splits":[{"userId":"u1","shareCents":3334},{"userId":"u2","shareCents":3333},{"userId":"u3","shareCents":3333}]}
+        """.utf8))
+    #expect(GroupRules.isEqualSplit(expense))
+    #expect(GroupRules.canEdit(expense, me: "u1"))
+    #expect(GroupRules.canEdit(expense, me: "u2") == false)
+    #expect(GroupRules.payerLabel(expense, me: "u1", names: [:]) == "Pagaste tú · entre 3")
+    #expect(GroupRules.payerLabel(expense, me: "u2", names: ["u1": "Ana"]) == "Pagó Ana · entre 3")
+    #expect(SharedExpenseDraft(expense).isCustom == false)
+  }
+
+  @Test func unequalSharesOpenInCustomMode() throws {
+    let expense = try JSONCoding.makeDecoder().decode(
+      SharedExpense.self,
+      from: Data(
+        """
+        {"id":"x","groupId":"g","paidBy":"u1","description":"Cena","amountCents":10000,"date":"2026-11-10","createdBy":"u1",
+        "createdAt":"2026-11-10T10:00:00.000Z","splits":[{"userId":"u1","shareCents":7000},{"userId":"u2","shareCents":3000}]}
+        """.utf8))
+    let draft = SharedExpenseDraft(expense)
+    #expect(draft.isCustom)
+    #expect(draft.customAmounts["u1"] == "70")
+  }
+
+  @Test func anEqualSplitSendsOnlyParticipants() throws {
+    var draft = SharedExpenseDraft(me: "u1", members: members())
+    draft.description = " Super "
+    draft.amountText = "90"
+    draft.participants = ["u1", "u3"]
+    let request = try draft.request(date: CalendarDay(year: 2026, month: 11, day: 20), members: members()).get()
+    #expect(request.participantIds == ["u1", "u3"])
+    #expect(request.splits == nil)
+    #expect(request.description == "Super")
+    #expect(request.amountCents == 9_000)
+  }
+
+  @Test func customSharesMustAddUpToTheTotal() throws {
+    var draft = SharedExpenseDraft(me: "u1", members: members())
+    draft.description = "Cena"
+    draft.amountText = "100"
+    draft.isCustom = true
+    draft.participants = ["u1", "u2"]
+    draft.customAmounts = ["u1": "60", "u2": "30"]
+    #expect(
+      draft.request(date: CalendarDay(year: 2026, month: 11, day: 20), members: members())
+        == .failure(.init("Las partes suman $90.00 y el gasto es de $100.00")))
+    draft.customAmounts["u2"] = "40"
+    let request = try draft.request(date: CalendarDay(year: 2026, month: 11, day: 20), members: members()).get()
+    #expect(request.splits?.map(\.shareCents) == [6_000, 4_000])
+    #expect(request.participantIds == nil)
+  }
+
+  @Test func needsAtLeastOnePersonAndAPositiveAmount() {
+    var draft = SharedExpenseDraft(me: "u1", members: members())
+    draft.description = "x"
+    draft.amountText = "10"
+    draft.participants = []
+    #expect(draft.request(date: CalendarDay(year: 2026, month: 1, day: 1), members: members()) == .failure(.init("Elige al menos a una persona")))
+    draft.participants = ["u1"]
+    draft.amountText = "0"
+    #expect(draft.request(date: CalendarDay(year: 2026, month: 1, day: 1), members: members()) == .failure(.init("El monto debe ser mayor a $0")))
+  }
+}

@@ -27,7 +27,7 @@ private struct RouteView: View {
         case .newSubscription: NewSubscriptionScreen()
         case .subscription(let id): SubscriptionDetailScreen(subscriptionId: id)
         case .editSubscription(let id): EditSubscriptionScreen(subscriptionId: id)
-        case .group: ContentUnavailableView("Próximamente", systemImage: "hammer")
+        case .group(let id): GroupDetailScreen(groupId: id)
         }
     }
 }

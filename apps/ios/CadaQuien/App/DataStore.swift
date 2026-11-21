@@ -15,8 +15,14 @@ final class DataStore {
     let groups: Resource<[ExpenseGroup]>
     let invitations: Resource<[GroupInvitation]>
 
+    @ObservationIgnored private var groupDetails: [EntityID: Resource<GroupDetail>] = [:]
+    @ObservationIgnored private let services: Services
+    @ObservationIgnored private let fire: @MainActor () -> Void
+
     init(services: Services, unauthorized: UnauthorizedHandler) {
         let fire: @MainActor () -> Void = { unauthorized.fire() }
+        self.services = services
+        self.fire = fire
         summary = Resource(onUnauthorized: fire) { try await services.dashboard.home() }
         accounts = Resource(onUnauthorized: fire) { try await services.accounts.list() }
         envelopes = Resource(onUnauthorized: fire) { try await services.envelopes.list() }
@@ -56,5 +62,21 @@ final class DataStore {
         async let groups: Void = groups.reloadIfLoaded()
         async let invitations: Void = invitations.reloadIfLoaded()
         _ = await (groups, invitations)
+    }
+
+    /// One group's balances, expenses and members; created on first use and kept for the session.
+    func groupDetail(_ id: EntityID) -> Resource<GroupDetail> {
+        if let existing = groupDetails[id] { return existing }
+        let services = services
+        let resource = Resource<GroupDetail>(onUnauthorized: fire) { try await services.groups.detail(id) }
+        groupDetails[id] = resource
+        return resource
+    }
+
+    /// After writing to a group: its detail and the list (balances show in both).
+    func refreshGroup(_ id: EntityID) async {
+        async let detail: Void = groupDetail(id).load()
+        async let list: Void = groups.reloadIfLoaded()
+        _ = await (detail, list)
     }
 }
