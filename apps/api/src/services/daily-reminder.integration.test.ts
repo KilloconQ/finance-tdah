@@ -9,9 +9,10 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
  */
 const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL
 
+const featuresMock = vi.hoisted(() => ({ passwordResetEmail: false, webPush: true, apns: true }))
 vi.mock('../env', () => ({
   env: { DATABASE_URL: process.env.TEST_DATABASE_URL ?? 'postgres://unused', NODE_ENV: 'test' },
-  features: { passwordResetEmail: false, webPush: true },
+  features: featuresMock,
 }))
 
 const { sendPushToUser } = vi.hoisted(() => ({ sendPushToUser: vi.fn() }))
@@ -52,6 +53,8 @@ describe.skipIf(!TEST_DATABASE_URL)('daily reminder (Postgres)', async () => {
 
   beforeEach(async () => {
     sendPushToUser.mockReset()
+    featuresMock.webPush = true
+    featuresMock.apns = true
   })
 
   afterAll(async () => {
@@ -122,6 +125,29 @@ describe.skipIf(!TEST_DATABASE_URL)('daily reminder (Postgres)', async () => {
     await runDailyReminders(NINE_THIRTY_PM)
     expect(remindedUsers()).toContain(`${ANA}-ios`)
     expect(remindedUsers()).not.toContain(`${ANA}-none`)
+  })
+
+  it('only counts a channel the server can actually send on, so a day is never claimed for nothing', async () => {
+    await make(`${ANA}-onlyios`, {}, { push: false, device: true })
+    await make(`${ANA}-onlyweb`, {}, { push: true })
+
+    featuresMock.apns = false // e.g. a bad APNs key after a redeploy
+    await runDailyReminders(NINE_THIRTY_PM)
+    expect(remindedUsers()).toContain(`${ANA}-onlyweb`)
+    expect(remindedUsers()).not.toContain(`${ANA}-onlyios`)
+
+    // The iPhone user's day was not spent: once APNs works again they still get today's reminder.
+    featuresMock.apns = true
+    await runDailyReminders(NINE_THIRTY_PM)
+    expect(remindedUsers()).toContain(`${ANA}-onlyios`)
+  })
+
+  it('does nothing when no channel is enabled', async () => {
+    await make(`${ANA}-nochannel`, {}, { push: true, device: true })
+    featuresMock.webPush = false
+    featuresMock.apns = false
+    expect(await runDailyReminders(NINE_THIRTY_PM)).toEqual({ sent: 0 })
+    expect(remindedUsers()).not.toContain(`${ANA}-nochannel`)
   })
 
   it('sends once even when runs overlap', async () => {
