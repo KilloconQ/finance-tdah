@@ -15,10 +15,7 @@ struct EnvelopeRow: View {
                 VStack(alignment: .leading, spacing: Layout.spacingTight) {
                     Text(envelope.name).font(.body.bold()).foregroundStyle(Palette.ink)
                     if envelope.balanceCents < 0 {
-                        HStack(spacing: 0) {
-                            Text("te pasaste por ")
-                            MoneyText(cents: -envelope.balanceCents)
-                        }
+                        MoneySentence("te pasaste por ", .money(-envelope.balanceCents))
                         .font(.footnote)
                         .foregroundStyle(Palette.danger)
                     }

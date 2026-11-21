@@ -45,16 +45,10 @@ struct AdjustEnvelopeSheet: View {
         switch direction {
         case .setAside:
             if let account {
-                HStack(spacing: 0) {
-                    Text("Sin apartar en la cuenta: ")
-                    MoneyText(cents: max(0, EnvelopeRules.unassigned(accountBalance: account.balanceCents, envelopeBalances: others + [envelope.balanceCents])))
-                }
+                MoneySentence("Sin apartar en la cuenta: ", .money(max(0, EnvelopeRules.unassigned(accountBalance: account.balanceCents, envelopeBalances: others + [envelope.balanceCents]))))
             }
         case .release:
-            HStack(spacing: 0) {
-                Text("En la cajita: ")
-                MoneyText(cents: max(0, envelope.balanceCents))
-            }
+            MoneySentence("En la cajita: ", .money(max(0, envelope.balanceCents)))
         }
     }
 

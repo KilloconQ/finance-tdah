@@ -50,11 +50,7 @@ struct GoalDetailScreen: View {
                 }
                 JarView(fraction: progress.fraction, emoji: goal.emoji)
                     .frame(width: 180, height: 240)
-                HStack(spacing: 0) {
-                    MoneyText(cents: goal.currentCents)
-                    Text(" / ")
-                    MoneyText(cents: goal.targetCents)
-                }
+                MoneySentence(.money(goal.currentCents), " / ", .money(goal.targetCents))
                 .font(.title3)
                 .foregroundStyle(Palette.inkMid)
 

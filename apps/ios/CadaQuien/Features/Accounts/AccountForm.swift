@@ -58,7 +58,7 @@ struct AccountForm: View {
     private var typeChips: some View {
         VStack(alignment: .leading, spacing: Layout.spacingSmall) {
             Text("Tipo").font(.subheadline).foregroundStyle(Palette.inkMid)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: Layout.spacingSmall)], alignment: .leading, spacing: Layout.spacingSmall) {
+            FlowLayout(spacing: Layout.spacingSmall) {
                 ForEach(AccountType.allCases, id: \.self) { type in
                     Chip(title: "\(type.emoji) \(type.label)", isSelected: model.draft.type == type) { model.draft.type = type }
                 }

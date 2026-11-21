@@ -30,10 +30,7 @@ struct ActiveChallengeView: View {
             VStack(alignment: .leading, spacing: Layout.spacing) {
                 Text("Día \(challenge.doneDays) de \(challenge.days)").font(.headline).foregroundStyle(Palette.ink)
                 StepDots(count: challenge.days, filled: challenge.doneDays)
-                HStack(spacing: 0) {
-                    Text("Llevas \(Spanish.days(challenge.doneDays)) · vas ahorrando ")
-                    MoneyText(cents: savedCents)
-                }
+                MoneySentence("Llevas \(Spanish.days(challenge.doneDays)) · vas ahorrando ", .money(savedCents))
                 .font(.subheadline)
                 .foregroundStyle(Palette.inkMid)
             }

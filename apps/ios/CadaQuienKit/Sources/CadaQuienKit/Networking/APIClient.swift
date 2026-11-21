@@ -89,6 +89,9 @@ public struct APIClient: Sendable {
         let response: URLResponse
         do {
             (data, response) = try await session.data(for: request)
+        } catch let error as URLError where error.code == .cancelled {
+            // The caller went away (a screen closed mid-request): that is not a failure to report.
+            throw CancellationError()
         } catch let error as URLError where Self.offlineCodes.contains(error.code) {
             throw APIError.offline
         }

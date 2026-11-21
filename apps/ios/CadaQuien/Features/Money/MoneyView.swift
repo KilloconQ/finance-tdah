@@ -49,11 +49,7 @@ struct MoneyView: View {
                                 NavigationRow(route: .goal(goal.id)) {
                                     VStack(alignment: .leading, spacing: Layout.spacingSmall) {
                                         Text("\(goal.emoji) \(goal.name)").foregroundStyle(Palette.ink)
-                                        HStack(spacing: 0) {
-                                            MoneyText(cents: goal.currentCents)
-                                            Text(" / ")
-                                            MoneyText(cents: goal.targetCents)
-                                        }
+                                        MoneySentence(.money(goal.currentCents), " / ", .money(goal.targetCents))
                                         .font(.footnote)
                                         .foregroundStyle(Palette.inkMid)
                                         ProgressView(value: JarProgress(currentCents: goal.currentCents, targetCents: goal.targetCents).fraction)
@@ -87,11 +83,8 @@ struct MoneyView: View {
                                         }
                                     }
                                 } trailing: {
-                                    HStack(spacing: 0) {
-                                        MoneyText(cents: SubscriptionCost.monthly(amountCents: subscription.amountCents, cadence: subscription.cadence))
-                                        Text("/mes")
-                                    }
-                                    .foregroundStyle(Palette.inkMid)
+                                    MoneySentence(.money(SubscriptionCost.monthly(amountCents: subscription.amountCents, cadence: subscription.cadence)), "/mes")
+                                        .foregroundStyle(Palette.inkMid)
                                 }
                             }
                         }
@@ -117,11 +110,8 @@ struct MoneyView: View {
                 if let accounts = store.accounts.value {
                     let worth = NetWorth(accounts: accounts)
                     if worth.debtCents > 0 {
-                        HStack(spacing: 0) {
-                            Text("debes ")
-                            MoneyText(cents: worth.debtCents)
-                        }
-                        .foregroundStyle(Palette.danger)
+                        MoneySentence("debes ", .money(worth.debtCents))
+                            .foregroundStyle(Palette.danger)
                     } else {
                         Text(accounts.count == 1 ? "1 cuenta" : "\(accounts.count) cuentas")
                     }

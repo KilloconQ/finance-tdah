@@ -90,6 +90,13 @@ extension NetworkedTests {
       }
     }
 
+    @Test func aCancelledRequestIsACancellationNotAnError() async {
+      StubURLProtocol.handler = { _ in throw URLError(.cancelled) }
+      await #expect(throws: CancellationError.self) {
+        let _: Pong = try await makeClient().get("/api/ping")
+      }
+    }
+
     @Test func rejectsAShapeTheContractDoesNotPromise() async {
       StubURLProtocol.handler = StubURLProtocol.reply(json: #"{"unexpected":1}"#)
       await #expect(throws: APIError.invalidResponse) {

@@ -70,11 +70,7 @@ struct HomeView: View {
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
             if let summary {
-                HStack(spacing: 0) {
-                    MoneyText(cents: summary.weekSpentCents)
-                    Text(" esta semana · te faltan ")
-                    MoneyText(cents: weekLeft)
-                }
+                MoneySentence(.money(summary.weekSpentCents), " esta semana · te faltan ", .money(weekLeft))
                 .font(.subheadline)
                 .foregroundStyle(Palette.inkMid)
                 .accessibilityElement(children: .combine)

@@ -42,11 +42,8 @@ struct SubscriptionDetailScreen: View {
                 VStack(spacing: Layout.spacingSmall) {
                     AvatarView(name: subscription.name, size: 72)
                     Text(subscription.name).font(.title.bold()).foregroundStyle(Palette.ink)
-                    HStack(spacing: 0) {
-                        MoneyText(cents: subscription.amountCents)
-                        Text(subscription.cadence == .monthly ? " / mes" : " / año")
-                    }
-                    .foregroundStyle(Palette.inkMid)
+                    MoneySentence(.money(subscription.amountCents), subscription.cadence == .monthly ? " / mes" : " / año")
+                        .foregroundStyle(Palette.inkMid)
                 }
                 usage(subscription, daysSinceUse: daysSinceUse)
                 if let errorMessage { InlineMessage(.error, errorMessage) }
@@ -72,11 +69,7 @@ struct SubscriptionDetailScreen: View {
             VStack(alignment: .leading, spacing: Layout.spacingSmall) {
                 Text("No la abres hace \(Spanish.days(days))").font(.headline).foregroundStyle(Palette.danger)
                 if days > 0, !app.hidesBalances {
-                    HStack(spacing: 0) {
-                        Text("Llevas ")
-                        MoneyText(cents: SubscriptionCost.over(days: days, amountCents: subscription.amountCents, cadence: subscription.cadence))
-                        Text(" pagados desde la última vez que la usaste.")
-                    }
+                    MoneySentence("Llevas ", .money(SubscriptionCost.over(days: days, amountCents: subscription.amountCents, cadence: subscription.cadence)), " pagados desde la última vez que la usaste.")
                     .font(.subheadline)
                     .foregroundStyle(Palette.inkMid)
                 }

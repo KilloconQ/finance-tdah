@@ -67,7 +67,7 @@ struct ExpenseForm: View {
     }
 
     private var kindChips: some View {
-        HStack(spacing: Layout.spacingSmall) {
+        FlowLayout(spacing: Layout.spacingSmall) {
             ForEach([(ExpenseKind.expense, "Gasto"), (.income, "Ingreso"), (.transfer, "Transferencia")], id: \.0) { kind, title in
                 Chip(title: title, isSelected: model.draft.kind == kind) { model.draft.kind = kind }
             }
@@ -77,7 +77,7 @@ struct ExpenseForm: View {
     private var categoryChips: some View {
         VStack(alignment: .leading, spacing: Layout.spacingSmall) {
             Text("En qué").font(.subheadline).foregroundStyle(Palette.inkMid)
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: Layout.spacingSmall)], alignment: .leading, spacing: Layout.spacingSmall) {
+            FlowLayout(spacing: Layout.spacingSmall) {
                 ForEach(ExpenseCategory.all) { category in
                     Chip(title: "\(category.emoji) \(category.label)", isSelected: model.draft.category == category.id) {
                         model.draft.category = category.id

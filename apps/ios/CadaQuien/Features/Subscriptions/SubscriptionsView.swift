@@ -82,10 +82,7 @@ struct SubscriptionsView: View {
             Text("Estás perdiendo al mes").font(.subheadline).foregroundStyle(Palette.danger)
             MoneyText(cents: monthly).font(.system(.largeTitle, weight: .semibold)).foregroundStyle(Palette.danger)
             if !app.hidesBalances {
-                HStack(spacing: 0) {
-                    Text("Al año: ")
-                    MoneyText(cents: yearly)
-                }
+                MoneySentence("Al año: ", .money(yearly))
                 .font(.subheadline)
                 .foregroundStyle(Palette.inkMid)
             }

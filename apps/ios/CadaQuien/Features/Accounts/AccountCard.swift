@@ -45,11 +45,7 @@ struct AccountCard: View {
                         if envelopes.isEmpty {
                             Text("📦 Cajitas: aparta dinero para algo")
                         } else {
-                            HStack(spacing: 0) {
-                                Text("🔒 ")
-                                MoneyText(cents: allocated)
-                                Text(" en cajitas")
-                            }
+                            MoneySentence("🔒 ", .money(allocated), " en cajitas")
                         }
                         Spacer()
                         Image(systemName: "chevron.right").font(.footnote).accessibilityHidden(true)

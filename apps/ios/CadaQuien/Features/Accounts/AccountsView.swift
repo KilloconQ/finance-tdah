@@ -55,15 +55,11 @@ struct AccountsView: View {
                 .foregroundStyle(Palette.ink)
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
-            HStack(spacing: 0) {
-                Text("tienes ")
-                MoneyText(cents: worth.liquidCents)
-                Text(" · debes ")
-                MoneyText(cents: worth.debtCents)
+            Group {
                 if locked > 0 {
-                    Text(" · 🔒 ")
-                    MoneyText(cents: locked)
-                    Text(" bloqueado en cajitas")
+                    MoneySentence("tienes ", .money(worth.liquidCents), " · debes ", .money(worth.debtCents), " · 🔒 ", .money(locked), " bloqueado en cajitas")
+                } else {
+                    MoneySentence("tienes ", .money(worth.liquidCents), " · debes ", .money(worth.debtCents))
                 }
             }
             .font(.footnote)

@@ -32,11 +32,7 @@ struct GoalCard: View {
                 Text("\(goal.emoji) \(goal.name) · frasco")
                     .font(.subheadline.bold())
                     .foregroundStyle(Palette.ink)
-                HStack(spacing: 0) {
-                    MoneyText(cents: goal.currentCents)
-                    Text(" / ")
-                    MoneyText(cents: goal.targetCents)
-                }
+                MoneySentence(.money(goal.currentCents), " / ", .money(goal.targetCents))
                 .font(.footnote)
                 .foregroundStyle(Palette.inkMid)
             }

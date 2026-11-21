@@ -62,11 +62,7 @@ struct PanicView: View {
             let overspend = max(0, summary.weekSpentCents - summary.weekTargetCents)
             if overspend > 0 {
                 VStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        Text("Te excediste por ")
-                        MoneyText(cents: overspend).foregroundStyle(Palette.warn)
-                        Text(" esta semana.")
-                    }
+                    MoneySentence("Te excediste por ", .money(overspend), " esta semana.")
                     Text("Esto es lo que sí podemos hacer.")
                 }
             } else {

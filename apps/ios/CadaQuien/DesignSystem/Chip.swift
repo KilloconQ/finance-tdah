@@ -17,6 +17,7 @@ struct Chip: View {
                 }
             }
             .font(.subheadline)
+            .lineLimit(1)
             .foregroundStyle(isSelected ? Palette.sageStrong : Palette.inkMid)
             .padding(.horizontal, Layout.spacingLarge)
             .frame(minHeight: Layout.minTap)

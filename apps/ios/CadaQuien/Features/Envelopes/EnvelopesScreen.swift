@@ -92,11 +92,7 @@ struct EnvelopesScreen: View {
                 stat("Disponible", cents: unassigned, color: unassigned < 0 ? Palette.danger : Palette.good)
             }
             if unassigned < 0 {
-                HStack(spacing: 0) {
-                    Text("Apartaste más de lo que tiene la cuenta. Libera ")
-                    MoneyText(cents: -unassigned)
-                    Text(" de alguna cajita.")
-                }
+                MoneySentence("Apartaste más de lo que tiene la cuenta. Libera ", .money(-unassigned), " de alguna cajita.")
                 .font(.footnote)
                 .foregroundStyle(Palette.danger)
             }

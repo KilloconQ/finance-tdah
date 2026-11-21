@@ -22,10 +22,7 @@ struct CreateEnvelopeSheet: View {
                 VStack(alignment: .leading, spacing: Layout.spacingSmall) {
                     AmountField(text: $amount, title: "Cuánto apartar (opcional)")
                     if let account {
-                        HStack(spacing: 0) {
-                            Text("Sin apartar en la cuenta: ")
-                            MoneyText(cents: max(0, EnvelopeRules.unassigned(accountBalance: account.balanceCents, envelopeBalances: siblings)))
-                        }
+                        MoneySentence("Sin apartar en la cuenta: ", .money(max(0, EnvelopeRules.unassigned(accountBalance: account.balanceCents, envelopeBalances: siblings))))
                         .font(.footnote)
                         .foregroundStyle(Palette.inkMid)
                     }

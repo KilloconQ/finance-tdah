@@ -52,11 +52,7 @@ struct GoalsView: View {
                             JarView(fraction: progress.fraction, emoji: goal.emoji).frame(width: 64, height: 84)
                             VStack(alignment: .leading, spacing: Layout.spacingTight) {
                                 Text("\(goal.emoji) \(goal.name)").font(.body.bold()).foregroundStyle(Palette.ink)
-                                HStack(spacing: 0) {
-                                    MoneyText(cents: goal.currentCents)
-                                    Text(" / ")
-                                    MoneyText(cents: goal.targetCents)
-                                }
+                                MoneySentence(.money(goal.currentCents), " / ", .money(goal.targetCents))
                                 .font(.footnote)
                                 .foregroundStyle(Palette.inkMid)
                                 Text("\(Int(progress.percent.rounded()))%")

@@ -32,7 +32,6 @@ struct MainTabs: View {
             .tabItem { Label("Grupos", systemImage: "person.2") }
             .tag(MainTab.groups)
         }
-        .environment(navigator)
         .safeAreaInset(edge: .top, spacing: 0) {
             OfflineBanner(connectivity: app.connectivity)
         }
@@ -42,5 +41,7 @@ struct MainTabs: View {
         .fullScreenCover(isPresented: $navigator.isShowingPanic) {
             PanicView()
         }
+        // Outermost on purpose: sheets and covers inherit the environment of the view they are attached to.
+        .environment(navigator)
     }
 }

@@ -23,11 +23,7 @@ struct CardStatementView: View {
                         .foregroundStyle(statement.paymentDate < statement.today ? Palette.danger : Palette.ink)
                         MoneyText(cents: statement.dueCents).font(.title2.bold()).foregroundStyle(Palette.ink)
                     }
-                    HStack(spacing: 0) {
-                        Text("Lo que gastes desde el corte (")
-                        MoneyText(cents: statement.openPeriodCents)
-                        Text(") se paga en el siguiente periodo, que cierra el \(DayFormat.short(statement.nextCutoffDate)).")
-                    }
+                    MoneySentence("Lo que gastes desde el corte (", .money(statement.openPeriodCents), ") se paga en el siguiente periodo, que cierra el \(DayFormat.short(statement.nextCutoffDate)).")
                     .font(.footnote)
                     .foregroundStyle(Palette.inkMid)
                 }
