@@ -98,3 +98,63 @@ extension NetworkedTests {
     }
   }
 }
+
+extension NetworkedTests {
+  @Suite struct PushServiceTests {
+    private func service() -> PushService {
+      PushService(
+        client: APIClient(environment: .localhost, tokens: InMemoryTokenStore(token: "t"), session: StubURLProtocol.session()))
+    }
+
+    private func sentJSON() throws -> [String: Any] {
+      let body = try #require(StubURLProtocol.lastBody)
+      return try #require(try JSONSerialization.jsonObject(with: body) as? [String: Any])
+    }
+
+    @Test func registersTheTokenWithItsEnvironment() async throws {
+      StubURLProtocol.handler = StubURLProtocol.reply(201, json: #"{"device":{}}"#)
+      try await service().register(token: "ab12", environment: .sandbox)
+      #expect(StubURLProtocol.lastRequest?.httpMethod == "POST")
+      #expect(StubURLProtocol.lastRequest?.url?.path() == "/api/push/device")
+      let json = try sentJSON()
+      #expect(json["token"] as? String == "ab12")
+      #expect(json["environment"] as? String == "sandbox")
+    }
+
+    @Test func unregisteringSendsTheTokenInTheBody() async throws {
+      StubURLProtocol.handler = StubURLProtocol.reply(json: #"{"ok":true}"#)
+      try await service().unregister(token: "ab12")
+      #expect(StubURLProtocol.lastRequest?.httpMethod == "DELETE")
+      #expect(try sentJSON()["token"] as? String == "ab12")
+    }
+
+    @Test func unregisteringADeviceTheServerDoesNotKnowIsFine() async throws {
+      StubURLProtocol.handler = StubURLProtocol.reply(404, json: #"{"error":"Dispositivo no encontrado"}"#)
+      try await service().unregister(token: "ab12")
+    }
+
+    @Test func aServerWithoutNotificationsSaysSo() async {
+      StubURLProtocol.handler = StubURLProtocol.reply(503, json: #"{"error":"Las notificaciones del iPhone no están configuradas en el servidor."}"#)
+      await #expect(throws: APIError.server(status: 503, message: "Las notificaciones del iPhone no están configuradas en el servidor.")) {
+        try await service().register(token: "ab12", environment: .production)
+      }
+    }
+  }
+}
+
+struct DeviceTokenTests {
+  @Test func tokensAreLowercaseHex() {
+    #expect(DeviceToken.hex(Data([0x00, 0xAB, 0x0F, 0xFF])) == "00ab0fff")
+    #expect(DeviceToken.hex(Data()) == "")
+    #expect(DeviceToken.hex(Data(repeating: 0xAB, count: 32)).count == 64)
+  }
+
+  @Test func reminderHoursReadLikeTheWeb() {
+    #expect(ReminderHour.label(0) == "12:00 am")
+    #expect(ReminderHour.label(1) == "1:00 am")
+    #expect(ReminderHour.label(12) == "12:00 pm")
+    #expect(ReminderHour.label(21) == "9:00 pm")
+    #expect(ReminderHour.label(23) == "11:00 pm")
+    #expect(ReminderHour.all.count == 24)
+  }
+}
