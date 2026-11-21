@@ -29,6 +29,8 @@ targets:
       properties:
         com.apple.security.application-groups: [group.app.cadaquien.shared]
         keychain-access-groups: [$(AppIdentifierPrefix)app.cadaquien.shared]
+        # Native notifications. Xcode switches this to "production" when archiving for TestFlight / the App Store.
+        aps-environment: development
     info:
       path: CadaQuien/Info.plist
       properties:

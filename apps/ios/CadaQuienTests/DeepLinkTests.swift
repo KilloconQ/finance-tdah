@@ -14,4 +14,14 @@ struct DeepLinkTests {
     func ignoresAnythingElse(link: String) {
         #expect(DeepLink(url: URL(string: link)!) == nil)
     }
+
+    @Test func notificationsOpenTheScreenTheServerMeans() {
+        #expect(DeepLink(webPath: "/add-expense") == .addExpense)
+        #expect(DeepLink(webPath: "/subscriptions/ABC-123") == .subscription("abc-123"))
+    }
+
+    @Test(arguments: ["/", "", "/goals/1", "/subscriptions", "/subscriptions/", "/add-expense/extra", "/unknown"])
+    func otherPathsJustOpenTheApp(path: String) {
+        #expect(DeepLink(webPath: path) == nil)
+    }
 }

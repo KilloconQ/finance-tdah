@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct CadaQuienApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var delegate
     @State private var app: AppModel
     @AppStorage(ThemePreference.storageKey) private var theme = ThemePreference.system
 
@@ -22,6 +23,7 @@ struct CadaQuienApp: App {
                 .tint(Palette.sage)
                 .preferredColorScheme(theme.colorScheme)
                 .onOpenURL { app.open($0) }
+                .task { delegate.attach(app) }
         }
     }
 }

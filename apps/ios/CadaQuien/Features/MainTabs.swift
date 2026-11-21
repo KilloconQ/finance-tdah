@@ -46,6 +46,7 @@ struct MainTabs: View {
             switch link {
             case .addExpense: navigator.isAddingExpense = true
             case .panic: navigator.isShowingPanic = true
+            case .subscription(let id): navigator.open(.subscription(id), in: .money)
             }
             app.consumeDeepLink()
         }

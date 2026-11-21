@@ -143,6 +143,18 @@ struct APIContractTests {
     #expect(try await groups.list().count == 1)
     #expect(try await InvitationsService(client: client).list().isEmpty)
 
+    // Native push: a phone registers, can register again (idempotent), and unregisters; a repeat unregister is fine.
+    // Needs the API started with APNS_* set (any valid P-256 key will do); otherwise it answers 503.
+    let push = PushService(client: client)
+    let deviceToken = DeviceToken.hex(Data((0..<32).map { _ in UInt8.random(in: 0...255) }))
+    try await push.register(token: deviceToken, environment: .sandbox)
+    try await push.register(token: deviceToken, environment: .production)
+    try await push.unregister(token: deviceToken)
+    try await push.unregister(token: deviceToken)
+    await #expect(throws: APIError.self) {
+      try await push.register(token: "not-hex", environment: .sandbox)
+    }
+
     // Sign out must revoke the token on the server, not just forget it on the phone.
     let issuedToken = try #require(tokens.token())
     await auth.signOut()

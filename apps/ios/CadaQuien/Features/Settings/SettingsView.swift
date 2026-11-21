@@ -24,6 +24,8 @@ struct SettingsView: View {
                         .frame(minHeight: Layout.minTap)
                 }
 
+                NotificationsSection()
+
                 if let errorMessage {
                     InlineMessage(.error, errorMessage)
                 }

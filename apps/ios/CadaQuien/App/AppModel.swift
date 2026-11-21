@@ -25,6 +25,7 @@ final class AppModel {
     let environment: APIEnvironment
     let services: Services
     let connectivity = ConnectivityMonitor()
+    let push: PushRegistrar
 
     @ObservationIgnored private let tokens: any TokenStore
     @ObservationIgnored private let unauthorized = UnauthorizedHandler()
@@ -34,6 +35,7 @@ final class AppModel {
         self.tokens = tokens
         let services = Services(client: APIClient(environment: environment, tokens: tokens))
         self.services = services
+        push = PushRegistrar(service: PushService(client: APIClient(environment: environment, tokens: tokens)))
         store = DataStore(services: services, unauthorized: unauthorized)
         unauthorized.handle = { [weak self] in self?.sessionExpired() }
     }
@@ -50,6 +52,7 @@ final class AppModel {
             }
             self.user = user
             try await loadProfile()
+            if phase == .ready { await push.resumeIfWanted() }
         } catch {
             phase = .failed((error as? LocalizedError)?.errorDescription ?? "No pudimos conectar con el servidor.")
         }
@@ -66,6 +69,8 @@ final class AppModel {
     }
 
     func signOut() async {
+        // While the token still works: afterwards the server can't tell this phone belonged to this person.
+        await push.unregisterBeforeSignOut()
         await services.auth.signOut()
         reset()
     }
@@ -116,6 +121,10 @@ final class AppModel {
 
     func open(_ url: URL) {
         pendingDeepLink = DeepLink(url: url)
+    }
+
+    func open(_ link: DeepLink) {
+        pendingDeepLink = link
     }
 
     func consumeDeepLink() {
