@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { queryOptions } from '@tanstack/react-query'
-import { calendarResponseSchema, incomeSchema } from '@finance-tdah/shared/schemas'
+import { calendarResponseSchema, incomeSchema, notificationRulesResponseSchema } from '@finance-tdah/shared/schemas'
 import { fetchValidated } from '@/lib/api'
 
 // Always refetch on mount: subscriptions and accounts change what the calendar shows and don't know about this key.
@@ -15,4 +15,10 @@ export const incomesQueryOptions = () =>
   queryOptions({
     queryKey: ['incomes'],
     queryFn: () => fetchValidated('/incomes', z.object({ incomes: z.array(incomeSchema) })).then((r) => r.incomes),
+  })
+
+export const notificationRulesQueryOptions = () =>
+  queryOptions({
+    queryKey: ['notification-rules'],
+    queryFn: () => fetchValidated('/notification-rules', notificationRulesResponseSchema).then((r) => r.rules),
   })

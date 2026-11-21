@@ -1,2 +1,2 @@
-export { calendarQueryOptions, incomesQueryOptions } from './calendar.queries'
-export { useCreateIncome, useDeleteIncome, useUpdateIncome } from './calendar.mutations'
+export { calendarQueryOptions, incomesQueryOptions, notificationRulesQueryOptions } from './calendar.queries'
+export { useCreateIncome, useDeleteIncome, useSaveNotificationRule, useUpdateIncome } from './calendar.mutations'

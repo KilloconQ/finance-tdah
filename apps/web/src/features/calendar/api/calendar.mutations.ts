@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { CreateIncomeInput, UpdateIncomeInput } from '@finance-tdah/shared/schemas'
+import type { AlertKind } from '@finance-tdah/shared/domain'
+import type { CreateIncomeInput, NotificationRuleInput, UpdateIncomeInput } from '@finance-tdah/shared/schemas'
 import { api } from '@/lib/api'
 
 function useRefresh() {
@@ -23,4 +24,12 @@ export function useUpdateIncome(id: string) {
 export function useDeleteIncome(id: string) {
   const refresh = useRefresh()
   return useMutation({ mutationFn: () => api.delete(`incomes/${id}`).json(), onSuccess: refresh })
+}
+
+export function useSaveNotificationRule() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ kind, ...input }: NotificationRuleInput & { kind: AlertKind }) => api.put(`notification-rules/${kind}`, { json: input }).json(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notification-rules'] }),
+  })
 }

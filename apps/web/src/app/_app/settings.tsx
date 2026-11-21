@@ -11,6 +11,7 @@ import { usePushSubscription } from '@/lib/use-push-subscription'
 import { signOutAndClear } from '@/lib/session-reset'
 import { errorText, fetchValidated } from '@/lib/api'
 import { useInviteToApp } from '@/features/groups'
+import { NotificationRulesContainer } from '@/features/calendar'
 import { z } from 'zod'
 
 export const Route = createFileRoute('/_app/settings')({
@@ -122,6 +123,11 @@ function Settings() {
                         </select>
                       </label>
                     ) : null}
+                    <div className="pt-2 text-sm font-medium text-ink">Avisos del calendario</div>
+                    <p className="-mt-2 text-xs text-ink-soft">
+                      Cobros, cortes y pagos de tarjeta y suscripciones. Elige cuándo te avisamos de cada uno.
+                    </p>
+                    <NotificationRulesContainer />
                   </>
                 ) : null}
               </div>

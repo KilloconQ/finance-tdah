@@ -1,2 +1,2 @@
-export { CalendarContainer } from './containers'
+export { CalendarContainer, NotificationRulesContainer } from './containers'
 export { calendarQueryOptions, incomesQueryOptions } from './api'
