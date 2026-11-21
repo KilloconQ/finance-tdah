@@ -27,7 +27,7 @@ public struct AccountsService: Sendable {
         try await client.get("/api/accounts/\(id.rawValue)/statement", key: "statement")
     }
 
-    public struct NewAccount: Encodable, Sendable {
+    public struct NewAccount: Encodable, Sendable, Equatable {
         public var name: String
         public var type: AccountType
         public var balanceCents: Int?

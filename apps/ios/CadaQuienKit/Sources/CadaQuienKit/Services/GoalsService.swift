@@ -32,7 +32,7 @@ public struct GoalsService: Sendable {
         try await client.send(.delete, "/api/goals/\(id.rawValue)")
     }
 
-    public struct NewGoal: Encodable, Sendable {
+    public struct NewGoal: Encodable, Sendable, Equatable {
         public var name: String
         public var emoji: String?
         public var targetCents: Int

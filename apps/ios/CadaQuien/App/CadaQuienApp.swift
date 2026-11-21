@@ -4,6 +4,7 @@ import SwiftUI
 @main
 struct CadaQuienApp: App {
     @State private var app: AppModel
+    @AppStorage(ThemePreference.storageKey) private var theme = ThemePreference.system
 
     init() {
         let tokens = KeychainTokenStore()
@@ -19,6 +20,7 @@ struct CadaQuienApp: App {
                 .environment(app)
                 .environment(\.hideBalances, app.hidesBalances)
                 .tint(Palette.sage)
+                .preferredColorScheme(theme.colorScheme)
         }
     }
 }

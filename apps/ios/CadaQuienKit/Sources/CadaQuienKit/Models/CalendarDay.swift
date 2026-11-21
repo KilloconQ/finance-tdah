@@ -49,6 +49,12 @@ public struct CalendarDay: Codable, Sendable, Hashable, Comparable {
         calendar.date(from: DateComponents(year: year, month: month, day: day, hour: 12))
     }
 
+    /// Whole calendar days from `earlier` to this day (negative when this day is before `earlier`).
+    public func days(since earlier: CalendarDay, calendar: Calendar = .current) -> Int {
+        guard let from = earlier.date(in: calendar), let to = date(in: calendar) else { return 0 }
+        return calendar.dateComponents([.day], from: from, to: to).day ?? 0
+    }
+
     public static func < (lhs: CalendarDay, rhs: CalendarDay) -> Bool {
         (lhs.year, lhs.month, lhs.day) < (rhs.year, rhs.month, rhs.day)
     }

@@ -15,10 +15,36 @@ enum DebugLaunch {
         if let token = value(after: "-cq-token") { tokens.save(token) }
     }
 
-    /// 0 Hoy, 1 Movimientos, 2 Dinero, 3 Grupos.
-    static var tab: Int? { value(after: "-cq-tab").flatMap(Int.init) }
+    /// `-cq-tab 0..3` (Hoy, Movimientos, Dinero, Grupos), `-cq-route settings` to push a screen, `-cq-panic`,
+    /// and `-cq-add` to open the add-expense sheet.
+    @MainActor
+    static func configure(_ navigator: Navigator) {
+        let tabs: [MainTab] = [.today, .movements, .money, .groups]
+        if let index = value(after: "-cq-tab").flatMap(Int.init), tabs.indices.contains(index) {
+            navigator.tab = tabs[index]
+        }
+        if let name = value(after: "-cq-route"), let route = Route.named(name) {
+            navigator.open(route, in: navigator.tab)
+        }
+        navigator.isShowingPanic = ProcessInfo.processInfo.arguments.contains("-cq-panic")
+        navigator.isAddingExpense = ProcessInfo.processInfo.arguments.contains("-cq-add")
+    }
+}
 
-    /// A named screen to push on the selected tab, e.g. `accounts`, `goals`, `subscriptions`, `settings`.
-    static var route: String? { value(after: "-cq-route") }
+extension Route {
+    /// Routes that need no id, by name, for `-cq-route`.
+    static func named(_ name: String) -> Route? {
+        switch name {
+        case "settings": .settings
+        case "challenge": .challenge
+        case "accounts": .accounts
+        case "newAccount": .newAccount
+        case "goals": .goals
+        case "newGoal": .newGoal
+        case "subscriptions": .subscriptions
+        case "newSubscription": .newSubscription
+        default: nil
+        }
+    }
 }
 #endif

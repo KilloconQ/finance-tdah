@@ -27,7 +27,7 @@ public struct SubscriptionsService: Sendable {
         try await client.post("/api/subscriptions/\(id.rawValue)/pause", key: "subscription")
     }
 
-    public struct NewSubscription: Encodable, Sendable {
+    public struct NewSubscription: Encodable, Sendable, Equatable {
         public var name: String
         public var category: String
         public var amountCents: Int

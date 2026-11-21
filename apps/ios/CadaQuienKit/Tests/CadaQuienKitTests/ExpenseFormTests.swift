@@ -163,9 +163,9 @@ struct ExpenseFormTests {
   }
 
   @Test func editShowsTheStoredAmountWithoutTrailingZeros() {
-    #expect(ExpenseDraft.amountText(cents: 1_500) == "15")
-    #expect(ExpenseDraft.amountText(cents: 1_550) == "15.5")
-    #expect(ExpenseDraft.amountText(cents: 1_505) == "15.05")
+    #expect(Money.editableText(cents: 1_500) == "15")
+    #expect(Money.editableText(cents: 1_550) == "15.5")
+    #expect(Money.editableText(cents: 1_505) == "15.05")
   }
 
   @Test func warnsAboutLockedMoney() {
@@ -181,5 +181,34 @@ struct ExpenseFormTests {
     #expect(ExpenseCategory.emoji(for: "hogar") == "🏠")
     #expect(ExpenseCategory.emoji(for: "algo raro") == "🪙")
     #expect(ExpenseCategory.all.count == 9)
+  }
+}
+
+struct DayGroupingTests {
+  private func expense(_ id: String, at iso: String) -> Expense {
+    try! JSONCoding.makeDecoder().decode(
+      Expense.self,
+      from: Data(
+        """
+        {"id":"\(id)","userId":"u","accountId":null,"toAccountId":null,"kind":"expense","amountCents":100,
+        "category":"comida","description":"x","occurredAt":"\(iso)","createdAt":"\(iso)"}
+        """.utf8))
+  }
+
+  @Test func groupsByLocalDayKeepingOrder() {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: "America/Mexico_City")!
+    // 03:00Z on the 21st is still the 20th in Mexico City (UTC-6).
+    let items = [
+      expense("a", at: "2026-11-21T03:00:00.000Z"), expense("b", at: "2026-11-20T15:00:00.000Z"),
+      expense("c", at: "2026-11-19T15:00:00.000Z"),
+    ]
+    let groups = DayGrouping.group(items, calendar: calendar)
+    #expect(groups.map(\.day) == [CalendarDay(year: 2026, month: 11, day: 20), CalendarDay(year: 2026, month: 11, day: 19)])
+    #expect(groups[0].expenses.map(\.id) == ["a", "b"])
+  }
+
+  @Test func nothingMeansNoGroups() {
+    #expect(DayGrouping.group([]).isEmpty)
   }
 }

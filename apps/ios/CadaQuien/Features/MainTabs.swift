@@ -1,18 +1,55 @@
 import SwiftUI
 
-/// Placeholder shell until the tabs land.
+/// The four tabs of the app: Hoy, Movimientos, Dinero, Grupos.
 struct MainTabs: View {
     @Environment(AppModel.self) private var app
+    @State private var navigator = Navigator()
 
     var body: some View {
-        VStack(spacing: Layout.spacingLarge) {
-            Text("Hola, \(app.profile?.displayName ?? "")")
-                .font(.title.bold())
-            Button("Cerrar sesión") { Task { await app.signOut() } }
-                .buttonStyle(.cqGhost)
-                .frame(maxWidth: 240)
+        @Bindable var navigator = navigator
+        TabView(selection: $navigator.tab) {
+            NavigationStack(path: $navigator.todayPath) {
+                HomeView().routeDestinations()
+            }
+            .tabItem { Label("Hoy", systemImage: "house") }
+            .tag(MainTab.today)
+
+            NavigationStack(path: $navigator.movementsPath) {
+                TransactionsView().routeDestinations()
+            }
+            .tabItem { Label("Movimientos", systemImage: "list.bullet.rectangle") }
+            .tag(MainTab.movements)
+
+            NavigationStack(path: $navigator.moneyPath) {
+                MoneyView().routeDestinations()
+            }
+            .tabItem { Label("Dinero", systemImage: "wallet.bifold") }
+            .tag(MainTab.money)
+
+            NavigationStack(path: $navigator.groupsPath) {
+                PlaceholderScreen(title: "Grupos").routeDestinations()
+            }
+            .tabItem { Label("Grupos", systemImage: "person.2") }
+            .tag(MainTab.groups)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Palette.bg)
+        .environment(navigator)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            OfflineBanner(connectivity: app.connectivity)
+        }
+        .sheet(isPresented: $navigator.isAddingExpense) {
+            AddExpenseSheet()
+        }
+        .fullScreenCover(isPresented: $navigator.isShowingPanic) {
+            PanicView()
+        }
+    }
+}
+
+private struct PlaceholderScreen: View {
+    let title: String
+
+    var body: some View {
+        ContentUnavailableView(title, systemImage: "hammer", description: Text("Próximamente"))
+            .navigationTitle(title)
     }
 }

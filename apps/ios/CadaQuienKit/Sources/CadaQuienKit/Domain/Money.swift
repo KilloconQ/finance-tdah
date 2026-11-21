@@ -29,6 +29,14 @@ public enum Money {
         return "$\(String(grouped.reversed())).\(fraction)"
     }
 
+    /// What an amount field shows when editing: `1500` -> `15`, `1550` -> `15.5`, `1505` -> `15.05`.
+    public static func editableText(cents: Int) -> String {
+        let whole = cents / 100
+        let fraction = cents % 100
+        if fraction == 0 { return String(whole) }
+        return fraction % 10 == 0 ? "\(whole).\(fraction / 10)" : "\(whole).\(String(format: "%02d", fraction))"
+    }
+
     public static func units(fromCents cents: Int) -> Double {
         Double(cents) / 100
     }

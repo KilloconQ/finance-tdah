@@ -104,3 +104,170 @@ struct EnvelopeDomainTests {
     #expect(SplitEqual.shares(amountCents: 10_000, count: 3).reduce(0, +) == 10_000)
   }
 }
+
+struct AccountDraftTests {
+  private func account(type: AccountType, balance: Int, cutoff: Int? = nil, payment: Int? = nil) -> Account {
+    try! JSONCoding.makeDecoder().decode(
+      Account.self,
+      from: Data(
+        """
+        {"id":"a","userId":"u","name":"BBVA","type":"\(type.rawValue)","institution":"BBVA","last4":"1234",
+        "cutoffDay":\(cutoff.map(String.init) ?? "null"),"paymentDay":\(payment.map(String.init) ?? "null"),
+        "balanceCents":\(balance),"createdAt":"2026-01-01T00:00:00.000Z","updatedAt":"2026-01-01T00:00:00.000Z"}
+        """.utf8))
+  }
+
+  @Test func aCreditCardIsSavedAsDebt() throws {
+    var draft = AccountDraft()
+    draft.name = "  Tarjeta "
+    draft.type = .credito
+    draft.balanceText = "1,500.50"
+    draft.cutoffText = "10"
+    draft.paymentText = "25"
+    let request = try draft.newAccount().get()
+    #expect(request.name == "Tarjeta")
+    #expect(request.balanceCents == -150_050)
+    #expect(request.cutoffDay == 10)
+    #expect(request.paymentDay == 25)
+  }
+
+  @Test func anEmptyOrZeroBalanceIsZero() throws {
+    var draft = AccountDraft()
+    draft.name = "Efectivo"
+    draft.type = .efectivo
+    #expect(try draft.newAccount().get().balanceCents == 0)
+    draft.balanceText = "0"
+    #expect(try draft.newAccount().get().balanceCents == 0)
+  }
+
+  @Test func statementDaysComeTogetherAndInRange() {
+    var draft = AccountDraft()
+    draft.name = "T"
+    draft.type = .credito
+    draft.cutoffText = "10"
+    #expect(draft.newAccount() == .failure(.init("Pon el día de corte y el de pago, o deja los dos vacíos")))
+    draft.paymentText = "40"
+    #expect(draft.newAccount() == .failure(.init("Los días van del 1 al 31")))
+  }
+
+  @Test func onlyCardsSendBankDetailsAndStatementDays() throws {
+    var draft = AccountDraft()
+    draft.name = "Efectivo"
+    draft.type = .efectivo
+    draft.institution = "BBVA"
+    draft.last4 = "1234"
+    draft.cutoffText = "10"
+    draft.paymentText = "25"
+    let request = try draft.newAccount().get()
+    #expect(request.institution == nil)
+    #expect(request.last4 == nil)
+    #expect(request.cutoffDay == nil)
+  }
+
+  @Test func rejectsABlankNameAndABadBalance() {
+    var draft = AccountDraft()
+    #expect(draft.newAccount() == .failure(.init("Ponle un nombre a la cuenta.")))
+    draft.name = "X"
+    draft.balanceText = "abc"
+    #expect(draft.newAccount() == .failure(.init("El saldo no es válido")))
+  }
+
+  @Test func editingKeepsTheDebtSignWhenTheTypeIsUnchanged() throws {
+    let original = account(type: .credito, balance: -50_000, cutoff: 10, payment: 25)
+    var draft = AccountDraft(original)
+    #expect(draft.balanceText == "500")
+    draft.balanceText = "750"
+    let update = try draft.update(from: original).get()
+    #expect(update.balanceCents == -75_000)
+  }
+
+  @Test func changingTheTypeUsesThatTypesSign() throws {
+    let original = account(type: .credito, balance: -50_000, cutoff: 10, payment: 25)
+    var draft = AccountDraft(original)
+    draft.type = .debito
+    #expect(try draft.update(from: original).get().balanceCents == 50_000)
+  }
+
+  @Test func clearingBothStatementDaysSendsNulls() throws {
+    let original = account(type: .credito, balance: -50_000, cutoff: 10, payment: 25)
+    var draft = AccountDraft(original)
+    draft.cutoffText = ""
+    draft.paymentText = ""
+    let update = try draft.update(from: original).get()
+    let json = try JSONSerialization.jsonObject(with: JSONCoding.makeEncoder().encode(update)) as? [String: Any]
+    #expect(json?["cutoffDay"] is NSNull)
+    #expect(json?["paymentDay"] is NSNull)
+  }
+
+  @Test func daysBetweenCalendarDays() {
+    let a = CalendarDay(year: 2026, month: 11, day: 1)
+    let b = CalendarDay(year: 2026, month: 11, day: 20)
+    #expect(b.days(since: a) == 19)
+    #expect(a.days(since: b) == -19)
+    #expect(a.days(since: a) == 0)
+  }
+
+  @Test func accountTypesReadInSpanish() {
+    #expect(AccountType.wallet.label == "Billetera")
+    #expect(AccountType.credito.emoji == "💳")
+    #expect(AccountType.efectivo.showsBankDetails == false)
+  }
+}
+
+struct GoalAndSubscriptionDraftTests {
+  @Test func aNewJarStartsPrefilledAndBuildsARequest() throws {
+    let draft = GoalDraft()
+    #expect(draft.name == "Nuevo frasco")
+    let request = try draft.newGoal().get()
+    #expect(request.targetCents == 500_000)
+    #expect(request.emoji == "🌿")
+  }
+
+  @Test func aJarTargetMustBeAboveZero() {
+    var draft = GoalDraft()
+    draft.targetText = "0"
+    #expect(draft.newGoal() == .failure(.init("La meta debe ser mayor a $0")))
+    draft.targetText = "10.555"
+    #expect(draft.newGoal() == .failure(.init("El monto admite máximo 2 decimales")))
+    draft.targetText = ""
+    #expect(draft.canSave == false)
+  }
+
+  @Test func aSubscriptionNeedsEveryField() {
+    var draft = SubscriptionDraft(today: CalendarDay(year: 2026, month: 11, day: 20))
+    #expect(draft.canSave == false)
+    draft.name = "Netflix"
+    draft.category = "Entretenimiento"
+    draft.amountText = "199"
+    #expect(draft.canSave)
+  }
+
+  @Test func aSubscriptionBuildsItsRequest() throws {
+    var draft = SubscriptionDraft(today: CalendarDay(year: 2026, month: 11, day: 20))
+    draft.name = " Netflix "
+    draft.category = "Entretenimiento"
+    draft.amountText = "199.50"
+    draft.cadence = .yearly
+    let request = try draft.newSubscription().get()
+    #expect(request.name == "Netflix")
+    #expect(request.amountCents == 19_950)
+    #expect(request.cadence == .yearly)
+    #expect(request.nextChargeAt == CalendarDay(year: 2026, month: 11, day: 20))
+  }
+
+  @Test func aSubscriptionAmountMustBeAboveZero() {
+    var draft = SubscriptionDraft()
+    draft.name = "x"
+    draft.category = "y"
+    draft.amountText = "0"
+    #expect(draft.newSubscription() == .failure(.init("El monto debe ser mayor a $0")))
+  }
+
+  @Test func avatarsAreStable() {
+    #expect(Avatar.initial("  netflix") == "N")
+    #expect(Avatar.initial("") == "?")
+    #expect(Avatar.hue("Netflix") == Avatar.hue("Netflix"))
+    #expect(Avatar.hue("Netflix") != Avatar.hue("Spotify"))
+    #expect((0..<1).contains(Avatar.hue("x")))
+  }
+}
