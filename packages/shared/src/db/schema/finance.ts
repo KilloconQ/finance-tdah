@@ -31,6 +31,8 @@ export const densityModeEnum = pgEnum('density_mode', ['simple', 'detailed'])
 
 export const expenseKindEnum = pgEnum('expense_kind', ['expense', 'income', 'transfer'])
 
+export const incomeFrequencyEnum = pgEnum('income_frequency', ['once', 'weekly', 'biweekly', 'semimonthly', 'monthly'])
+
 export const invitationStatusEnum = pgEnum('invitation_status', ['pending', 'declined'])
 
 export const userProfile = pgTable('user_profile', {
@@ -445,3 +447,19 @@ export const ENUMS = {
   densityMode: densityModeEnum,
   expenseKind: expenseKindEnum,
 }
+
+// Money the user expects to receive (payroll, payments owed to her). It only feeds the calendar: it never creates a movement.
+export const scheduledIncome = pgTable('scheduled_income', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  // Optional: not everyone knows what the next payment will be.
+  amountCents: integer('amount_cents'),
+  frequency: incomeFrequencyEnum('frequency').notNull(),
+  // The first (or only) date it arrives.
+  startsOn: date('starts_on').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+})

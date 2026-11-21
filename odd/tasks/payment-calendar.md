@@ -10,7 +10,7 @@ Branch: feat/payment-calendar (stacked on feat/ios-app). Delivery strategy: ask-
 - S5 (assumption): the server computes the events (`GET /api/calendar?from&to`) so web and iOS cannot disagree; a new "Calendario" tab on both.
 
 ## Tasks
-- [ ] T1 (S1,S2,S5) API: shared domain for calendar events, `scheduled_income` table + migration, `/incomes` CRUD, `GET /calendar` — route: inline — Risk: item 1 (additive migration)
+- [x] T1 (S1,S2,S5) API: shared domain for calendar events, `scheduled_income` table + migration, `/incomes` CRUD, `GET /calendar` — route: inline — Risk: item 1 (additive migration) — domain 15 tests (RED then GREEN), schemas, migration 0014, routes; api integration 5/5, api suite + shared 163 — commit: see log
 - [ ] T2 (S1,S2,S3) Web: calendar page, income forms, navigation — route: inline
 - [ ] T3 (S1,S2,S3) iOS: Kit models/services/rules, calendar screen, income forms, new tab — route: inline
 - [ ] T4 (S4) iOS: compact tab bar — route: inline

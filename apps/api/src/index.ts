@@ -19,6 +19,8 @@ import { invitationsRoute } from './routes/invitations'
 import { profileRoute } from './routes/profile'
 import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
+import { calendarRoute } from './routes/calendar'
+import { incomesRoute } from './routes/incomes'
 import { startDailyReminders } from './services/daily-reminder'
 
 const app = new Hono<{ Variables: { requestId: string } }>()
@@ -54,6 +56,8 @@ app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 const api = app
   .basePath('/api')
   .route('/profile', profileRoute)
+  .route('/calendar', calendarRoute)
+  .route('/incomes', incomesRoute)
   .route('/accounts', accountsRoute)
   .route('/envelopes', envelopesRoute)
   .route('/goals', goalsRoute)
