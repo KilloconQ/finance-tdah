@@ -20,7 +20,9 @@ Branch: feat/ios-app. Delivery strategy: ask-on-risk. Test runner: XCTest / Swif
 - [ ] T7 (S2) Dinero: accounts, envelopes, statement, goals, subscriptions — inline — -
 - [ ] T8 (S2) Groups, challenge, panic, settings — inline — -
 - [ ] T9 (S3) Widget + App Intents (quick expense) — inline — -
-- [ ] T10 (S2) Native push (APNs): device token table, endpoint, sender — inline — -
+- [ ] T10a (S2) API: native push (APNs) — `device_token` table + migration, `POST/DELETE /push/device`, APNs sender (JWT ES256 over HTTP/2, injectable transport), fan-out in `sendPushToUser`, reminder/alerts also reach device tokens, optional env (APNS_*) — inline — Risk: item 1 (migration, additive new table) + item 3 (shared push/reminder code: web-only behavior must stay identical) — -
+- [ ] T10b (S2) iOS: register the device token, Settings → Notificaciones (toggle, daily reminder, hour), tap-to-open deep links — inline — -
+- [ ] T11 (S2) Close: full test pass (api, shared, Kit, app + opt-in contract/intent), README for iOS, cleanup — inline — -
 
 ## Log
 - L1 (2026-11-20, user): "sabes que yo se que te dije que me iba a esperar pero se me hincharon los huevos, quiero tener la version de ios de la app y quiero que sea nativo para ios"
