@@ -117,3 +117,18 @@ struct ValidationTests {
     #expect(Validation.isValidPassword("12345678"))
   }
 }
+
+@Suite("Money.grouped")
+struct MoneyGroupedTests {
+    @Test(arguments: [
+        ("", ""), ("15", "15"), ("15000", "15,000"), ("1,2505", "12,505"), ("1250.5", "1,250.5"),
+        ("1,250.50", "1,250.50"), ("1234567", "1,234,567"), ("12,50", "12,50"), ("1,250", "1,250"), ("abc", "abc"),
+    ])
+    func groups(raw: String, expected: String) {
+        #expect(Money.grouped(raw) == expected)
+    }
+
+    @Test func groupedTextStillParses() {
+        #expect(Money.parseToCents(Money.grouped("15000")) == 1_500_000)
+    }
+}

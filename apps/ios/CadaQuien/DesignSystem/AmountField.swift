@@ -22,6 +22,10 @@ struct AmountField: View {
                     .monospacedDigit()
                     .keyboardType(.decimalPad)
                     .focused($isFocused)
+                    .onChange(of: text) { _, new in
+                        let grouped = Money.grouped(new)
+                        if grouped != new { text = grouped }
+                    }
                     .accessibilityLabel(title)
             }
             .padding(Layout.cardPadding)

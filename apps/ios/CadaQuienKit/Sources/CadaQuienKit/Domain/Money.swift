@@ -119,6 +119,27 @@ public enum Money {
         return .success(cents(fromUnits: units))
     }
 
+    /// Adds thousands commas to what is being typed: `"15000"` -> `"15,000"`, `"1250.5"` -> `"1,250.5"`.
+    /// Anything that is not plain digits, commas and at most one dot is returned untouched, and so is a comma followed
+    /// by 1-2 digits, which is a decimal comma (`"12,50"`) and not one of the commas this function inserted.
+    public static func grouped(_ raw: String) -> String {
+        let parts = raw.split(separator: ".", maxSplits: 1, omittingEmptySubsequences: false)
+        let integer = String(parts[0])
+        let decimal = parts.count > 1 ? "." + parts[1] : ""
+        guard integer.allSatisfy({ $0.isASCII && ($0.isNumber || $0 == ",") }), !decimal.dropFirst().contains(",") else { return raw }
+        if parts.count == 1, let comma = integer.lastIndex(of: ",") {
+            let after = integer.distance(from: comma, to: integer.endIndex) - 1
+            if after < 3 { return raw }
+        }
+        let digits = integer.filter { $0 != "," }
+        var grouped = ""
+        for (offset, digit) in digits.reversed().enumerated() {
+            if offset > 0, offset % 3 == 0 { grouped.append(",") }
+            grouped.append(digit)
+        }
+        return String(grouped.reversed()) + decimal
+    }
+
     /// `nil` on any failure; use `parse` when the reason matters.
     public static func parseToCents(_ raw: String) -> Int? {
         if case .success(let cents) = parse(raw) { return cents }
