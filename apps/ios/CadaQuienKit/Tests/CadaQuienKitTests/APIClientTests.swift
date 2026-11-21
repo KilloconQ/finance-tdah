@@ -76,9 +76,9 @@ extension NetworkedTests {
       }
     }
 
-    @Test func fallsBackToAGenericMessage() async {
+    @Test func fallsBackToACalmMessageOnAServerError() async {
       StubURLProtocol.handler = StubURLProtocol.reply(500, json: "<html>")
-      await #expect(throws: APIError.server(status: 500, message: "Algo salió mal (500).")) {
+      await #expect(throws: APIError.server(status: 500, message: "Algo salió mal de nuestro lado. Intenta de nuevo en un momento.")) {
         let _: Pong = try await makeClient().get("/api/ping")
       }
     }

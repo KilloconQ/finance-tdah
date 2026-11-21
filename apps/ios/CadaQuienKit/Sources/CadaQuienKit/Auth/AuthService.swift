@@ -10,8 +10,13 @@ public struct AuthService: Sendable {
     }
 
     public func signIn(email: String, password: String) async throws {
-        let result = try await client.perform(.post, "/api/auth/sign-in/email", body: ["email": email, "password": password])
-        try storeToken(from: result.response)
+        do {
+            let result = try await client.perform(.post, "/api/auth/sign-in/email", body: ["email": email, "password": password])
+            try storeToken(from: result.response)
+        } catch APIError.unauthorized {
+            // A 401 while signing in means wrong credentials, not an expired session.
+            throw APIError.server(status: 401, message: APIMessages.wrongCredentials)
+        }
     }
 
     public func signUp(email: String, password: String, name: String) async throws {

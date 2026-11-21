@@ -116,13 +116,20 @@ public struct APIClient: Sendable {
         .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost, .cannotFindHost, .timedOut, .dnsLookupFailed,
     ]
 
-    /// Our routes answer `{error}`; better-auth answers `{message}`.
-    private static func message(in data: Data, status: Int) -> String {
+    /// Our routes answer `{error}` (already Spanish); better-auth answers `{code, message}` in English, so those are
+    /// translated. Mirrors `apps/web/src/lib/auth-errors.ts`.
+    static func message(in data: Data, status: Int) -> String {
         struct Body: Decodable {
             let error: String?
             let message: String?
+            let code: String?
         }
         let body = try? JSONDecoder().decode(Body.self, from: data)
-        return body?.error ?? body?.message ?? "Algo salió mal (\(status))."
+        if status == 429 { return APIMessages.rateLimited }
+        if let code = body?.code, let known = APIMessages.byCode[code] { return known }
+        if let error = body?.error { return error }
+        if let message = body?.message { return APIMessages.translate(message) }
+        if status >= 500 { return APIMessages.serverTrouble }
+        return "Algo salió mal (\(status))."
     }
 }

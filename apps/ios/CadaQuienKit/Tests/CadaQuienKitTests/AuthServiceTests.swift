@@ -37,7 +37,7 @@ extension NetworkedTests {
     @Test func signInSurfacesTheServerMessage() async {
       StubURLProtocol.handler = StubURLProtocol.reply(
         401, json: #"{"message":"Invalid email or password"}"#)
-      await #expect(throws: APIError.unauthorized) {
+      await #expect(throws: APIError.server(status: 401, message: "Correo o contraseña incorrectos.")) {
         try await makeService(tokens: InMemoryTokenStore()).signIn(email: "a@b.co", password: "x")
       }
     }
