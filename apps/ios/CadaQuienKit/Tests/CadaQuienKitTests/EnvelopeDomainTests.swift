@@ -375,3 +375,43 @@ struct GroupRulesTests {
     #expect(draft.request(date: CalendarDay(year: 2026, month: 1, day: 1), members: members()) == .failure(.init("El monto debe ser mayor a $0")))
   }
 }
+
+struct QuickExpenseTests {
+  @Test func sirisAmountBecomesWholeCents() throws {
+    let request = try QuickExpense.newExpense(pesos: 150.5, categoryId: "comida", note: nil).get()
+    #expect(request.amountCents == 15_050)
+    #expect(request.category == "comida")
+    #expect(request.kind == .expense)
+    #expect(request.accountId == nil)
+  }
+
+  @Test func floatingPointDriftDoesNotLoseACent() throws {
+    #expect(try QuickExpense.newExpense(pesos: 0.29, categoryId: "otro", note: nil).get().amountCents == 29)
+    #expect(try QuickExpense.newExpense(pesos: 1.15, categoryId: "otro", note: nil).get().amountCents == 115)
+  }
+
+  @Test func theNoteDefaultsToTheCategoryLabel() throws {
+    #expect(try QuickExpense.newExpense(pesos: 10, categoryId: "super", note: "  ").get().description == "Súper")
+    #expect(try QuickExpense.newExpense(pesos: 10, categoryId: "super", note: " Leche ").get().description == "Leche")
+  }
+
+  @Test func rejectsNonsenseAmounts() {
+    for pesos in [0, -5, Double.nan, Double.infinity, 0.001] {
+      #expect(QuickExpense.newExpense(pesos: pesos, categoryId: "comida", note: nil) == .failure(.init("El monto debe ser mayor a $0")))
+    }
+    #expect(QuickExpense.newExpense(pesos: 1e12, categoryId: "comida", note: nil) == .failure(.init("El monto es demasiado grande")))
+  }
+
+  @Test func presetsBuildTheirRequest() {
+    let preset = QuickExpense.presets[0]
+    #expect(preset.title == "$50")
+    #expect(preset.emoji == "☕")
+    let request = QuickExpense.newExpense(preset)
+    #expect(request.amountCents == 5_000)
+    #expect(request.description == "Café")
+  }
+
+  @Test func sirisConfirmation() {
+    #expect(QuickExpense.confirmation(cents: 15_000, categoryId: "comida") == "Anotado: $150.00 en comida.")
+  }
+}

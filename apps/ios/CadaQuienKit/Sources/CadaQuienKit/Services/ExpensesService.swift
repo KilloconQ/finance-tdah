@@ -23,7 +23,7 @@ public struct ExpensesService: Sendable {
         try await client.send(.delete, "/api/expenses/\(id.rawValue)")
     }
 
-    public struct NewExpense: Encodable, Sendable {
+    public struct NewExpense: Encodable, Sendable, Equatable {
         public var kind: ExpenseKind
         public var amountCents: Int
         public var category: String

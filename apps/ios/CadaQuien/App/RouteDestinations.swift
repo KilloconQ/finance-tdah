@@ -28,6 +28,9 @@ private struct RouteView: View {
         case .subscription(let id): SubscriptionDetailScreen(subscriptionId: id)
         case .editSubscription(let id): EditSubscriptionScreen(subscriptionId: id)
         case .group(let id): GroupDetailScreen(groupId: id)
+        #if DEBUG
+        case .widgetGallery: WidgetGallery()
+        #endif
         }
     }
 }

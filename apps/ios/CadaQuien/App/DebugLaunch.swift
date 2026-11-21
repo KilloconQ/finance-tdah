@@ -36,6 +36,7 @@ extension Route {
     static func named(_ name: String) -> Route? {
         switch name {
         case "settings": .settings
+        case "widgets": .widgetGallery
         case "challenge": .challenge
         case "accounts": .accounts
         case "newAccount": .newAccount

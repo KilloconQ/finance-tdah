@@ -22,4 +22,8 @@ enum Route: Hashable {
     case editSubscription(EntityID)
 
     case group(EntityID)
+
+    #if DEBUG
+    case widgetGallery
+    #endif
 }

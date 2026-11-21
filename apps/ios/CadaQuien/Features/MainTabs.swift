@@ -41,6 +41,14 @@ struct MainTabs: View {
         .fullScreenCover(isPresented: $navigator.isShowingPanic) {
             PanicView()
         }
+        .onChange(of: app.pendingDeepLink, initial: true) { _, link in
+            guard let link else { return }
+            switch link {
+            case .addExpense: navigator.isAddingExpense = true
+            case .panic: navigator.isShowingPanic = true
+            }
+            app.consumeDeepLink()
+        }
         // Outermost on purpose: sheets and covers inherit the environment of the view they are attached to.
         .environment(navigator)
     }

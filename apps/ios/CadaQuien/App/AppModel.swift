@@ -19,6 +19,8 @@ final class AppModel {
     private(set) var user: AuthUser?
     private(set) var profile: UserProfile?
     private(set) var store: DataStore
+    /// A link opened before the tabs exist (cold launch from the widget): the tabs pick it up once they appear.
+    private(set) var pendingDeepLink: DeepLink?
 
     let environment: APIEnvironment
     let services: Services
@@ -109,4 +111,14 @@ final class AppModel {
     }
 
     var hidesBalances: Bool { profile?.showBalances == false }
+
+    // MARK: Links
+
+    func open(_ url: URL) {
+        pendingDeepLink = DeepLink(url: url)
+    }
+
+    func consumeDeepLink() {
+        pendingDeepLink = nil
+    }
 }

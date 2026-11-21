@@ -1,6 +1,7 @@
 name: CadaQuien
 options:
   bundleIdPrefix: app.cadaquien
+  developmentLanguage: es
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -19,7 +20,7 @@ targets:
   CadaQuien:
     type: application
     platform: iOS
-    sources: [CadaQuien]
+    sources: [CadaQuien, Shared]
     dependencies:
       - package: CadaQuienKit
       - target: CadaQuienWidget
@@ -39,6 +40,9 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         APIBaseURL: $(API_BASE_URL)
+        CFBundleURLTypes:
+          - CFBundleURLName: app.cadaquien.ios
+            CFBundleURLSchemes: [cadaquien]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSFaceIDUsageDescription: Para abrir Cada Quien sin escribir tu contraseña.
@@ -50,7 +54,8 @@ targets:
   CadaQuienWidget:
     type: app-extension
     platform: iOS
-    sources: [CadaQuienWidget]
+    # The widget shares the intents, and the color tokens (its own asset catalog carries the same palette).
+    sources: [CadaQuienWidget, Shared, CadaQuien/DesignSystem/Palette.swift]
     dependencies:
       - package: CadaQuienKit
     entitlements:
@@ -63,6 +68,8 @@ targets:
       properties:
         CFBundleDisplayName: Cada Quien
         APIBaseURL: $(API_BASE_URL)
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:

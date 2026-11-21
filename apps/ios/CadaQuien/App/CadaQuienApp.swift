@@ -21,6 +21,7 @@ struct CadaQuienApp: App {
                 .environment(\.hideBalances, app.hidesBalances)
                 .tint(Palette.sage)
                 .preferredColorScheme(theme.colorScheme)
+                .onOpenURL { app.open($0) }
         }
     }
 }
