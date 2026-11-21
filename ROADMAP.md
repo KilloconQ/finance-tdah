@@ -68,7 +68,7 @@ Ordenado por prioridad, no por fecha. Basado en lo que ya existe en el repo (có
 ## Más adelante (diferido a propósito, no por olvido)
 
 - **Modelo de gasto compartido / partner-household**: no existe ningún concepto de "hogar" o pareja en el schema (verificado, cero referencias). Decidido como su propia feature futura, no algo a meter de contrabando en otra tarea.
-- **Apps nativas de verdad** (no un wrapper tipo Capacitor): para aprovechar cada plataforma — voz del sistema, widgets, Siri/Atajos y gastos automáticos con Apple Pay, notificaciones nativas, Face ID. Falta decidir entre Swift + Kotlin puro o React Native/Expo con extensiones nativas; en ambos casos hace falta otro método de login (la API usa cookies de sesión) y una Mac con cuenta de Apple Developer para iOS. Es una fase separada; hasta entonces la voz sigue congelada.
+- **Apps nativas de verdad** (no un wrapper tipo Capacitor): **iOS hecho** en `apps/ios` (Swift + SwiftUI, paridad con la web, widget y Atajos de Siri para anotar gastos, notificaciones nativas por APNs, login por token bearer; ver `apps/ios/README.md`). Pendiente en iOS: voz del sistema, gastos automáticos con Apple Pay, Face ID, enlace universal para restablecer contraseña, y probar las notificaciones en un iPhone real (necesita cuenta de Apple Developer y una clave APNs). Android sigue sin empezar.
 
 ## Cómo se prioriza
 
