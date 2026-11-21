@@ -12,7 +12,7 @@ Branch: feat/ios-app. Delivery strategy: ask-on-risk. Test runner: XCTest / Swif
 
 ## Tasks
 - [x] T1 (S2,S3) API: native login path (better-auth bearer plugin, Keychain token) — route: inline — RED/GREEN observed, api suite 210/210 — commit: feat(api): accept bearer tokens for native clients — Risk: item 2 (auth)
-- [ ] T2 (S1) Xcode project scaffold in apps/ios (app + widget extension + App Group) — inline — files written, xcodegen OK; xcodebuild blocked until the iOS 26.5 simulator runtime finishes downloading (10.6 GB) — commit: pending
+- [x] T2 (S1) Xcode project scaffold in apps/ios (app + widget extension + App Group) — inline — files written, xcodegen OK; build app+widget OK, XCTest on iPhone 17 Pro (iOS 26.5) passed, app launched and screenshot taken — commit: d9adaa8 — Risk: none
 - [x] T3 (S2,S5) Core: API client, Codable models, bearer auth, token store — inline — swift test 52/52 + real-API contract test over every service (auth, profile, accounts, envelopes, expenses, goals, subscriptions, challenges, dashboard, groups) — commits: de8b10f, 13802b3, be31928 — Risk: none (new package, no shared code)
 - [ ] T4 (S4,S6) Design system: tokens, components (Btn, Card, Chip, Sheet, AmountInput, Money) — inline — -
 - [ ] T5 (S2) Auth + onboarding — inline — -
