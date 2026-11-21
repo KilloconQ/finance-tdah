@@ -14,8 +14,10 @@ final class DataStore {
     let challenge: Resource<Challenge?>
     let groups: Resource<[ExpenseGroup]>
     let invitations: Resource<[GroupInvitation]>
+    let incomes: Resource<[ScheduledIncome]>
 
     @ObservationIgnored private var groupDetails: [EntityID: Resource<GroupDetail>] = [:]
+    @ObservationIgnored private var calendarMonths: [CalendarMonth: Resource<CalendarResponse>] = [:]
     @ObservationIgnored private let services: Services
     @ObservationIgnored private let fire: @MainActor () -> Void
 
@@ -32,6 +34,7 @@ final class DataStore {
         challenge = Resource(onUnauthorized: fire) { try await services.challenges.active() }
         groups = Resource(onUnauthorized: fire) { try await services.groups.list() }
         invitations = Resource(onUnauthorized: fire) { try await services.invitations.list() }
+        incomes = Resource(onUnauthorized: fire) { try await services.incomes.list() }
     }
 
     /// Money moved: balances, envelopes, the week's numbers and the list of movements may all have changed.
@@ -51,7 +54,26 @@ final class DataStore {
     }
 
     func refreshSubscriptions() async {
-        await subscriptions.reloadIfLoaded()
+        async let subscriptions: Void = subscriptions.reloadIfLoaded()
+        async let calendar: Void = refreshCalendar()
+        _ = await (subscriptions, calendar)
+    }
+
+    /// One month of the calendar; created on first use and kept for the session.
+    func calendarMonth(_ month: CalendarMonth) -> Resource<CalendarResponse> {
+        if let existing = calendarMonths[month] { return existing }
+        let services = services
+        let resource = Resource<CalendarResponse>(onUnauthorized: fire) {
+            try await services.calendar.events(from: month.first, to: month.last)
+        }
+        calendarMonths[month] = resource
+        return resource
+    }
+
+    /// Income, subscriptions or card days changed: the registered income and every month already seen may differ.
+    func refreshCalendar() async {
+        await incomes.reloadIfLoaded()
+        for resource in calendarMonths.values { await resource.reloadIfLoaded() }
     }
 
     func refreshChallenge() async {

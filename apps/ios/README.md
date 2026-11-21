@@ -74,8 +74,15 @@ Debug builds only. They let a script open the app signed in on a given screen, t
 xcrun simctl launch <device> app.cadaquien.ios -cq-token <token> -cq-tab 2 -cq-route accounts
 ```
 
-`-cq-tab 0..3` (Hoy, Movimientos, Dinero, Grupos), `-cq-route settings|challenge|accounts|goals|subscriptions|widgets|…`,
+`-cq-tab 0..4` (Hoy, Movimientos, Dinero, Calendario, Grupos), `-cq-route settings|challenge|accounts|goals|subscriptions|widgets|…`,
 `-cq-add` (open the add-expense sheet), `-cq-panic`. `-cq-route widgets` shows the widget at its real sizes.
+
+## Calendar
+
+The Calendario tab shows, month by month, when each credit card is due, when subscriptions charge and the income the person
+registers (payroll or other payments, once or weekly, every 14 days, semimonthly or monthly). The server computes the events
+(`GET /api/calendar?from&to`), so the web and the app always show the same days; the income itself lives at `/api/incomes`.
+Income only reminds: it never creates a movement. On iOS 26 the tab bar shrinks to a small pill while scrolling down.
 
 ## Widget, Siri and Shortcuts
 

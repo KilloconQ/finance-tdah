@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The four tabs of the app: Hoy, Movimientos, Dinero, Grupos.
+/// The five tabs of the app: Hoy, Movimientos, Dinero, Calendario, Grupos.
 struct MainTabs: View {
     @Environment(AppModel.self) private var app
     @State private var navigator = Navigator()
@@ -25,6 +25,12 @@ struct MainTabs: View {
             }
             .tabItem { Label("Dinero", systemImage: "wallet.bifold") }
             .tag(MainTab.money)
+
+            NavigationStack(path: $navigator.calendarPath) {
+                CalendarView().routeDestinations()
+            }
+            .tabItem { Label("Calendario", systemImage: "calendar") }
+            .tag(MainTab.calendar)
 
             NavigationStack(path: $navigator.groupsPath) {
                 GroupsView().routeDestinations()

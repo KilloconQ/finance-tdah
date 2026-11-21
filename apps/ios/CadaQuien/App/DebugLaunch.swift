@@ -15,11 +15,11 @@ enum DebugLaunch {
         if let token = value(after: "-cq-token") { tokens.save(token) }
     }
 
-    /// `-cq-tab 0..3` (Hoy, Movimientos, Dinero, Grupos), `-cq-route settings` to push a screen, `-cq-panic`,
+    /// `-cq-tab 0..4` (Hoy, Movimientos, Dinero, Calendario, Grupos), `-cq-route settings` to push a screen, `-cq-panic`,
     /// and `-cq-add` to open the add-expense sheet.
     @MainActor
     static func configure(_ navigator: Navigator) {
-        let tabs: [MainTab] = [.today, .movements, .money, .groups]
+        let tabs: [MainTab] = [.today, .movements, .money, .calendar, .groups]
         if let index = value(after: "-cq-tab").flatMap(Int.init), tabs.indices.contains(index) {
             navigator.tab = tabs[index]
         }

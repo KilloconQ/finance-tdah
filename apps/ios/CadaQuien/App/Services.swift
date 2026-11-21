@@ -13,6 +13,8 @@ struct Services: Sendable {
     let dashboard: DashboardService
     let groups: GroupsService
     let invitations: InvitationsService
+    let incomes: IncomesService
+    let calendar: CalendarService
 
     init(client: APIClient) {
         auth = AuthService(client: client)
@@ -26,5 +28,7 @@ struct Services: Sendable {
         dashboard = DashboardService(client: client)
         groups = GroupsService(client: client)
         invitations = InvitationsService(client: client)
+        incomes = IncomesService(client: client)
+        calendar = CalendarService(client: client)
     }
 }

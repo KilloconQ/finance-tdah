@@ -1,7 +1,7 @@
 import Observation
 
 enum MainTab: Hashable {
-    case today, movements, money, groups
+    case today, movements, money, calendar, groups
 }
 
 /// Which tab is showing, what is pushed on each, and the sheets that open from anywhere. Lives in the environment so
@@ -12,6 +12,7 @@ final class Navigator {
     var todayPath: [Route] = []
     var movementsPath: [Route] = []
     var moneyPath: [Route] = []
+    var calendarPath: [Route] = []
     var groupsPath: [Route] = []
 
     var isAddingExpense = false
@@ -30,6 +31,7 @@ final class Navigator {
         case .today: todayPath = [route]
         case .movements: movementsPath = [route]
         case .money: moneyPath = [route]
+        case .calendar: calendarPath = [route]
         case .groups: groupsPath = [route]
         }
     }

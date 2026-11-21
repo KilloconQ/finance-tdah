@@ -31,6 +31,7 @@ final class AccountFormModel {
                 _ = try await app.services.accounts.create(try draft.newAccount().get())
             }
             await app.store.refreshMoney()
+            await app.store.refreshCalendar()  // the statement days decide the card payment dates
             return true
         } catch {
             errorMessage =
