@@ -29,6 +29,7 @@ struct WidgetGallery: View {
         }
         .background(Palette.bgAlt)
         .navigationTitle("Widgets")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func card(_ entry: QuickAddEntry, _ family: WidgetFamily, size: CGSize, lockScreen: Bool = false) -> some View {

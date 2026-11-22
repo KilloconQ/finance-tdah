@@ -48,6 +48,8 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         NSFaceIDUsageDescription: Para abrir Cada Quien sin escribir tu contraseña.
+        # Only asked when API_BASE_URL points at a server on the local network (a phone talking to the dev API on a Mac).
+        NSLocalNetworkUsageDescription: Para conectarse a tu servidor de desarrollo en la red local.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.cadaquien.ios
