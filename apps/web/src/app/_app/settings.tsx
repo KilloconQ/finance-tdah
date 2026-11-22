@@ -11,6 +11,7 @@ import { usePushSubscription } from '@/lib/use-push-subscription'
 import { signOutAndClear } from '@/lib/session-reset'
 import { errorText, fetchValidated } from '@/lib/api'
 import { useInviteToApp } from '@/features/groups'
+import { NotificationRulesContainer } from '@/features/calendar'
 import { z } from 'zod'
 
 export const Route = createFileRoute('/_app/settings')({
@@ -139,6 +140,13 @@ function Settings() {
             ) : null}
           </Section>
         ) : null}
+
+        <Section
+          label="Avisos del calendario"
+          hint="Cobros, cortes y pagos de tarjeta y suscripciones. Elige cuándo te avisamos de cada uno."
+        >
+          <NotificationRulesContainer />
+        </Section>
 
         <Section label="Invita a alguien" hint="Le mandamos un correo con el enlace para crear su cuenta en Cada Quien.">
           <InviteToApp />

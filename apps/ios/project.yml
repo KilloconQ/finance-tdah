@@ -1,0 +1,98 @@
+name: CadaQuien
+options:
+  bundleIdPrefix: app.cadaquien
+  developmentLanguage: es
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Where the API lives. The simulator reaches the dev API on localhost; override for a real device:
+    #   xcodebuild ... API_BASE_URL=https://your-domain
+    API_BASE_URL: http:/$()/localhost:3001
+packages:
+  CadaQuienKit:
+    path: CadaQuienKit
+targets:
+  CadaQuien:
+    type: application
+    platform: iOS
+    sources: [CadaQuien, Shared]
+    dependencies:
+      - package: CadaQuienKit
+      - target: CadaQuienWidget
+    entitlements:
+      path: CadaQuien/CadaQuien.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.cadaquien.shared]
+        keychain-access-groups: [$(AppIdentifierPrefix)app.cadaquien.shared]
+        # Native notifications. Xcode switches this to "production" when archiving for TestFlight / the App Store.
+        aps-environment: development
+    info:
+      path: CadaQuien/Info.plist
+      properties:
+        CFBundleDisplayName: Cada Quien
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        APIBaseURL: $(API_BASE_URL)
+        CFBundleURLTypes:
+          - CFBundleURLName: app.cadaquien.ios
+            CFBundleURLSchemes: [cadaquien]
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSFaceIDUsageDescription: Para abrir Cada Quien sin escribir tu contraseña.
+        # Only asked when API_BASE_URL points at a server on the local network (a phone talking to the dev API on a Mac).
+        NSLocalNetworkUsageDescription: Para conectarse a tu servidor de desarrollo en la red local.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.cadaquien.ios
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+  CadaQuienWidget:
+    type: app-extension
+    platform: iOS
+    # The widget shares the intents, and the color tokens (its own asset catalog carries the same palette).
+    sources: [CadaQuienWidget, Shared, CadaQuien/DesignSystem/Palette.swift]
+    dependencies:
+      - package: CadaQuienKit
+    entitlements:
+      path: CadaQuienWidget/CadaQuienWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.app.cadaquien.shared]
+        keychain-access-groups: [$(AppIdentifierPrefix)app.cadaquien.shared]
+    info:
+      path: CadaQuienWidget/Info.plist
+      properties:
+        CFBundleDisplayName: Cada Quien
+        APIBaseURL: $(API_BASE_URL)
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.cadaquien.ios.widget
+  CadaQuienTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [CadaQuienTests]
+    dependencies:
+      - target: CadaQuien
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: app.cadaquien.ios.tests
+schemes:
+  CadaQuien:
+    build:
+      targets:
+        CadaQuien: all
+    test:
+      targets: [CadaQuienTests]

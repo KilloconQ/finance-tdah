@@ -1,9 +1,11 @@
 import { and, eq, exists, isNull, lt, or, sql } from 'drizzle-orm'
 import { dailyReminderDue, localClock } from '@finance-tdah/shared/domain'
 import { db, schema } from '../db/client'
+import { features } from '../env'
 import { logger } from '../lib/logger'
 import { sendPushToUser } from './push-sender'
-import { runSubscriptionAlerts } from './subscription-alerts'
+import { runCalendarAlerts } from './calendar-alerts'
+import { rollSubscriptionDates } from './subscription-alerts'
 
 const CHECK_EVERY_MS = 5 * 60 * 1000
 
@@ -20,6 +22,27 @@ const MESSAGES = [
  * claimed with a conditional update before anything is sent.
  */
 export async function runDailyReminders(now: Date = new Date()): Promise<{ sent: number }> {
+  // Someone counts as reachable only through a channel the server can send on right now. Otherwise a day would be
+  // claimed for a reminder that goes nowhere, and it would be lost for good.
+  const reachable = [
+    features.webPush &&
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(schema.pushSubscription)
+          .where(eq(schema.pushSubscription.userId, schema.userProfile.userId)),
+      ),
+    features.apns &&
+      exists(
+        db
+          .select({ one: sql`1` })
+          .from(schema.deviceToken)
+          .where(eq(schema.deviceToken.userId, schema.userProfile.userId)),
+      ),
+  ].filter((condition) => condition !== false)
+  // `or()` of nothing is "no condition", which would remind everybody: no channel means no reminders.
+  if (reachable.length === 0) return { sent: 0 }
+
   const candidates = await db
     .select({
       userId: schema.userProfile.userId,
@@ -28,17 +51,7 @@ export async function runDailyReminders(now: Date = new Date()): Promise<{ sent:
       lastOn: schema.userProfile.lastDailyReminderOn,
     })
     .from(schema.userProfile)
-    .where(
-      and(
-        eq(schema.userProfile.dailyReminderEnabled, true),
-        exists(
-          db
-            .select({ one: sql`1` })
-            .from(schema.pushSubscription)
-            .where(eq(schema.pushSubscription.userId, schema.userProfile.userId)),
-        ),
-      ),
-    )
+    .where(and(eq(schema.userProfile.dailyReminderEnabled, true), or(...reachable)))
 
   let sent = 0
   for (const c of candidates) {
@@ -89,12 +102,14 @@ export function startDailyReminders(): void {
         if (sent > 0) logger.info('daily_reminders_sent', { sent })
       })
       .catch(failed('daily_reminders_failed'))
-    // ponytail: rides the reminder timer, so it only runs while web push is configured.
-    void runSubscriptionAlerts()
+    // ponytail: rides the reminder timer, so it only runs while web push or native push is configured.
+    // The date roll goes first so the notifications look at the dates ahead, not at ones that have passed.
+    void rollSubscriptionDates()
+      .then(() => runCalendarAlerts())
       .then(({ sent }) => {
-        if (sent > 0) logger.info('subscription_alerts_sent', { sent })
+        if (sent > 0) logger.info('calendar_alerts_sent', { sent })
       })
-      .catch(failed('subscription_alerts_failed'))
+      .catch(failed('calendar_alerts_failed'))
   }
   // `bun --hot` re-runs this module on every save: replace the timer, don't stack them.
   const g = globalThis as { __dailyReminderTimer?: ReturnType<typeof setInterval> }

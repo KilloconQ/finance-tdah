@@ -8,6 +8,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -30,6 +31,8 @@ export const inputPreferenceEnum = pgEnum('input_preference', ['voice', 'widget'
 export const densityModeEnum = pgEnum('density_mode', ['simple', 'detailed'])
 
 export const expenseKindEnum = pgEnum('expense_kind', ['expense', 'income', 'transfer'])
+
+export const incomeFrequencyEnum = pgEnum('income_frequency', ['once', 'weekly', 'biweekly', 'semimonthly', 'monthly'])
 
 export const invitationStatusEnum = pgEnum('invitation_status', ['pending', 'declined'])
 
@@ -196,6 +199,26 @@ export const pushSubscription = pgTable(
   (t) => [uniqueIndex('push_subscription_endpoint_idx').on(t.endpoint)],
 )
 
+/**
+ * An iPhone or iPad that can receive native (APNs) notifications. The web has its own table
+ * (`push_subscription`): the two are different protocols with different credentials.
+ */
+export const deviceToken = pgTable(
+  'device_token',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    /** The APNs device token, as the hex string the app sends. */
+    token: text('token').notNull(),
+    /** Which APNs host this token belongs to: debug builds register against the sandbox. */
+    environment: text('environment').$type<'sandbox' | 'production'>().notNull().default('production'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex('device_token_token_idx').on(t.token), index('device_token_user_idx').on(t.userId)],
+)
+
 export const userRelations = relations(user, ({ one, many }) => ({
   profile: one(userProfile, {
     fields: [user.id],
@@ -209,10 +232,15 @@ export const userRelations = relations(user, ({ one, many }) => ({
   challenges: many(challenge),
   budgets: many(dailyBudget),
   pushSubscriptions: many(pushSubscription),
+  deviceTokens: many(deviceToken),
 }))
 
 export const pushSubscriptionRelations = relations(pushSubscription, ({ one }) => ({
   user: one(user, { fields: [pushSubscription.userId], references: [user.id] }),
+}))
+
+export const deviceTokenRelations = relations(deviceToken, ({ one }) => ({
+  user: one(user, { fields: [deviceToken.userId], references: [user.id] }),
 }))
 
 export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({
@@ -420,3 +448,49 @@ export const ENUMS = {
   densityMode: densityModeEnum,
   expenseKind: expenseKindEnum,
 }
+
+// Money the user expects to receive (payroll, payments owed to her). It only feeds the calendar: it never creates a movement.
+export const scheduledIncome = pgTable('scheduled_income', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  // Optional: not everyone knows what the next payment will be.
+  amountCents: integer('amount_cents'),
+  frequency: incomeFrequencyEnum('frequency').notNull(),
+  // The first (or only) date it arrives.
+  startsOn: date('starts_on').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+})
+
+// How the user wants each kind of calendar notification. A kind without a row uses the defaults in `domain/alerts`.
+export const notificationRule = pgTable(
+  'notification_rule',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    kind: text('kind').$type<'income' | 'card_cutoff' | 'card_payment' | 'subscription_monthly' | 'subscription_yearly'>().notNull(),
+    enabled: boolean('enabled').notNull(),
+    daysBefore: integer('days_before').notNull(),
+    hour: integer('hour').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind] })],
+)
+
+// What was already notified, so a calendar event never produces a second notification.
+export const calendarAlert = pgTable(
+  'calendar_alert',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(),
+    sourceId: text('source_id').notNull(),
+    eventDate: date('event_date').notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.kind, t.sourceId, t.eventDate] })],
+)

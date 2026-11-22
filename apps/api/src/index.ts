@@ -19,6 +19,9 @@ import { invitationsRoute } from './routes/invitations'
 import { profileRoute } from './routes/profile'
 import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
+import { calendarRoute } from './routes/calendar'
+import { incomesRoute } from './routes/incomes'
+import { notificationRulesRoute } from './routes/notification-rules'
 import { startDailyReminders } from './services/daily-reminder'
 
 const app = new Hono<{ Variables: { requestId: string } }>()
@@ -54,6 +57,9 @@ app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 const api = app
   .basePath('/api')
   .route('/profile', profileRoute)
+  .route('/calendar', calendarRoute)
+  .route('/incomes', incomesRoute)
+  .route('/notification-rules', notificationRulesRoute)
   .route('/accounts', accountsRoute)
   .route('/envelopes', envelopesRoute)
   .route('/goals', goalsRoute)
@@ -101,7 +107,15 @@ if (!features.webPush) {
     feature: 'web_push',
     message: `${features.webPushProblem} Push notifications are disabled; sign-in is unaffected.`,
   })
-} else if (env.NODE_ENV !== 'test') {
+}
+if (features.apnsConfigured && !features.apns) {
+  logger.warn('feature_disabled', {
+    feature: 'apns',
+    message: `${features.apnsProblem} iPhone notifications are disabled; sign-in is unaffected.`,
+  })
+}
+// The reminders go out over whichever channel is set up.
+if ((features.webPush || features.apns) && env.NODE_ENV !== 'test') {
   startDailyReminders()
 }
 export default {

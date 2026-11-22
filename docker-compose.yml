@@ -48,6 +48,10 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:soporte@finance-tdah.local}
+      APNS_KEY_ID: ${APNS_KEY_ID:-}
+      APNS_TEAM_ID: ${APNS_TEAM_ID:-}
+      APNS_BUNDLE_ID: ${APNS_BUNDLE_ID:-app.cadaquien.ios}
+      APNS_PRIVATE_KEY: ${APNS_PRIVATE_KEY:-}
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://localhost:3001/health']
       interval: 10s

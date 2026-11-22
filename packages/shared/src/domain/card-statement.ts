@@ -37,7 +37,7 @@ export interface CardStatement {
 const pad = (n: number) => String(n).padStart(2, '0')
 
 // Day `day` of a month, clamped to the month's length (day 31 -> Feb 28).
-function dayOf(year: number, month: number, day: number): string {
+export function dayOf(year: number, month: number, day: number): string {
   const y = year + Math.floor((month - 1) / 12)
   const m = ((((month - 1) % 12) + 12) % 12) + 1
   const last = new Date(Date.UTC(y, m, 0)).getUTCDate()

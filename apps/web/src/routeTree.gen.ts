@@ -24,6 +24,7 @@ import { Route as AppSettingsRouteImport } from './app/_app/settings'
 import { Route as AppPanicRouteImport } from './app/_app/panic'
 import { Route as AppMoneyRouteImport } from './app/_app/money'
 import { Route as AppChallengeRouteImport } from './app/_app/challenge'
+import { Route as AppCalendarRouteImport } from './app/_app/calendar'
 import { Route as AppAddExpenseRouteImport } from './app/_app/add-expense'
 import { Route as AppSubscriptionsIndexRouteImport } from './app/_app/subscriptions/index'
 import { Route as AppGroupsIndexRouteImport } from './app/_app/groups/index'
@@ -115,6 +116,11 @@ const AppChallengeRoute = AppChallengeRouteImport.update({
   path: '/challenge',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCalendarRoute = AppCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppAddExpenseRoute = AppAddExpenseRouteImport.update({
   id: '/add-expense',
   path: '/add-expense',
@@ -199,6 +205,7 @@ const AppAccountsIdEnvelopesRoute = AppAccountsIdEnvelopesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/add-expense': typeof AppAddExpenseRoute
+  '/calendar': typeof AppCalendarRoute
   '/challenge': typeof AppChallengeRoute
   '/money': typeof AppMoneyRoute
   '/panic': typeof AppPanicRoute
@@ -230,6 +237,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/add-expense': typeof AppAddExpenseRoute
+  '/calendar': typeof AppCalendarRoute
   '/challenge': typeof AppChallengeRoute
   '/money': typeof AppMoneyRoute
   '/panic': typeof AppPanicRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/add-expense': typeof AppAddExpenseRoute
+  '/_app/calendar': typeof AppCalendarRoute
   '/_app/challenge': typeof AppChallengeRoute
   '/_app/money': typeof AppMoneyRoute
   '/_app/panic': typeof AppPanicRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/add-expense'
+    | '/calendar'
     | '/challenge'
     | '/money'
     | '/panic'
@@ -330,6 +340,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/add-expense'
+    | '/calendar'
     | '/challenge'
     | '/money'
     | '/panic'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_app'
     | '/_app/add-expense'
+    | '/_app/calendar'
     | '/_app/challenge'
     | '/_app/money'
     | '/_app/panic'
@@ -513,6 +525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppChallengeRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/calendar': {
+      id: '/_app/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/add-expense': {
       id: '/_app/add-expense'
       path: '/add-expense'
@@ -630,6 +649,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAddExpenseRoute: typeof AppAddExpenseRoute
+  AppCalendarRoute: typeof AppCalendarRoute
   AppChallengeRoute: typeof AppChallengeRoute
   AppMoneyRoute: typeof AppMoneyRoute
   AppPanicRoute: typeof AppPanicRoute
@@ -655,6 +675,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAddExpenseRoute: AppAddExpenseRoute,
+  AppCalendarRoute: AppCalendarRoute,
   AppChallengeRoute: AppChallengeRoute,
   AppMoneyRoute: AppMoneyRoute,
   AppPanicRoute: AppPanicRoute,

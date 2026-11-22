@@ -33,7 +33,7 @@ export function costOverDaysCents(amountCents: number, cadence: SubscriptionCade
 const pad = (n: number) => String(n).padStart(2, '0')
 
 // `months` after `date`, clamped to the target month's length (Jan 31 + 1 -> Feb 28).
-function addMonthsClamped(date: string, months: number): string {
+export function addMonthsClamped(date: string, months: number): string {
   const [y, m, d] = date.split('-').map(Number) as [number, number, number]
   const index = y * 12 + (m - 1) + months
   const year = Math.floor(index / 12)

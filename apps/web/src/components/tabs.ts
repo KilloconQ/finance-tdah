@@ -1,4 +1,4 @@
-import { Home, Receipt, Repeat, Users, Wallet, Flame, type LucideIcon } from 'lucide-react'
+import { CalendarDays, Home, Receipt, Repeat, Users, Wallet, Flame, type LucideIcon } from 'lucide-react'
 
 type Tab = {
   to: string
@@ -24,6 +24,7 @@ export const TABS: ReadonlyArray<Tab> = [
   },
   { to: '/subscriptions', label: 'Suscrip.', icon: Repeat, desktopOnly: true },
   { to: '/accounts', label: 'Cuentas', icon: Wallet, desktopOnly: true },
+  { to: '/calendar', label: 'Calendario', icon: CalendarDays },
   { to: '/groups', label: 'Grupos', icon: Users },
   { to: '/challenge', label: 'Retos', icon: Flame, desktopOnly: true },
 ]
