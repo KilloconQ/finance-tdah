@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Purchases, type Package } from '@revenuecat/purchases-js'
 import { AppBar, Btn, Hello, PhoneShell } from '@/components'
@@ -33,33 +34,36 @@ async function waitForAccess(): Promise<boolean> {
 function Paywall() {
   const { userId } = Route.useRouteContext()
   const navigate = useNavigate()
-  const [packages, setPackages] = useState<Package[] | null>(null)
-  const [busy, setBusy] = useState(false)
   const apiKey = import.meta.env.VITE_REVENUECAT_WEB_KEY
-  const [error, setError] = useState<string | null>(apiKey ? null : 'El cobro no está configurado todavía.')
-  const [purchases, setPurchases] = useState<Purchases | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [buyError, setBuyError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!apiKey) return
-    // The app user id is OUR user id: that is what the webhook maps back to an account.
-    const p = Purchases.configure({ apiKey, appUserId: userId })
-    setPurchases(p)
-    p.getOfferings()
-      .then((o) => setPackages(o.current?.availablePackages ?? []))
-      .catch((err) => setError(errorText(err, 'No pudimos cargar los planes')))
-  }, [apiKey, userId])
+  const offerings = useQuery({
+    queryKey: ['revenuecat', 'offerings', userId],
+    enabled: Boolean(apiKey),
+    retry: false,
+    queryFn: async () => {
+      // The app user id is OUR user id: that is what the webhook maps back to an account.
+      const purchases = Purchases.isConfigured() ? Purchases.getSharedInstance() : Purchases.configure({ apiKey, appUserId: userId })
+      if (purchases.getAppUserId() !== userId) await purchases.changeUser(userId)
+      return (await purchases.getOfferings()).current?.availablePackages ?? []
+    },
+  })
+  const packages = offerings.data
+  const error = !apiKey
+    ? 'El cobro no está configurado todavía.'
+    : (buyError ?? (offerings.isError ? errorText(offerings.error, 'No pudimos cargar los planes') : null))
 
   const buy = async (rcPackage: Package) => {
-    if (!purchases || busy) return
+    if (busy) return
     setBusy(true)
-    setError(null)
+    setBuyError(null)
     try {
-      await purchases.purchase({ rcPackage })
+      await Purchases.getSharedInstance().purchase({ rcPackage })
       if (await waitForAccess()) navigate({ to: '/', replace: true })
-      else setError('Tu pago está en proceso. Vuelve a abrir la app en un minuto.')
+      else setBuyError('Tu pago está en proceso. Vuelve a abrir la app en un minuto.')
     } catch (err) {
-      // Closing the checkout is not an error worth shouting about.
-      setError(errorText(err, 'No pudimos completar el pago'))
+      setBuyError(errorText(err, 'No pudimos completar el pago'))
     } finally {
       setBusy(false)
     }
