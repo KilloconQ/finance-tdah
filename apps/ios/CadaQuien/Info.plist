@@ -42,6 +42,8 @@
 	<string>Para abrir Cada Quien sin escribir tu contraseña.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Para conectarse a tu servidor de desarrollo en la red local.</string>
+	<key>RevenueCatAPIKey</key>
+	<string>$(REVENUECAT_API_KEY)</string>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UISupportedInterfaceOrientations</key>

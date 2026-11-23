@@ -10,6 +10,8 @@ final class AppModel {
         case signedOut
         /// Signed in but no profile yet: show the onboarding.
         case onboarding
+        /// Billing is on and this user hasn't paid (and isn't on the allowlist).
+        case paywall
         case ready
         /// The session could not be checked (offline, server down). The token is kept: this is not a sign-out.
         case failed(String)
@@ -90,19 +92,24 @@ final class AppModel {
     }
 
     private func loadProfile() async throws {
-        if let profile = try await services.profile.get(), profile.onboardingCompleted {
-            self.profile = profile
-            phase = .ready
-        } else {
+        guard let profile = try await services.profile.get(), profile.onboardingCompleted else {
             phase = .onboarding
+            return
         }
+        self.profile = profile
+        phase = try await services.billing.status().needsPaywall ? .paywall : .ready
     }
 
     // MARK: Profile
 
     func completeOnboarding(_ input: ProfileService.Onboarding) async throws {
         profile = try await services.profile.completeOnboarding(input)
-        phase = .ready
+        phase = try await services.billing.status().needsPaywall ? .paywall : .ready
+    }
+
+    /// Called by the paywall once the purchase went through (or was restored): ask the server again.
+    func refreshAccess() async throws {
+        if try await services.billing.status().needsPaywall == false { phase = .ready }
     }
 
     func updateProfile(_ update: ProfileService.ProfileUpdate) async throws {

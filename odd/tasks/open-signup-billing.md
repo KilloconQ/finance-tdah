@@ -18,8 +18,8 @@ Assumptions: one entitlement (`pro`), hard paywall (402) when billing is on; bil
 | ID | Specs | Route | Status | Commit |
 |----|-------|-------|--------|--------|
 | T1 API: open signup, per-platform onboarding, billing webhook/status/gate, admin stats | S1-S5 | inline | done (integration tests not run locally: no Postgres server) | see git log |
-| T2 Web: paywall (purchases-js), platform header, per-platform onboarding, admin page | S2-S5 | inline | pending | — |
-| T3 iOS: purchases-ios, paywall, platform header, onboarding | S2-S4 | inline | pending | — |
+| T2 Web: paywall (purchases-js), platform header, per-platform onboarding, admin page | S2-S5 | inline | done (web tests/lint/tsc green; paywall not exercised against real RevenueCat) | see git log |
+| T3 iOS: purchases-ios, paywall, platform header | S2-S4 | inline | done (Kit tests + simulator build green; paywall not exercised against real RevenueCat) | see git log |
 | T4 Crash/bug reporting (Sentry) | S5 | inline | pending, needs user decision | — |
 
 ## Log

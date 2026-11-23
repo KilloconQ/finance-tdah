@@ -4,6 +4,7 @@ import CadaQuienKit
 struct Services: Sendable {
     let auth: AuthService
     let profile: ProfileService
+    let billing: BillingService
     let accounts: AccountsService
     let envelopes: EnvelopesService
     let expenses: ExpensesService
@@ -20,6 +21,7 @@ struct Services: Sendable {
     init(client: APIClient) {
         auth = AuthService(client: client)
         profile = ProfileService(client: client)
+        billing = BillingService(client: client)
         accounts = AccountsService(client: client)
         envelopes = EnvelopesService(client: client)
         expenses = ExpensesService(client: client)

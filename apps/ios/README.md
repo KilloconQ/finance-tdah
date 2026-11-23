@@ -43,7 +43,7 @@ The API sends a session cookie to browsers. Native clients use the better-auth *
 `set-auth-token` header, the app keeps the token in the Keychain and sends it as `Authorization: Bearer`. The API client never
 stores cookies: with a cookie present the API demands an `Origin` header on every POST, which breaks sign-out.
 
-Registration is invite-only, like the web. Password reset opens the web page from the emailed link.
+Registration is open, like the web. Password reset opens the web page from the emailed link.
 
 ## Tests
 
@@ -107,3 +107,14 @@ and App Store builds against production; the server picks the host per device.
 
 Be aware of what the automated checks do not cover: push delivery to a real iPhone (needs an Apple Developer account and a key),
 the widget on a real home screen, Siri by voice, and App Store submission.
+
+## Billing (RevenueCat)
+
+The server decides: `GET /api/billing/status` says whether billing is on and whether this user has access. In dev/local it says
+`required: false`, so no paywall shows and RevenueCat is never configured. In production, set the public SDK key per build:
+
+```sh
+xcodebuild … REVENUECAT_API_KEY=appl_xxx
+```
+
+The RevenueCat app user id is the API user id, and the entitlement name must match the server's `REVENUECAT_ENTITLEMENT_ID`.
