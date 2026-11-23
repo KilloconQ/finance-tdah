@@ -8,6 +8,8 @@ import { Route } from './_app'
 const getSessionMock = vi.hoisted(() => vi.fn())
 vi.mock('@/lib/auth-client', () => ({ authClient: { getSession: getSessionMock } }))
 
+vi.mock('@/lib/access-guard', () => ({ requireOnboardedAndPaid: vi.fn() }))
+
 const session = (id: string) => ({ user: { id, email: `${id}@ejemplo.com` }, session: { id: `s-${id}` } })
 
 // The guard only reads what it needs; the router context isn't part of that.

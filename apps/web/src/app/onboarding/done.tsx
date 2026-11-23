@@ -5,6 +5,7 @@ import { mutations } from '@/lib/queries'
 import { authClient } from '@/lib/auth-client'
 import { clearOnboardingDraft, useOnboardingDraft } from '@/lib/onboarding-draft'
 import { errorText } from '@/lib/api'
+import { queryClient } from '@/lib/query-client'
 import { OnboardingLayout } from './-layout'
 
 export const Route = createFileRoute('/onboarding/done')({
@@ -41,6 +42,8 @@ function OnboardingDone() {
       })
 
       clearOnboardingDraft()
+      // The guard reads the profile from cache: make it see the onboarding as done.
+      queryClient.removeQueries({ queryKey: ['profile'] })
       navigate({ to: '/', replace: true })
     } catch (err) {
       setError(errorText(err, 'No pudimos guardar tu setup'))

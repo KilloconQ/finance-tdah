@@ -72,6 +72,7 @@ services:
         VITE_API_URL: /api
         # Same key the api signs pushes with — the browser needs it to subscribe.
         VITE_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+        VITE_REVENUECAT_WEB_KEY: ${REVENUECAT_WEB_KEY:-}
     container_name: ft-web
     restart: unless-stopped
     networks:

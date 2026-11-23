@@ -3,6 +3,7 @@ import { OfflineBanner, Sidebar } from '@/components'
 import { forgetSession, getSession } from '@/lib/session'
 import { queryClient, SESSION_QUERY_KEY } from '@/lib/query-client'
 import { syncSessionCache } from '@/lib/session-reset'
+import { requireOnboardedAndPaid } from '@/lib/access-guard'
 import { AppError } from './-app-error'
 
 export const Route = createFileRoute('/_app')({
@@ -23,6 +24,8 @@ export const Route = createFileRoute('/_app')({
     if (syncSessionCache(session.user.id)) {
       queryClient.setQueryData(SESSION_QUERY_KEY, session)
     }
+    // Onboarding done on this platform, and a subscription when billing is on.
+    await requireOnboardedAndPaid()
     return { user: session.user }
   },
   errorComponent: AppError,

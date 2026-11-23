@@ -23,6 +23,8 @@ ADMIN_EMAILS=vos@ejemplo.com
 REVENUECAT_WEBHOOK_AUTH=
 # Entitlement que desbloquea la app (el mismo nombre que en el dashboard de RevenueCat).
 REVENUECAT_ENTITLEMENT_ID=pro
+# Public SDK key de la app Web Billing de RevenueCat. Va al build del web (hay que rebuildear si cambia).
+REVENUECAT_WEB_KEY=
 
 # --- Public URL ---
 # El dominio público que Cloudflare Tunnel va a exponer

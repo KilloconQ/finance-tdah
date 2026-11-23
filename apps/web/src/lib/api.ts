@@ -18,6 +18,8 @@ const baseUrl = import.meta.env.VITE_API_URL ?? '/api'
 export const api = ky.create({
   prefixUrl: baseUrl.replace(/\/$/, ''),
   credentials: 'include',
+  // The API keeps onboarding per platform.
+  headers: { 'X-Client-Platform': 'web' },
   retry: { limit: 1 },
   hooks: {
     afterResponse: [
@@ -25,6 +27,8 @@ export const api = ky.create({
         // Only `sessionMiddleware` answers 401, so this always means the
         // session is gone — caught here once instead of at every screen.
         if (response.status === 401) handleSessionExpired()
+        // 402: signed in but not subscribed (the API only answers it with billing on).
+        if (response.status === 402 && window.location.pathname !== '/paywall') window.location.assign('/paywall')
       },
     ],
     beforeError: [
