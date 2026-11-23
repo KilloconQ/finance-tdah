@@ -3,6 +3,7 @@ import { zValidator } from '@hono/zod-validator'
 import { eq, inArray } from 'drizzle-orm'
 import { completeOnboardingSchema, updateProfileSchema } from '@finance-tdah/shared/schemas'
 import { db, schema } from '../db/client'
+import { clientPlatform } from '../lib/client-platform'
 import { sessionMiddleware, type SessionVariables } from '../middleware/session'
 
 export const profileRoute = new Hono<{ Variables: SessionVariables }>()
@@ -18,7 +19,12 @@ export const profileRoute = new Hono<{ Variables: SessionVariables }>()
       return c.json({ profile: null }, 200)
     }
 
-    return c.json({ profile }, 200)
+    // Onboarding is per platform: signing in on a new device type walks through it again.
+    const platform = clientPlatform(c.req.header('x-client-platform'))
+    const done = await db.query.userOnboarding.findFirst({
+      where: (o, { and, eq }) => and(eq(o.userId, user.id), eq(o.platform, platform)),
+    })
+    return c.json({ profile: { ...profile, onboardingCompleted: Boolean(done) } }, 200)
   })
 
   .post('/onboarding', zValidator('json', completeOnboardingSchema), async (c) => {
@@ -46,6 +52,11 @@ export const profileRoute = new Hono<{ Variables: SessionVariables }>()
           },
         })
         .returning()
+
+      await tx
+        .insert(schema.userOnboarding)
+        .values({ userId: user.id, platform: clientPlatform(c.req.header('x-client-platform')) })
+        .onConflictDoNothing()
 
       if (input.firstGoal) {
         await tx.insert(schema.goal).values({

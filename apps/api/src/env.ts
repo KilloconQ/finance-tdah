@@ -12,6 +12,17 @@ const optionalSecret = z
     return trimmed ? trimmed : undefined
   })
 
+const emailList = z
+  .string()
+  .optional()
+  .default('')
+  .transform((s) =>
+    s
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
+  )
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
@@ -36,18 +47,15 @@ const envSchema = z.object({
   APNS_TEAM_ID: optionalSecret,
   APNS_BUNDLE_ID: z.string().trim().min(1).default('app.cadaquien.ios'),
   APNS_PRIVATE_KEY: optionalSecret,
-  // Comma-separated emails that may always register (admins). Anyone else needs an
-  // invitation from an existing user (see auth.ts).
-  ALLOWED_EMAILS: z
-    .string()
-    .optional()
-    .default('')
-    .transform((s) =>
-      s
-        .split(',')
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean),
-    ),
+  // Comma-separated emails that never pay (free for now). Registration is open to everyone.
+  ALLOWED_EMAILS: emailList,
+  // Comma-separated emails that may open /api/admin.
+  ADMIN_EMAILS: emailList,
+  // RevenueCat: the secret RevenueCat sends in the Authorization header of its webhook, and the
+  // entitlement that unlocks the app. Billing is enforced only in production AND with the secret set,
+  // so dev/local never shows a paywall (see `features.billing`).
+  REVENUECAT_WEBHOOK_AUTH: optionalSecret,
+  REVENUECAT_ENTITLEMENT_ID: z.string().trim().min(1).default('pro'),
 })
 
 const parsed = envSchema.safeParse(process.env)
@@ -71,6 +79,8 @@ const apns = apnsStatus({
 })
 
 export const features = {
+  // Paywall + 402s. Off in dev/test and whenever the webhook secret is missing (a prod misconfig is logged at startup).
+  billing: env.NODE_ENV === 'production' && Boolean(env.REVENUECAT_WEBHOOK_AUTH),
   passwordResetEmail: Boolean(env.RESEND_API_KEY),
   // On only for a usable pair: a malformed one would make `web-push` throw while
   // the API loads. `webPushProblem` says why it's off, for the startup log.

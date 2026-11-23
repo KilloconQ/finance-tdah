@@ -1,4 +1,5 @@
 export * from './account'
+export * from './billing'
 export * from './challenge'
 export * from './common'
 export * from './dashboard'

@@ -356,10 +356,37 @@ export const appInvitationLog = pgTable(
   ],
 )
 
-/** An address someone invited to sign up. Registration is invite-only; a row is valid for SIGNUP_INVITE_DAYS. */
-export const signupInvite = pgTable('signup_invite', {
-  email: text('email').primaryKey(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+/** Client the user is on. Onboarding is done once per platform. */
+export const clientPlatformEnum = pgEnum('client_platform', ['web', 'ios'])
+
+/** One row per platform the user finished onboarding on. */
+export const userOnboarding = pgTable(
+  'user_onboarding',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    platform: clientPlatformEnum('platform').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.platform] })],
+)
+
+/**
+ * What RevenueCat last told us about a user's paid entitlement (webhook). The allowlist is not
+ * stored here: it lives in env and is checked at request time.
+ */
+export const billingEntitlement = pgTable('billing_entitlement', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  active: boolean('active').notNull(),
+  productId: text('product_id'),
+  store: text('store'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  // Webhooks can arrive out of order: only an event newer than this one may overwrite the row.
+  lastEventAt: timestamp('last_event_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const sharedExpense = pgTable(
