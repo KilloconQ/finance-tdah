@@ -44,7 +44,7 @@ services:
       # Optional features. Leaving these empty disables password-reset emails /
       # web push, but never blocks sign-in (the api warns at startup instead).
       RESEND_API_KEY: ${RESEND_API_KEY:-}
-      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-onboarding@resend.dev}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-hola@cadaquien.app}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:soporte@finance-tdah.local}
