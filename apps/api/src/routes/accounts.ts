@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { and, eq, gte, or } from 'drizzle-orm'
+import { and, eq, gte, isNull, or } from 'drizzle-orm'
 import {
   createFinancialAccountSchema,
   idParamSchema,
@@ -24,7 +24,7 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
   .get('/', async (c) => {
     const user = c.get('user')
     const accounts = await db.query.financialAccount.findMany({
-      where: (a, { eq }) => eq(a.userId, user.id),
+      where: (a, { and, eq, isNull }) => and(eq(a.userId, user.id), isNull(a.closedAt)),
       orderBy: (a, { asc }) => [asc(a.createdAt)],
     })
     return c.json({ accounts })
@@ -184,6 +184,46 @@ export const accountsRoute = new Hono<{ Variables: SessionVariables }>()
 
     if ('error' in result) return c.json({ error: result.error }, result.status)
     return c.json({ account: result.account })
+  })
+
+  // Closing keeps the account's history but takes it out of every list and total.
+  // Envelopes hold money of an open account, so they have to be emptied/deleted first.
+  .post('/:id/close', zValidator('param', idParamSchema), async (c) => {
+    const user = c.get('user')
+    const { id } = c.req.valid('param')
+
+    const result = await db.transaction(async (tx) => {
+      const [account] = await tx
+        .select({ id: schema.financialAccount.id })
+        .from(schema.financialAccount)
+        .where(
+          and(
+            eq(schema.financialAccount.id, id),
+            eq(schema.financialAccount.userId, user.id),
+            isNull(schema.financialAccount.closedAt),
+          ),
+        )
+        .for('update')
+      if (!account) return { error: 'Cuenta no encontrada', status: 404 as const }
+
+      const [envelope] = await tx
+        .select({ id: schema.envelope.id })
+        .from(schema.envelope)
+        .where(and(eq(schema.envelope.accountId, id), eq(schema.envelope.userId, user.id)))
+        .limit(1)
+      if (envelope) {
+        return { error: 'Esta cuenta tiene cajitas: bórralas antes de cerrarla.', status: 422 as const }
+      }
+
+      await tx
+        .update(schema.financialAccount)
+        .set({ closedAt: new Date(), updatedAt: new Date() })
+        .where(eq(schema.financialAccount.id, id))
+      return { ok: true as const }
+    })
+
+    if ('error' in result) return c.json({ error: result.error }, result.status)
+    return c.json({ ok: true })
   })
 
   .delete('/:id', zValidator('param', idParamSchema), async (c) => {

@@ -58,7 +58,7 @@ export async function runCalendarAlerts(now: Date = new Date()): Promise<{ sent:
   const [profiles, rules, accounts, subscriptions, incomes] = await Promise.all([
     db.select({ userId: schema.userProfile.userId, timeZone: schema.userProfile.timeZone }).from(schema.userProfile).where(inArray(schema.userProfile.userId, ids)),
     db.select().from(schema.notificationRule).where(inArray(schema.notificationRule.userId, ids)),
-    db.select().from(schema.financialAccount).where(and(inArray(schema.financialAccount.userId, ids), eq(schema.financialAccount.type, 'credito'))),
+    db.select().from(schema.financialAccount).where(and(inArray(schema.financialAccount.userId, ids), eq(schema.financialAccount.type, 'credito'), isNull(schema.financialAccount.closedAt))),
     db.select().from(schema.subscription).where(and(inArray(schema.subscription.userId, ids), isNull(schema.subscription.cancelledAt))),
     db.select().from(schema.scheduledIncome).where(inArray(schema.scheduledIncome.userId, ids)),
   ])

@@ -23,3 +23,15 @@ export function useUpdateAccount(id: string) {
     },
   })
 }
+
+export function useCloseAccount(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => api.post(`accounts/${id}/close`).json(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['accounts'] })
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] })
+    },
+  })
+}

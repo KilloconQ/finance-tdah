@@ -19,6 +19,8 @@ export const financialAccountSchema = z.object({
   cutoffDay: dayOfMonth.nullable().default(null),
   paymentDay: dayOfMonth.nullable().default(null),
   balanceCents: signedCents,
+  // Default null for the same deploy-skew reason as the fields above.
+  closedAt: z.iso.datetime({ offset: true }).nullable().default(null),
   createdAt: z.iso.datetime({ offset: true }),
   updatedAt: z.iso.datetime({ offset: true }),
 })

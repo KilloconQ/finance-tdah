@@ -44,13 +44,13 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
         if (input.kind === 'transfer') {
           const [sourceAccount, targetAccount] = await Promise.all([
             tx.query.financialAccount.findFirst({
-              where: (a, { and, eq }) =>
-                and(eq(a.id, input.accountId!), eq(a.userId, user.id)),
+              where: (a, { and, eq, isNull }) =>
+                and(eq(a.id, input.accountId!), eq(a.userId, user.id), isNull(a.closedAt)),
               columns: { id: true },
             }),
             tx.query.financialAccount.findFirst({
-              where: (a, { and, eq }) =>
-                and(eq(a.id, input.toAccountId!), eq(a.userId, user.id)),
+              where: (a, { and, eq, isNull }) =>
+                and(eq(a.id, input.toAccountId!), eq(a.userId, user.id), isNull(a.closedAt)),
               columns: { id: true },
             }),
           ])
@@ -59,8 +59,8 @@ export const expensesRoute = new Hono<{ Variables: SessionVariables }>()
           }
         } else if (input.accountId) {
           const account = await tx.query.financialAccount.findFirst({
-            where: (a, { and, eq }) =>
-              and(eq(a.id, input.accountId!), eq(a.userId, user.id)),
+            where: (a, { and, eq, isNull }) =>
+              and(eq(a.id, input.accountId!), eq(a.userId, user.id), isNull(a.closedAt)),
             columns: { id: true },
           })
           if (!account) {

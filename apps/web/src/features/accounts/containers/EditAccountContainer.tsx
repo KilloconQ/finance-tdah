@@ -3,9 +3,9 @@ import { useNavigate } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { parseAmountToCents, signedBalanceForType } from '@finance-tdah/shared/domain'
-import { AppBar, EmptyState, IconButton, PhoneShell } from '@/components'
+import { AppBar, Btn, EmptyState, IconButton, PhoneShell } from '@/components'
 import { errorText } from '@/lib/api'
-import { accountsQueryOptions, accountStatementQueryOptions, useUpdateAccount } from '../api'
+import { accountsQueryOptions, accountStatementQueryOptions, useCloseAccount, useUpdateAccount } from '../api'
 import { AccountForm, type AccountFormFields } from '../components/AccountForm'
 import { CardStatementSummary } from '../components/CardStatementSummary'
 import { parseStatementDays } from './statement-days'
@@ -17,11 +17,14 @@ interface EditAccountContainerProps {
 export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const [confirmClose, setConfirmClose] = useState(false)
+  const [closeError, setCloseError] = useState<string | null>(null)
   const inFlight = useRef(false)
 
   const { data: accounts, isLoading } = useQuery(accountsQueryOptions())
   const account = accounts?.find((a) => a.id === accountId)
   const updateAccount = useUpdateAccount(accountId)
+  const closeAccount = useCloseAccount(accountId)
   const hasStatementDays = account?.type === 'credito' && account.cutoffDay !== null && account.paymentDay !== null
   const { data: statement } = useQuery({ ...accountStatementQueryOptions(accountId), enabled: hasStatementDays })
 
@@ -125,6 +128,40 @@ export function EditAccountContainer({ accountId }: EditAccountContainerProps) {
         }}
         submitLabel="Guardar cambios"
       />
+      <div className="px-5 pb-8">
+        {!confirmClose ? (
+          <Btn kind="plain" className="w-full" onClick={() => setConfirmClose(true)}>
+            Cerrar cuenta
+          </Btn>
+        ) : (
+          <div className="rounded-xl border border-danger bg-danger-bg p-4">
+            <div className="mb-1 text-sm font-medium text-danger">¿Cerrar {account.name}?</div>
+            <div className="mb-4 text-xs text-ink-soft">
+              Dejará de aparecer en tus cuentas y en tu total. Sus movimientos pasados se conservan.
+            </div>
+            {closeError ? <div className="mb-3 text-xs text-danger">{closeError}</div> : null}
+            <div className="flex gap-2">
+              <Btn kind="ghost" className="flex-1" onClick={() => setConfirmClose(false)}>
+                Cancelar
+              </Btn>
+              <Btn
+                kind="danger"
+                className="flex-1"
+                disabled={closeAccount.isPending}
+                onClick={() => {
+                  setCloseError(null)
+                  closeAccount.mutate(undefined, {
+                    onSuccess: () => navigate({ to: '/accounts', replace: true }),
+                    onError: (err) => setCloseError(errorText(err, 'No pudimos cerrar la cuenta')),
+                  })
+                }}
+              >
+                {closeAccount.isPending ? 'Cerrando…' : 'Cerrar cuenta'}
+              </Btn>
+            </div>
+          </div>
+        )}
+      </div>
     </PhoneShell>
   )
 }

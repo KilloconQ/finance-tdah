@@ -18,6 +18,7 @@ export const account = (patch: Partial<FinancialAccountDTO> = {}): FinancialAcco
   last4: null,
   cutoffDay: null,
   paymentDay: null,
+  closedAt: null,
   balanceCents: 1_000_000,
   createdAt: NOW,
   updatedAt: NOW,

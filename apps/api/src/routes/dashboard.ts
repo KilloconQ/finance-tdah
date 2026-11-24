@@ -12,7 +12,7 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
 
     const [accounts, goals, profile] = await Promise.all([
       db.query.financialAccount.findMany({
-        where: (a, { eq }) => eq(a.userId, user.id),
+        where: (a, { and, eq, isNull }) => and(eq(a.userId, user.id), isNull(a.closedAt)),
       }),
       db.query.goal.findMany({
         where: (g, { and, eq, isNull }) => and(eq(g.userId, user.id), isNull(g.archivedAt)),
@@ -68,7 +68,7 @@ export const dashboardRoute = new Hono<{ Variables: SessionVariables }>()
     const user = c.get('user')
 
     const accounts = await db.query.financialAccount.findMany({
-      where: (a, { eq }) => eq(a.userId, user.id),
+      where: (a, { and, eq, isNull }) => and(eq(a.userId, user.id), isNull(a.closedAt)),
     })
     const goals = await db.query.goal.findMany({
       where: (g, { and, eq, isNull }) => and(eq(g.userId, user.id), isNull(g.archivedAt)),

@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
   date,
@@ -72,10 +72,13 @@ export const financialAccount = pgTable(
     cutoffDay: integer('cutoff_day'),
     paymentDay: integer('payment_day'),
     balanceCents: integer('balance_cents').default(0).notNull(),
+    // Set when the account is closed: it keeps its history but leaves every list and total.
+    closedAt: timestamp('closed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [uniqueIndex('financial_account_user_name_idx').on(t.userId, t.name)],
+  // Names are unique among open accounts, so a closed one doesn't block reusing its name.
+  (t) => [uniqueIndex('financial_account_user_name_idx').on(t.userId, t.name).where(sql`${t.closedAt} is null`)],
 )
 
 export const goal = pgTable('goal', {
