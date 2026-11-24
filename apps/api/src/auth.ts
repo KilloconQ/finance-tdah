@@ -4,6 +4,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { bearer } from 'better-auth/plugins'
 import { db } from './db/client'
 import { env } from './env'
+import { emailLayout } from './services/email-layout'
 import { deliver, emailEnabled } from './services/mailer'
 
 // Without a Resend key the reset endpoint fails loudly, but sign-in/sign-up keep working.
@@ -60,7 +61,11 @@ export const auth = betterAuth({
       deliver('password_reset_send', {
         to: user.email,
         subject: 'Restablece tu contraseña',
-        html: `<p>Haz clic para restablecer tu contraseña de Cada Quien:</p><p><a href="${url}">${url}</a></p><p>Si no pediste esto, ignora este email.</p>`,
+        html: emailLayout({
+          heading: 'Restablece tu contraseña',
+          body: '<p style="margin:0">Pediste restablecer la contraseña de tu cuenta de Cada Quien. Si no fuiste tú, ignora este correo.</p>',
+          cta: { label: 'Restablecer contraseña', url },
+        }),
       }),
   },
   session: {
