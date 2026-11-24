@@ -1,8 +1,6 @@
 import { env } from '../env'
+import { emailLayout, escapeHtml } from './email-layout'
 import { deliver } from './mailer'
-
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (ch) => ESCAPES[ch])
 
 /**
  * Tells an existing account that someone invited them to a group. The caller
@@ -14,7 +12,11 @@ export function sendGroupInvitationEmail(input: { to: string; inviterName: strin
   return deliver('group_invitation_email', {
     to: input.to,
     subject: `${input.inviterName} te invitó a un grupo en Cada Quien`,
-    html: `<p>${escapeHtml(input.inviterName)} te invitó al grupo «${escapeHtml(input.groupName)}» en Cada Quien.</p><p>Abre la app para aceptar o declinar la invitación:</p><p><a href="${link}">${link}</a></p>`,
+    html: emailLayout({
+      heading: `${input.inviterName} te invitó a un grupo`,
+      body: `<p style="margin:0"><strong>${escapeHtml(input.inviterName)}</strong> te invitó al grupo «${escapeHtml(input.groupName)}» en Cada Quien. Abre la app para aceptar o declinar la invitación.</p>`,
+      cta: { label: 'Ver invitación', url: link },
+    }),
   })
 }
 
@@ -24,6 +26,10 @@ export function sendAppInvitationEmail(input: { to: string; inviterName: string 
   return deliver('app_invitation_email', {
     to: input.to,
     subject: `${input.inviterName} te invitó a Cada Quien`,
-    html: `<p>${escapeHtml(input.inviterName)} te invitó a usar Cada Quien, una app para llevar tus gastos y dividirlos con otras personas.</p><p>Crea tu cuenta aquí:</p><p><a href="${link}">${link}</a></p>`,
+    html: emailLayout({
+      heading: `${input.inviterName} te invitó a Cada Quien`,
+      body: `<p style="margin:0"><strong>${escapeHtml(input.inviterName)}</strong> te invitó a usar Cada Quien, una app para llevar tus gastos y dividirlos con otras personas.</p>`,
+      cta: { label: 'Crear mi cuenta', url: link },
+    }),
   })
 }

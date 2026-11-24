@@ -35,7 +35,8 @@ PORT=3001
 # Si queda vacío, el reset por email queda deshabilitado (la API avisa al arrancar).
 # La API arranca igual: nunca bloquea el login.
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=onboarding@resend.dev
+# Debe ser una dirección de un dominio verificado en Resend (Domains), si no solo entrega a tu propio correo.
+RESEND_FROM_EMAIL=hola@cadaquien.app
 
 # --- Web Push (notificaciones) --- OPCIONAL
 # Si quedan vacías, las push quedan deshabilitadas. La API arranca igual.
