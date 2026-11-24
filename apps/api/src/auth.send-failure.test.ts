@@ -61,7 +61,7 @@ describe('sendResetPassword when Resend fails', () => {
     await sendResetPassword()({ user: { email: 'registrado@ejemplo.com' }, url: 'https://x/reset' })
 
     expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'registrado@ejemplo.com', from: 'onboarding@resend.dev' }),
+      expect.objectContaining({ to: 'registrado@ejemplo.com', from: 'Cada Quien <onboarding@resend.dev>' }),
     )
   })
 })

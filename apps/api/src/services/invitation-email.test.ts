@@ -41,7 +41,7 @@ describe('sendGroupInvitationEmail', () => {
 
     expect(send).toHaveBeenCalledTimes(1)
     const sent = send.mock.calls[0][0]
-    expect(sent).toMatchObject({ to: 'ben@ejemplo.com', from: 'onboarding@resend.dev' })
+    expect(sent).toMatchObject({ to: 'ben@ejemplo.com', from: 'Cada Quien <onboarding@resend.dev>' })
     expect(sent.subject).toContain('Ana')
     expect(sent.html).toContain('Viaje')
     expect(sent.html).toContain('http://localhost:5173/groups')
@@ -93,7 +93,7 @@ describe('sendAppInvitationEmail', () => {
     await sendInvite({ to: 'nueva@ejemplo.com', inviterName: '<b>Ana</b>' })
 
     const sent = send.mock.calls[0][0]
-    expect(sent).toMatchObject({ to: 'nueva@ejemplo.com', from: 'onboarding@resend.dev' })
+    expect(sent).toMatchObject({ to: 'nueva@ejemplo.com', from: 'Cada Quien <onboarding@resend.dev>' })
     expect(sent.subject).toContain('Cada Quien')
     expect(sent.html).toContain('http://localhost:5173/auth/sign-up')
     expect(sent.html).toContain('&lt;b&gt;Ana&lt;/b&gt;')
