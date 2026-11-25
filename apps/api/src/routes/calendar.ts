@@ -16,7 +16,7 @@ export const calendarRoute = new Hono<{ Variables: SessionVariables }>()
 
     const [accounts, subscriptions, incomes, profile] = await Promise.all([
       db.query.financialAccount.findMany({
-        where: and(eq(schema.financialAccount.userId, user.id), eq(schema.financialAccount.type, 'credito')),
+        where: and(eq(schema.financialAccount.userId, user.id), eq(schema.financialAccount.type, 'credito'), isNull(schema.financialAccount.closedAt)),
       }),
       db.query.subscription.findMany({
         where: and(eq(schema.subscription.userId, user.id), isNull(schema.subscription.cancelledAt)),

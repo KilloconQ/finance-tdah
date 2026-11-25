@@ -13,9 +13,13 @@ settings:
     # Where the API lives. The simulator reaches the dev API on localhost; override for a real device:
     #   xcodebuild ... API_BASE_URL=https://your-domain
     API_BASE_URL: http:/$()/localhost:3001
+    REVENUECAT_API_KEY: ""
 packages:
   CadaQuienKit:
     path: CadaQuienKit
+  RevenueCat:
+    url: https://github.com/RevenueCat/purchases-ios-spm.git
+    exactVersion: 5.103.2
 targets:
   CadaQuien:
     type: application
@@ -23,6 +27,8 @@ targets:
     sources: [CadaQuien, Shared]
     dependencies:
       - package: CadaQuienKit
+      - package: RevenueCat
+        product: RevenueCat
       - target: CadaQuienWidget
     entitlements:
       path: CadaQuien/CadaQuien.entitlements
@@ -42,6 +48,8 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         APIBaseURL: $(API_BASE_URL)
+        # Public SDK key from RevenueCat. Only used when the server says billing is on, so dev builds can leave it empty.
+        RevenueCatAPIKey: $(REVENUECAT_API_KEY)
         CFBundleURLTypes:
           - CFBundleURLName: app.cadaquien.ios
             CFBundleURLSchemes: [cadaquien]

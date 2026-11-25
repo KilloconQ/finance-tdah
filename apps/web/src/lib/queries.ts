@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { queryOptions } from '@tanstack/react-query'
 import {
+  adminStatsSchema,
+  billingStatusSchema,
   challengeSchema,
   expenseSchema,
   financialAccountSchema,
@@ -30,6 +32,19 @@ export const profileQuery = () =>
         '/profile',
         z.object({ profile: userProfileSchema.nullable() }),
       ).then((r) => r.profile),
+  })
+
+export const billingStatusQuery = () =>
+  queryOptions({
+    queryKey: ['billing', 'status'],
+    queryFn: () => fetchValidated('/billing/status', billingStatusSchema),
+  })
+
+export const adminStatsQuery = () =>
+  queryOptions({
+    queryKey: ['admin', 'stats'],
+    queryFn: () => fetchValidated('/admin/stats', adminStatsSchema),
+    retry: false,
   })
 
 export const accountsQuery = () =>

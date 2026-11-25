@@ -21,7 +21,7 @@ public struct InvitationsService: Sendable {
         try await client.send(.post, "/api/invitations/\(id.rawValue)/decline")
     }
 
-    /// Invites someone to sign up for the app (registration is invite-only).
+    /// Invites someone to sign up for the app .
     public func inviteToApp(email: String) async throws {
         try await client.send(.post, "/api/invitations/app", body: ["email": email])
     }

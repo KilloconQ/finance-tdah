@@ -1,4 +1,4 @@
-import { relations } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
   date,
@@ -72,10 +72,13 @@ export const financialAccount = pgTable(
     cutoffDay: integer('cutoff_day'),
     paymentDay: integer('payment_day'),
     balanceCents: integer('balance_cents').default(0).notNull(),
+    // Set when the account is closed: it keeps its history but leaves every list and total.
+    closedAt: timestamp('closed_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [uniqueIndex('financial_account_user_name_idx').on(t.userId, t.name)],
+  // Names are unique among open accounts, so a closed one doesn't block reusing its name.
+  (t) => [uniqueIndex('financial_account_user_name_idx').on(t.userId, t.name).where(sql`${t.closedAt} is null`)],
 )
 
 export const goal = pgTable('goal', {
@@ -356,10 +359,37 @@ export const appInvitationLog = pgTable(
   ],
 )
 
-/** An address someone invited to sign up. Registration is invite-only; a row is valid for SIGNUP_INVITE_DAYS. */
-export const signupInvite = pgTable('signup_invite', {
-  email: text('email').primaryKey(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+/** Client the user is on. Onboarding is done once per platform. */
+export const clientPlatformEnum = pgEnum('client_platform', ['web', 'ios'])
+
+/** One row per platform the user finished onboarding on. */
+export const userOnboarding = pgTable(
+  'user_onboarding',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    platform: clientPlatformEnum('platform').notNull(),
+    completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.platform] })],
+)
+
+/**
+ * What RevenueCat last told us about a user's paid entitlement (webhook). The allowlist is not
+ * stored here: it lives in env and is checked at request time.
+ */
+export const billingEntitlement = pgTable('billing_entitlement', {
+  userId: text('user_id')
+    .primaryKey()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  active: boolean('active').notNull(),
+  productId: text('product_id'),
+  store: text('store'),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  // Webhooks can arrive out of order: only an event newer than this one may overwrite the row.
+  lastEventAt: timestamp('last_event_at', { withTimezone: true }).notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const sharedExpense = pgTable(

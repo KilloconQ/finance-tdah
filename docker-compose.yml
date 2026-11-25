@@ -38,9 +38,12 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET requerido}
       BETTER_AUTH_URL: ${PUBLIC_URL:-https://finance.local}
       WEB_ORIGIN: ${PUBLIC_URL:-https://finance.local}
-      # Sign-up is invite-only: an address can register if it's listed here (admins)
-      # or an existing user invited it in the last 7 days. Comma-separated emails.
+      # Sign-up is open. Emails listed here never pay; ADMIN_EMAILS may open /api/admin.
       ALLOWED_EMAILS: ${ALLOWED_EMAILS:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      # RevenueCat: paywall is enforced only in production with the webhook secret set.
+      REVENUECAT_WEBHOOK_AUTH: ${REVENUECAT_WEBHOOK_AUTH:-}
+      REVENUECAT_ENTITLEMENT_ID: ${REVENUECAT_ENTITLEMENT_ID:-pro}
       # Optional features. Leaving these empty disables password-reset emails /
       # web push, but never blocks sign-in (the api warns at startup instead).
       RESEND_API_KEY: ${RESEND_API_KEY:-}
@@ -69,6 +72,7 @@ services:
         VITE_API_URL: /api
         # Same key the api signs pushes with — the browser needs it to subscribe.
         VITE_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+        VITE_REVENUECAT_WEB_KEY: ${REVENUECAT_WEB_KEY:-}
     container_name: ft-web
     restart: unless-stopped
     networks:

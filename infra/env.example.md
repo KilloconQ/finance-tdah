@@ -12,10 +12,19 @@ POSTGRES_DB=finance_tdah
 # 32+ chars. Generá uno con: openssl rand -base64 48
 BETTER_AUTH_SECRET=cambiame-por-uno-de-al-menos-32-caracteres
 
-# Emails admin que siempre pueden registrarse, separados por coma. Cualquier
-# otra persona necesita una invitación de un usuario existente (vale 7 días).
-# Vacío = solo por invitación; ya no hay registro abierto.
+# El registro es abierto. Estos emails no pagan (por ahora), separados por coma.
 ALLOWED_EMAILS=vos@ejemplo.com,tu-novia@ejemplo.com
+# Quienes pueden abrir /api/admin (estadísticas).
+ADMIN_EMAILS=vos@ejemplo.com
+
+# --- RevenueCat ---
+# Secreto que RevenueCat manda en el header Authorization del webhook
+# (POST {PUBLIC_URL}/api/billing/webhook). Sin esto, o fuera de producción, nadie ve paywall.
+REVENUECAT_WEBHOOK_AUTH=
+# Entitlement que desbloquea la app (el mismo nombre que en el dashboard de RevenueCat).
+REVENUECAT_ENTITLEMENT_ID=pro
+# Public SDK key de la app Web Billing de RevenueCat. Va al build del web (hay que rebuildear si cambia).
+REVENUECAT_WEB_KEY=
 
 # --- Public URL ---
 # El dominio público que Cloudflare Tunnel va a exponer

@@ -19,6 +19,9 @@ import { invitationsRoute } from './routes/invitations'
 import { profileRoute } from './routes/profile'
 import { pushRoute } from './routes/push'
 import { subscriptionsRoute } from './routes/subscriptions'
+import { accessGate } from './middleware/access'
+import { adminRoute } from './routes/admin'
+import { billingRoute } from './routes/billing'
 import { calendarRoute } from './routes/calendar'
 import { incomesRoute } from './routes/incomes'
 import { notificationRulesRoute } from './routes/notification-rules'
@@ -46,7 +49,7 @@ app.use(
     origin: env.WEB_ORIGIN,
     credentials: true,
     allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowHeaders: ['Content-Type', 'Authorization'],
+    allowHeaders: ['Content-Type', 'Authorization', 'X-Client-Platform'],
   }),
 )
 
@@ -54,9 +57,13 @@ app.get('/health', (c) => c.json({ status: 'ok' }))
 
 app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
+app.use('/api/*', accessGate)
+
 const api = app
   .basePath('/api')
   .route('/profile', profileRoute)
+  .route('/billing', billingRoute)
+  .route('/admin', adminRoute)
   .route('/calendar', calendarRoute)
   .route('/incomes', incomesRoute)
   .route('/notification-rules', notificationRulesRoute)
@@ -96,6 +103,12 @@ export type AppRouter = typeof api
 export type AppType = typeof app
 
 logger.info('startup', { port: env.PORT })
+if (env.NODE_ENV === 'production' && !features.billing) {
+  logger.warn('feature_disabled', {
+    feature: 'billing',
+    message: 'REVENUECAT_WEBHOOK_AUTH is not set — nobody is asked to pay.',
+  })
+}
 if (!features.passwordResetEmail) {
   logger.warn('feature_disabled', {
     feature: 'password_reset_email',

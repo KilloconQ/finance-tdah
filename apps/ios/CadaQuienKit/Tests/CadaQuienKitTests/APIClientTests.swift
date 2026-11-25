@@ -31,6 +31,12 @@ extension NetworkedTests {
         #expect(configuration.httpCookieStorage == nil)
     }
 
+    @Test func tellsTheServerItIsTheiOSClient() async throws {
+      StubURLProtocol.handler = StubURLProtocol.reply(json: #"{"ok":true}"#)
+      let _: Pong = try await makeClient().get("/api/ping")
+      #expect(StubURLProtocol.lastRequest?.value(forHTTPHeaderField: "X-Client-Platform") == "ios")
+    }
+
     @Test func omitsTheAuthorizationHeaderWithoutAToken() async throws {
       StubURLProtocol.handler = StubURLProtocol.reply(json: #"{"ok":true}"#)
       let client = APIClient(

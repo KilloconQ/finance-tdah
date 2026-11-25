@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './app/__root'
+import { Route as PaywallRouteImport } from './app/paywall'
 import { Route as AppRouteImport } from './app/_app'
 import { Route as OnboardingIndexRouteImport } from './app/onboarding/index'
 import { Route as AppIndexRouteImport } from './app/_app/index'
@@ -25,6 +26,7 @@ import { Route as AppPanicRouteImport } from './app/_app/panic'
 import { Route as AppMoneyRouteImport } from './app/_app/money'
 import { Route as AppChallengeRouteImport } from './app/_app/challenge'
 import { Route as AppCalendarRouteImport } from './app/_app/calendar'
+import { Route as AppAdminRouteImport } from './app/_app/admin'
 import { Route as AppAddExpenseRouteImport } from './app/_app/add-expense'
 import { Route as AppSubscriptionsIndexRouteImport } from './app/_app/subscriptions/index'
 import { Route as AppGroupsIndexRouteImport } from './app/_app/groups/index'
@@ -42,6 +44,11 @@ import { Route as AppSubscriptionsIdEditRouteImport } from './app/_app/subscript
 import { Route as AppGoalsIdEditRouteImport } from './app/_app/goals/$id_.edit'
 import { Route as AppAccountsIdEnvelopesRouteImport } from './app/_app/accounts/$id_.envelopes'
 
+const PaywallRoute = PaywallRouteImport.update({
+  id: '/paywall',
+  path: '/paywall',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
@@ -119,6 +126,11 @@ const AppChallengeRoute = AppChallengeRouteImport.update({
 const AppCalendarRoute = AppCalendarRouteImport.update({
   id: '/calendar',
   path: '/calendar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAdminRoute = AppAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AppRoute,
 } as any)
 const AppAddExpenseRoute = AppAddExpenseRouteImport.update({
@@ -204,7 +216,9 @@ const AppAccountsIdEnvelopesRoute = AppAccountsIdEnvelopesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/paywall': typeof PaywallRoute
   '/add-expense': typeof AppAddExpenseRoute
+  '/admin': typeof AppAdminRoute
   '/calendar': typeof AppCalendarRoute
   '/challenge': typeof AppChallengeRoute
   '/money': typeof AppMoneyRoute
@@ -236,7 +250,9 @@ export interface FileRoutesByFullPath {
   '/transactions/$id/edit': typeof AppTransactionsIdEditRoute
 }
 export interface FileRoutesByTo {
+  '/paywall': typeof PaywallRoute
   '/add-expense': typeof AppAddExpenseRoute
+  '/admin': typeof AppAdminRoute
   '/calendar': typeof AppCalendarRoute
   '/challenge': typeof AppChallengeRoute
   '/money': typeof AppMoneyRoute
@@ -271,7 +287,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/paywall': typeof PaywallRoute
   '/_app/add-expense': typeof AppAddExpenseRoute
+  '/_app/admin': typeof AppAdminRoute
   '/_app/calendar': typeof AppCalendarRoute
   '/_app/challenge': typeof AppChallengeRoute
   '/_app/money': typeof AppMoneyRoute
@@ -307,7 +325,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/paywall'
     | '/add-expense'
+    | '/admin'
     | '/calendar'
     | '/challenge'
     | '/money'
@@ -339,7 +359,9 @@ export interface FileRouteTypes {
     | '/transactions/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/paywall'
     | '/add-expense'
+    | '/admin'
     | '/calendar'
     | '/challenge'
     | '/money'
@@ -373,7 +395,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_app'
+    | '/paywall'
     | '/_app/add-expense'
+    | '/_app/admin'
     | '/_app/calendar'
     | '/_app/challenge'
     | '/_app/money'
@@ -408,6 +432,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  PaywallRoute: typeof PaywallRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignInRoute: typeof AuthSignInRoute
@@ -420,6 +445,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/paywall': {
+      id: '/paywall'
+      path: '/paywall'
+      fullPath: '/paywall'
+      preLoaderRoute: typeof PaywallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
@@ -530,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/calendar'
       fullPath: '/calendar'
       preLoaderRoute: typeof AppCalendarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/admin': {
+      id: '/_app/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AppAdminRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/add-expense': {
@@ -649,6 +688,7 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppAddExpenseRoute: typeof AppAddExpenseRoute
+  AppAdminRoute: typeof AppAdminRoute
   AppCalendarRoute: typeof AppCalendarRoute
   AppChallengeRoute: typeof AppChallengeRoute
   AppMoneyRoute: typeof AppMoneyRoute
@@ -675,6 +715,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppAddExpenseRoute: AppAddExpenseRoute,
+  AppAdminRoute: AppAdminRoute,
   AppCalendarRoute: AppCalendarRoute,
   AppChallengeRoute: AppChallengeRoute,
   AppMoneyRoute: AppMoneyRoute,
@@ -703,6 +744,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  PaywallRoute: PaywallRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignInRoute: AuthSignInRoute,

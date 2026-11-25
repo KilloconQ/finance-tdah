@@ -77,6 +77,8 @@ public struct APIClient: Sendable {
         var request = URLRequest(url: url, timeoutInterval: 20)
         request.httpMethod = method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        // The API keeps onboarding per platform.
+        request.setValue("ios", forHTTPHeaderField: "X-Client-Platform")
         if let token = tokens.token() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }

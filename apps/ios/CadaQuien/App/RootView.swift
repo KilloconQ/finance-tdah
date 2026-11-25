@@ -15,6 +15,8 @@ struct RootView: View {
                 AuthFlow()
             case .onboarding:
                 OnboardingFlow()
+            case .paywall:
+                PaywallView()
             case .ready:
                 MainTabs()
             case .failed(let message):
