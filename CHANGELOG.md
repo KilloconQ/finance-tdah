@@ -1,5 +1,53 @@
 # Changelog
 
+## [0.1.5](https://github.com/KilloconQ/finance-tdah/compare/v0.1.4...v0.1.5) (2026-11-25)
+
+
+### Features
+
+* always show the calendar notification options in settings ([5e30ed9](https://github.com/KilloconQ/finance-tdah/commit/5e30ed93883e50dfac3a4c4625632c7c82ed8564))
+* **api:** accept bearer tokens for native clients ([5360748](https://github.com/KilloconQ/finance-tdah/commit/5360748b1fb6ae7fbb87dadf3d4ad762cf093bb0))
+* **api:** branded transactional emails with a Cada Quien sender name ([#66](https://github.com/KilloconQ/finance-tdah/issues/66)) ([62b00ba](https://github.com/KilloconQ/finance-tdah/commit/62b00baf964b29fc56ce359a07589d2fa82459e2))
+* **api:** calendar push notifications with per-kind options ([616b455](https://github.com/KilloconQ/finance-tdah/commit/616b4553f2f395a47573979cecb85793980acd65))
+* **api:** native push for iPhone through APNs ([a42aa70](https://github.com/KilloconQ/finance-tdah/commit/a42aa70cafbca22410fb00b9bab665f3bea50ddb))
+* **api:** open sign-up, per-platform onboarding, RevenueCat entitlement gate and admin stats ([7de2cf9](https://github.com/KilloconQ/finance-tdah/commit/7de2cf9516980ca94387cbc7488cb4172d40c134))
+* **api:** payment calendar and scheduled income endpoints ([0ab0345](https://github.com/KilloconQ/finance-tdah/commit/0ab0345dfbeaa0bf14542c67b7d08ddebd662840))
+* close accounts instead of deleting them ([333fcdf](https://github.com/KilloconQ/finance-tdah/commit/333fcdfb923657ae9506254fc927d1a29eb9fa14))
+* **ios:** add app session model, auth and onboarding screens, expense form rules ([82cf5c9](https://github.com/KilloconQ/finance-tdah/commit/82cf5c9d5848cbf0a4c6d9d2b00dd74588e5ab14))
+* **ios:** add CadaQuienKit with API client, bearer auth and models ([de8b10f](https://github.com/KilloconQ/finance-tdah/commit/de8b10fadc63d611bc9fe84f5e79e592787ad748))
+* **ios:** add design system tokens, buttons, cards and resource loading ([d301106](https://github.com/KilloconQ/finance-tdah/commit/d30110606a79ac31dcb34369bfbc80b925f98c9e))
+* **ios:** add groups screens and rules ([34feb01](https://github.com/KilloconQ/finance-tdah/commit/34feb01b6abc12fe2a2cd8c1652cd488d05e1d64))
+* **ios:** add native push registration, notification settings and tap-to-open links ([a38daae](https://github.com/KilloconQ/finance-tdah/commit/a38daae98c3d959e9780a6b7360a15a89acc6010))
+* **ios:** add push device registration service and reminder hour labels ([29fcc69](https://github.com/KilloconQ/finance-tdah/commit/29fcc69d4fe541a9f98e90808bd97a41d220c466))
+* **ios:** add quick-add widget, Siri and Shortcuts intents, and deep links ([78ab645](https://github.com/KilloconQ/finance-tdah/commit/78ab645fd652998f5890526cb70fba0ab6af49be))
+* **ios:** add resource services and lowercase EntityID ([be31928](https://github.com/KilloconQ/finance-tdah/commit/be319289455aa2ad6a4ac58e92dade1db575e74f))
+* **ios:** add tabs, home, movements, expense form, money hub, accounts, envelopes, goals, subscriptions, settings, panic and challenge ([5cba4c0](https://github.com/KilloconQ/finance-tdah/commit/5cba4c0905852b42d4b6e91b00b52bcbb0edee04))
+* **ios:** calendar notification options in settings ([426ea77](https://github.com/KilloconQ/finance-tdah/commit/426ea77aea7167f3902cec030bb83190c82915e6))
+* **ios:** local network usage description for device builds ([f479e4a](https://github.com/KilloconQ/finance-tdah/commit/f479e4acbad5d0763c18348d21b53b84f06fb852))
+* **ios:** payment calendar tab with income management ([1339c19](https://github.com/KilloconQ/finance-tdah/commit/1339c19b99f4285fc8d5dae5215968701a9e1e4f))
+* **ios:** port envelope, net worth and split rules ([831cde5](https://github.com/KilloconQ/finance-tdah/commit/831cde5629a052865148cb414896b30f21064cf9))
+* **ios:** port money, subscription and jar domain logic with Spanish API errors ([c0f6e2c](https://github.com/KilloconQ/finance-tdah/commit/c0f6e2c2c0ab08178ad4ed61c4eb86be7caa9a95))
+* **ios:** RevenueCat paywall, platform header and billing status ([f412c1f](https://github.com/KilloconQ/finance-tdah/commit/f412c1f5b4888635343530b7ac5295ed20ff8460))
+* **ios:** scaffold app, widget extension and test target ([d9adaa8](https://github.com/KilloconQ/finance-tdah/commit/d9adaa86347392251fb066efbf86df75e5c336e5))
+* **ios:** shrink the tab bar while scrolling on iOS 26 ([f38d6b2](https://github.com/KilloconQ/finance-tdah/commit/f38d6b22128d84b383480899da1e80eb9fae5097))
+* **ios:** thousands separators while typing an amount ([99912ea](https://github.com/KilloconQ/finance-tdah/commit/99912eabdb5d5417b9b4d033b88b660e4d9a0a4d))
+* open sign-up, RevenueCat billing, iOS paywall and close accounts ([7f8db07](https://github.com/KilloconQ/finance-tdah/commit/7f8db07e8f59821009165614d8c43e83d0f55b7a))
+* **web:** calendar notification options in settings ([06ea1ed](https://github.com/KilloconQ/finance-tdah/commit/06ea1ed6fe7f2cb7b98bf29176a2bf730d00535f))
+* **web:** payment calendar page and income management ([cd91db5](https://github.com/KilloconQ/finance-tdah/commit/cd91db53100793fe91a47965b9f9584a81f036ca))
+* **web:** RevenueCat paywall, onboarding per platform guard and admin stats page ([1516790](https://github.com/KilloconQ/finance-tdah/commit/1516790949e27dce84d1607f71fb7cc2560b4986))
+
+
+### Bug Fixes
+
+* **api:** count only enabled channels when picking who gets the daily reminder ([df78256](https://github.com/KilloconQ/finance-tdah/commit/df78256c779cb9e85636f573adb110203176dfca))
+* **ios:** don't surface cancelled requests, wrap chips naturally, compose money phrases as one Text ([6f57cd2](https://github.com/KilloconQ/finance-tdah/commit/6f57cd25ed4b462c394dfebe0bcb14b533238a48))
+* **ios:** draw the goal jar with a lid and level marks ([4c88c4f](https://github.com/KilloconQ/finance-tdah/commit/4c88c4fd8a40b3026411ad0e3377f67333bddc62))
+* **ios:** give an empty account selection its own row so the picker never has an untagged value ([1b4f2a0](https://github.com/KilloconQ/finance-tdah/commit/1b4f2a0a94286d199ed40753169da4f4543f8033))
+* **ios:** inline title on the widget gallery ([ac6b3f0](https://github.com/KilloconQ/finance-tdah/commit/ac6b3f0febf9b565a9cb6ea1be55a486001893fa))
+* **ios:** unique ids for calendar grid headers and blanks ([eba26a6](https://github.com/KilloconQ/finance-tdah/commit/eba26a62e830730a9fbc61287b6c2917c940f552))
+* **ios:** use a bearer-only session and add API contract test ([13802b3](https://github.com/KilloconQ/finance-tdah/commit/13802b3d20c4b50896b379f052d7b2e31fd1189a))
+* **web:** load paywall offerings through react-query ([de1986f](https://github.com/KilloconQ/finance-tdah/commit/de1986fda0fedd901a3f4d11f8a7cc46871c037e))
+
 ## [0.1.4](https://github.com/KilloconQ/finance-tdah/compare/v0.1.3...v0.1.4) (2026-11-17)
 
 
